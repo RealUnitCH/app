@@ -21,6 +21,13 @@ import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
+// Store builds show this row only after the insider unlock. Debug always shows it.
+bool showSettingsNetworkRow({
+  required bool debugMode,
+  required bool insiderUnlocked,
+}) =>
+    debugMode || insiderUnlocked;
+
 class SettingsPage extends StatelessWidget {
   final Duration unavailablePollInterval;
 
@@ -65,7 +72,10 @@ class SettingsPage extends StatelessWidget {
                             selectedOption: state.currency.code,
                             onTap: () => context.pushNamed(SettingsRoutes.currencies),
                           ),
-                          if (kDebugMode)
+                          if (showSettingsNetworkRow(
+                            debugMode: kDebugMode,
+                            insiderUnlocked: state.insiderFeaturesUnlocked,
+                          ))
                             SettingOption(
                               title: S.of(context).settingsNetwork,
                               leading: const NodesIcon(size: 24),

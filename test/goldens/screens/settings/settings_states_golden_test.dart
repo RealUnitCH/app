@@ -10,12 +10,9 @@ void main() {
   // `settings_golden_test.dart` / `settings_confirm_logout_wallet_sheet_golden_test.dart`.
   //
   // Documented skip — release-build Settings variant (Network tile hidden):
-  // the Network tile is gated by `if (kDebugMode)` (settings_page.dart:57), not
-  // a runtime flag. `flutter test` always runs in debug (JIT), so `kDebugMode`
-  // is a compile-time `true` that cannot be flipped from a test. The tile is
-  // therefore always present in goldens; the release variant is not
-  // deterministically reproducible without a separate release-mode build, so it
-  // is skipped rather than hacked.
+  // the Network tile uses `showSettingsNetworkRow`. `flutter test` always runs
+  // in debug, so the tile is always present in goldens. The release-and-locked
+  // case is the pure function with `debugMode: false`, not a golden.
   //
   // Covered here: the confirm-logout sheet with the checkbox ticked, which
   // enables the Reset button (`isChecked ? … : null`,

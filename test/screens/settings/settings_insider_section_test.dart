@@ -95,6 +95,14 @@ void main() {
           S.current.settingsWalletBackup,
         ]),
       );
+      expect(
+        firstSectionTitles(tester),
+        containsAllInOrder([
+          S.current.settingsCurrency,
+          S.current.settingsNetwork,
+          S.current.settingsTaxReport,
+        ]),
+      );
     },
   );
 
@@ -144,6 +152,54 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pushedRoutes, [SettingsRoutes.insider]);
+  });
+
+  testWidgets('tapping Netzwerk pushes SettingsRoutes.network', (tester) async {
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+
+    final pushedRoutes = <String>[];
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => BlocProvider<HomeBloc>.value(
+            value: homeBloc,
+            child: const SettingsPage(unavailablePollInterval: Duration.zero),
+          ),
+        ),
+        GoRoute(
+          name: SettingsRoutes.network,
+          path: '/settings/network',
+          builder: (_, _) {
+            pushedRoutes.add(SettingsRoutes.network);
+            return const Scaffold(body: Text('ROUTE:network'));
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        locale: const Locale('de'),
+        routerConfig: router,
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: S.delegate.supportedLocales,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text(S.current.settingsNetwork));
+    await tester.tap(find.text(S.current.settingsNetwork));
+    await tester.pumpAndSettle();
+
+    expect(pushedRoutes, [SettingsRoutes.network]);
   });
 
   testWidgets(

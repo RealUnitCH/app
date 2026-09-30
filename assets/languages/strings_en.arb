@@ -442,7 +442,6 @@
   "settingsLanguageLoadFailedDescription": "Please check your internet connection and try again.",
   "settingsLanguages": "Languages",
   "settingsNetwork": "Network",
-  "settingsNetworkHint": "Switches the whole app to the DFX development server. Not real funds.",
   "settingsSecurity": "Security",
   "settingsTaxReport": "Tax report",
   "settingsWalletBackup": "Wallet backup",
