@@ -13,17 +13,11 @@ import 'package:realunit_wallet/widgets/transaction_title_label.dart';
 class TransactionRow extends StatelessWidget {
   final Transaction transaction;
   final String walletAddress;
-  final Color firstRowTextColor;
-  final Color secondRowTextColor;
-  final bool showBlockchainIcon;
 
   const TransactionRow({
     super.key,
     required this.transaction,
     required this.walletAddress,
-    this.firstRowTextColor = RealUnitColors.realUnitBlack,
-    this.secondRowTextColor = RealUnitColors.neutral400,
-    this.showBlockchainIcon = false,
   });
 
   bool get _isOutbound => transaction.isOutbound(walletAddress);
