@@ -15,9 +15,9 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/filter/transaction_history_filter_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/multi_receipt/transaction_history_multi_receipt_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
+import 'package:realunit_wallet/screens/transaction_history/transaction_detail_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_download_button.dart';
-import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_row.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
@@ -28,7 +28,7 @@ import '../../../helper/helper.dart';
 // `transaction_history_golden_test.dart` — both mock the filter cubit with an
 // empty `filtered` list, so they render the same empty page (the `_with_...`
 // baseline never actually shows a row). This file adds the surfaces that base
-// file leaves uncovered: a populated list, the per-row receipt spinner, the
+// file leaves uncovered: a populated list, the receipt states on the detail page, the
 // multi-receipt spinner, the receipt-failure SnackBar and the date picker.
 //
 // Determinism note — dates: `TransactionHistoryRow` formats via
@@ -264,8 +264,8 @@ void main() {
     );
   });
 
-  // ---- B) TransactionHistoryRowView: per-row receipt spinner + failure ----
-  group('$TransactionHistoryRowView', () {
+  // ---- B) TransactionDetailView: receipt loading + failure ----
+  group('$TransactionDetailView', () {
     late _MockTransactionHistoryReceiptCubit receiptCubit;
 
     setUp(() {
@@ -275,27 +275,24 @@ void main() {
     });
 
     Widget rowSubject() => wrapForGolden(
-          Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-              child: MultiBlocProvider(
-                providers: [
-                  BlocProvider<SettingsBloc>.value(value: settingsBloc),
-                  BlocProvider<TransactionHistoryReceiptCubit>.value(value: receiptCubit),
-                ],
-                child: TransactionHistoryRowView(
-                  transaction: transactions.first,
-                  isOutbound: false,
-                ),
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SettingsBloc>.value(value: settingsBloc),
+              BlocProvider<TransactionHistoryReceiptCubit>.value(value: receiptCubit),
+            ],
+            child: TransactionDetailView(
+              args: TransactionDetailArgs(
+                transaction: transactions.first,
+                walletAddress: walletAddress,
               ),
             ),
           ),
         );
 
     goldenTest(
-      'receipt generating — 12px spinner replaces the download icon',
+      'receipt generating — Beleg button is loading',
       fileName: 'transaction_history_row_receipt_loading',
-      // The 12px CircularProgressIndicator never settles; freeze the first frame.
+      // The loading indicator never settles; freeze the first frame.
       pumpBeforeTest: pumpOnce,
       constraints: phoneConstraints,
       builder: () {
@@ -305,8 +302,8 @@ void main() {
       },
     );
 
-    // Emitting a failure drives the BlocConsumer listener
-    // (`transaction_history_row.dart:52-59`) to show the red error SnackBar.
+    // Emitting a failure drives the detail page listener to show the red
+    // error SnackBar.
     goldenTest(
       'receipt failure SnackBar (red)',
       fileName: 'transaction_history_row_receipt_failure',

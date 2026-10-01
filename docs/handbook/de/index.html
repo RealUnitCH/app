@@ -4368,7 +4368,7 @@
                 />
               </div>
               <div class="desc">
-                Der <b>befüllte Verlauf</b> mit drei Buchungen: zwei Käufe (<b>+ 50</b> und <b>+ 100 REALU</b>) sowie ein Verkauf (<b>- 20 REALU</b>), je mit Datum, Uhrzeit und eigenem Beleg-Symbol am rechten Rand. Der blaue PDF-Button oben rechts ist jetzt <b>aktiv</b> und erzeugt einen Sammelbeleg über alle sichtbaren Buchungen.
+                Der befüllte Verlauf mit drei Buchungen: zwei Käufe (<b>+ 50</b> und <b>+ 100 REALU</b>) sowie ein Verkauf (<b>- 20 REALU</b>), je mit Datum und Uhrzeit. Ein Tippen auf eine Zeile öffnet die Detailseite dieser Buchung. Der blaue <b>PDF-Button</b> oben rechts ist aktiv und erzeugt einen Sammelbeleg über alle sichtbaren Buchungen.
               </div>
             </div>
             <div class="test" id="97-transaction-history-page-date-picker">
@@ -4427,7 +4427,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Zu jeder Buchung lässt sich ein PDF-Beleg erzeugen: einzeln über das Symbol in der Zeile oder gesammelt über den grossen PDF-Button. Bei einem Verkauf öffnet dasselbe Symbol eine Auswahl mit zwei Belegen, dem RealUnit-Verkauf und dem Tausch von ZCHF in CHF oder EUR. Diese Zustände zeigen die Beleg-Erzeugung und den Fehlerfall.
+            Ein Tippen auf eine Buchung öffnet ihre Detailseite. Dort liegen die Angaben zu der Buchung und, ausser bei einer Empfehlungsprämie, die Beleg-Buttons. Ein Verkauf hat zwei Buttons: RealUnit-Verkauf und Tausch ZCHF in CHF/EUR. Jede andere Buchung ausser der Empfehlungsprämie hat einen Button Beleg. Der Sammelbeleg über den grossen PDF-Button bleibt unverändert. Die folgenden Zustände zeigen die Beleg-Erzeugung und den Fehlerfall auf der Detailseite.
           </p>
 
           <div class="tests cols-2">
@@ -4444,7 +4444,7 @@
                 />
               </div>
               <div class="desc">
-                Eine einzelne Zeile (<b>Kauf, + 50 REALU</b>) während der <b>Erzeugung des Einzelbelegs</b>: das Download-Symbol am rechten Rand ist durch einen <b>kleinen Ladekreis</b> ersetzt (im Golden nur als Punkt sichtbar). Der Nutzer sieht dies unmittelbar nach dem Tippen auf das Beleg-Symbol der Zeile.
+                Die Detailseite eines Kaufs (<b>+ 50 REALU</b>) während der Erzeugung des Belegs: der Button <b>Beleg</b> zeigt einen <b>Ladekreis</b> und ist gesperrt. Der Nutzer sieht dies unmittelbar nach dem Tippen auf diesen Button.
               </div>
             </div>
             <div class="test" id="99-transaction-history-row-receipt-failure">
@@ -4460,7 +4460,7 @@
                 />
               </div>
               <div class="desc">
-                Konnte der Beleg nicht erstellt werden, erscheint am unteren Rand eine <b>rote Fehlermeldung</b> mit der Servermeldung (im Golden 'Beleg konnte nicht erstellt werden.'). Das Download-Symbol der Zeile ist wieder sichtbar, sodass ein <b>erneuter Versuch</b> möglich ist.
+                Konnte der Beleg nicht erstellt werden, erscheint am unteren Rand der Detailseite eine <b>rote Fehlermeldung</b> mit der Servermeldung (im Golden 'Beleg konnte nicht erstellt werden.'). Der Button <b>Beleg</b> ist wieder tippbar, sodass ein <b>erneuter Versuch</b> möglich ist.
               </div>
             </div>
             <div class="test" id="100-transaction-history-multi-receipt-loading">
