@@ -10,13 +10,11 @@ import 'package:realunit_wallet/styles/language.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockSupportedLanguageRepository extends Mock
-    implements SupportedLanguageRepository {}
+class _MockSupportedLanguageRepository extends Mock implements SupportedLanguageRepository {}
 
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 void main() {
-
   late _MockSupportedLanguageRepository langRepo;
   late _MockSettingsRepository settingsRepo;
   late SettingsBloc settingsBloc;
@@ -28,12 +26,16 @@ void main() {
     when(() => settingsRepo.currency).thenReturn('CHF');
     when(() => settingsRepo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => settingsRepo.insiderFeaturesUnlocked).thenReturn(false);
+    when(() => settingsRepo.networkOptionsEnabled).thenReturn(false);
     when(() => settingsRepo.walletFeaturePay).thenReturn(false);
     when(() => settingsRepo.walletFeatureSend).thenReturn(false);
     when(() => settingsRepo.walletFeaturePromoCode).thenReturn(false);
     when(() => settingsRepo.walletFeatureReferral).thenReturn(false);
-    when(() => langRepo.getEnabled())
-        .thenAnswer((_) async => const [Language.en, Language.de]);
+    when(() => settingsRepo.walletFeaturePayCentral).thenReturn(false);
+    when(() => settingsRepo.walletFeatureSendCentral).thenReturn(false);
+    when(() => settingsRepo.walletFeaturePromoCodeCentral).thenReturn(false);
+    when(() => settingsRepo.walletFeatureReferralCentral).thenReturn(false);
+    when(() => langRepo.getEnabled()).thenAnswer((_) async => const [Language.en, Language.de]);
     settingsBloc = SettingsBloc(settingsRepo, () async {});
 
     final getIt = GetIt.instance;

@@ -1189,14 +1189,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 375 Visual-Regression Goldens (311 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 376 Visual-Regression Goldens (312 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 311 App-Screenshots dieser Seite sind Goldens aus
+            Die 312 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1236,7 +1236,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 311 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 312 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -8164,14 +8164,17 @@
           </summary>
           <p class="spec-intro">
             <b>Bezahlen</b>, <b>Senden</b>, <b>Promo-Code</b> und <b>Empfehlungen</b>
-            bleiben ausgeblendet, bis sie zentral freigeschaltet werden. Hat ein Gerät
-            eine Freischaltung einmal gesehen, bleibt sie auf diesem Gerät an, auch wenn
-            eine spätere Abfrage sie nicht mehr liefert. In Insider Funktionen lässt sich
-            jede der vier Funktionen wieder ausschalten; das Aus bleibt über Neustart und
-            eine spätere zentrale Freischaltung hinweg bestehen, bis der Schalter wieder
-            an ist oder siebenmal auf die Versionsnummer getippt wird. Siebenmal tippen
-            schaltet alle vier auf diesem Gerät ein. OpenCryptoPay-Zahlungslinks
-            funktionieren ohne den Bezahlen-Button.
+            bleiben ausgeblendet, bis sie zentral freigeschaltet werden oder ein Tester
+            sie unter Insider Funktionen einschaltet. Hat ein Gerät eine zentrale
+            Freischaltung einmal gesehen, bleibt sie auf diesem Gerät an, auch wenn eine
+            spätere Abfrage sie nicht mehr liefert oder fehlschlägt. Solange eine Funktion
+            nicht zentral freigeschaltet ist, lässt sie sich unter Insider Funktionen
+            ein- und ausschalten; dieses Aus gilt über den Neustart, bis der Schalter
+            wieder an ist. Ist sie zentral freigeschaltet, steht der Schalter fest auf
+            an, ist nicht bedienbar und zeigt «zentral freigeschaltet». Siebenmal auf die
+            Versionsnummer tippen schaltet auf diesem Gerät alle vier ein, die noch nicht
+            zentral an sind. OpenCryptoPay-Zahlungslinks funktionieren ohne den
+            Bezahlen-Button.
           </p>
 
           <!-- Single column on purpose: the explainer block below carries a
@@ -8204,15 +8207,16 @@
                 <p>
                   Die zentrale Freischaltung und der Sieben-Tap bleiben auf dem Gerät
                   gespeichert (auch nach App-Neustart). Eine Neuinstallation setzt sie
-                  zurück. In Insider Funktionen schaltet jeder Schalter seine Funktion
-                  aus und wieder an; Aus gilt weiter nach Neustart und nach einer
-                  späteren zentralen Freischaltung. OpenCryptoPay-Zahlungslinks
-                  funktionieren unabhängig vom Bezahlen-Button — der Deeplink bleibt
-                  bewusst immer offen. Tippen auf die Versionsnummer hat keine Wirkung
-                  mehr, wenn die Insider-Einstellungen schon sichtbar sind und alle vier
-                  Funktionen bereits an sind. Sind nur die zentralen Flags gesetzt,
-                  bleibt der siebenmalige Tap der Tester-Override und schaltet alle vier
-                  ein.
+                  zurück. Solange eine Funktion nicht zentral freigeschaltet ist, schaltet
+                  ihr Schalter sie aus und wieder an; dieses Aus gilt nach dem Neustart,
+                  aber nicht gegen eine spätere zentrale Freischaltung. Ist sie zentral
+                  freigeschaltet, bleibt der Schalter an und lässt sich nicht mehr
+                  ausmachen. OpenCryptoPay-Zahlungslinks funktionieren unabhängig vom
+                  Bezahlen-Button — der Deeplink bleibt bewusst immer offen. Tippen auf
+                  die Versionsnummer hat keine Wirkung mehr, wenn die Insider-Einstellungen
+                  schon sichtbar sind und alle vier Funktionen bereits an sind. Sind nur
+                  die zentralen Flags gesetzt, bleibt der siebenmalige Tap der
+                  Tester-Override und schaltet die übrigen ein.
                 </p>
               </div>
               <div class="img img-multi">
@@ -11411,7 +11415,8 @@
             (`285`), Einstellungen mit Empfehlungen (`299`), Rechtliche Dokumente letzter Eintrag (`286`), Einladung
             erkannt (`287`), Historie mit Prämie (`288`), Dashboard-Einstieg
             (`289`), Promo-Aktionstext (`290`), Bind-Overlay ungültig (`291`),
-            Bind-Overlay nur für neue Kundinnen (`292`).
+            Bind-Overlay nur für neue Kundinnen (`292`),
+            Bind-Overlay Einladung erkannt (`303`).
           </p>
           <div class="test" id="276-referral-overview">
             <div class="head">
@@ -11726,6 +11731,25 @@
               Body <b>Einladungs- und Promo-Codes müssen vor dem ersten REALU-Kauf
               eingelöst werden.</b> — nicht «Link ungültig».
               API-Code <code>ALREADY_REGISTERED</code>.
+            </div>
+          </div>
+          <div class="test" id="303-referral-bind-invite-recognized">
+            <div class="head">
+              <a class="name permalink" href="#303-referral-bind-invite-recognized">303-referral-bind-invite-recognized</a>
+              <button class="copy-link" type="button" data-target="303-referral-bind-invite-recognized" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_bind_error_dialog_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/303-referral-bind-invite-recognized.png"
+                alt="Dashboard-Overlay: Einladung erkannt"
+              />
+            </div>
+            <div class="desc">
+              Nach einem erfolgreichen Invite-Bind beim Öffnen der App:
+              Overlay auf dem Dashboard (Kurschart), ohne Titel, Body
+              «Einladung von Björn erkannt. Sind Sie verifiziert und umfasst Ihr erster Kauf mindestens 200 Aktientoken, kann Björn dafür eine Prämie gemäss Teilnahmebedingungen erhalten.»,
+              <b>Schließen</b> mit Tastaturfokus, nicht per Barrier schliessbar.
             </div>
           </div>
         </details>

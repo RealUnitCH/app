@@ -21,10 +21,15 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
            currency: Currency.fromCode(_settingsRepository.currency),
            networkMode: _settingsRepository.networkMode,
            insiderFeaturesUnlocked: _settingsRepository.insiderFeaturesUnlocked,
+           networkOptionsEnabled: _settingsRepository.networkOptionsEnabled,
            walletFeaturePay: _settingsRepository.walletFeaturePay,
            walletFeatureSend: _settingsRepository.walletFeatureSend,
            walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
            walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+           walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+           walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+           walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+           walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
          ),
        ) {
     on<SetCurrencyEvent>(_onSetCurrencyEvent);
@@ -81,10 +86,31 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     SetNetworkModeEvent event,
     Emitter<SettingsState> emit,
   ) async {
+    if (event.networkMode == state.networkMode) return;
+    final previous = state.networkMode;
     _settingsRepository.networkMode = event.networkMode;
-    await getNewAuthToken();
+    try {
+      await getNewAuthToken();
+    } catch (_) {
+      _settingsRepository.networkMode = previous;
+      emit(state.copyWith(networkMode: previous));
+      return;
+    }
     onNetworkModeChanged?.call();
-    emit(state.copyWith(networkMode: event.networkMode));
+    emit(
+      state.copyWith(
+        networkMode: event.networkMode,
+        walletFeaturePay: _settingsRepository.walletFeaturePay,
+        walletFeatureSend: _settingsRepository.walletFeatureSend,
+        walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
+        walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+        walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+        walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+        walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+        walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
+      ),
+    );
+    add(const RefreshWalletFeaturesEvent());
   }
 
   void _onToggleHideAmountEvent(ToggleHideAmountEvent event, Emitter<SettingsState> emit) {
@@ -107,6 +133,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         walletFeatureSend: _settingsRepository.walletFeatureSend,
         walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
         walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+        walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+        walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+        walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+        walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
       ),
     );
   }
@@ -129,6 +159,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           walletFeatureSend: _settingsRepository.walletFeatureSend,
           walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
           walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+          walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+          walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+          walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+          walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
         ),
       );
     } catch (_) {}
@@ -139,19 +173,52 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     switch (event.feature) {
+      case InsiderFeature.networkOptions:
+        _settingsRepository.networkOptionsEnabled = event.enabled;
+        emit(state.copyWith(networkOptionsEnabled: _settingsRepository.networkOptionsEnabled));
       case InsiderFeature.pay:
         _settingsRepository.setWalletFeaturePayFromUser(event.enabled);
-        emit(state.copyWith(walletFeaturePay: _settingsRepository.walletFeaturePay));
+        emit(
+          state.copyWith(
+            walletFeaturePay: _settingsRepository.walletFeaturePay,
+            walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+            walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+            walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+            walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
+          ),
+        );
       case InsiderFeature.send:
         _settingsRepository.setWalletFeatureSendFromUser(event.enabled);
-        emit(state.copyWith(walletFeatureSend: _settingsRepository.walletFeatureSend));
+        emit(
+          state.copyWith(
+            walletFeatureSend: _settingsRepository.walletFeatureSend,
+            walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+            walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+            walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+            walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
+          ),
+        );
       case InsiderFeature.referral:
         _settingsRepository.setWalletFeatureReferralFromUser(event.enabled);
-        emit(state.copyWith(walletFeatureReferral: _settingsRepository.walletFeatureReferral));
+        emit(
+          state.copyWith(
+            walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+            walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+            walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+            walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+            walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
+          ),
+        );
       case InsiderFeature.bonus:
         _settingsRepository.setWalletFeaturePromoCodeFromUser(event.enabled);
         emit(
-          state.copyWith(walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode),
+          state.copyWith(
+            walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
+            walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+            walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+            walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+            walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
+          ),
         );
     }
   }
