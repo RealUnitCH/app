@@ -19,6 +19,18 @@ void main() {
     targetAccount: '0x1111111111111111111111111111111111111111',
   );
 
+  final sell = TransactionDto(
+    type: TransactionType.sell,
+    inputAmount: 30,
+    inputAsset: 'REALU',
+    outputAmount: 2970,
+    outputAsset: 'CHF',
+    state: TransactionState.waitingForPayment,
+    date: DateTime.utc(2026, 5, 20, 12),
+    sourceAccount: 'CH9300762011623852957',
+    targetAccount: '0x1111111111111111111111111111111111111111',
+  );
+
   goldenTest(
     'pending transaction detail',
     fileName: 'pending_transaction_detail',
@@ -38,6 +50,34 @@ void main() {
     builder: () => wrapForGolden(
       PendingTransactionDetailPage(
         args: PendingTransactionDetailArgs(transaction: buy),
+      ),
+    ),
+  );
+
+  // This test does not commit a PNG; the regenerate workflow writes it.
+  goldenTest(
+    'pending sell transaction detail',
+    fileName: 'pending_transaction_detail_sell',
+    constraints: phoneConstraints,
+    pumpBeforeTest: (tester) async {
+      await tester.pump();
+      expect(find.text('Verkauf'), findsOneWidget);
+      expect(find.text('30.00 REALU'), findsOneWidget);
+      expect(find.text('Warte auf Zahlung'), findsOneWidget);
+      expect(find.text('Betrag in CHF'), findsOneWidget);
+      expect(find.text('2970.00'), findsOneWidget);
+      expect(find.text('CH9300762011623852957'), findsNothing);
+      expect(find.text('IBAN'), findsNothing);
+      expect(
+        find.text('0x1111111111111111111111111111111111111111'),
+        findsNothing,
+      );
+      expect(find.text('Beleg'), findsNothing);
+      expect(find.text('RealUnit-Verkauf'), findsNothing);
+    },
+    builder: () => wrapForGolden(
+      PendingTransactionDetailPage(
+        args: PendingTransactionDetailArgs(transaction: sell),
       ),
     ),
   );

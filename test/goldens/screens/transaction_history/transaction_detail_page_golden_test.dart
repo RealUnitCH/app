@@ -10,6 +10,7 @@ import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/trans
 import 'package:realunit_wallet/screens/transaction_history/transaction_detail_page.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../../helper/helper.dart';
 
@@ -43,6 +44,98 @@ void main() {
     note: '',
     data: null,
     timestamp: DateTime.utc(2026, 8, 24, 10),
+  );
+
+  final purchase = DfxTransaction(
+    dfxId: 2,
+    inputAmount: 5000,
+    inputAsset: 'CHF',
+    outputAmount: 50,
+    outputAsset: 'REALU',
+    height: 0,
+    txId: 'tx-purchase-detail',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x2222222222222222222222222222222222222222',
+    receiverAddress: '0x1111111111111111111111111111111111111111',
+    amount: BigInt.from(50),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.purchase,
+    note: '',
+    data: null,
+    timestamp: DateTime.utc(2026, 5, 20, 10),
+  );
+
+  final received = Transaction(
+    height: 0,
+    txId: 'tx-received-detail',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x2222222222222222222222222222222222222222',
+    receiverAddress: '0x1111111111111111111111111111111111111111',
+    amount: BigInt.from(10),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.transferIn,
+    note: null,
+    data: null,
+    timestamp: DateTime.utc(2026, 5, 19, 12),
+  );
+
+  final sent = Transaction(
+    height: 0,
+    txId: 'tx-sent-detail',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x2222222222222222222222222222222222222222',
+    amount: BigInt.from(10),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.transferOut,
+    note: '',
+    data: null,
+    timestamp: DateTime.utc(2026, 5, 18, 14),
+  );
+
+  final savingsAdd = Transaction(
+    height: 0,
+    txId: 'tx-savings-add',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x2222222222222222222222222222222222222222',
+    amount: BigInt.from(100),
+    asset: realUnitAsset,
+    type: TransactionTypes.savingsAdd,
+    note: null,
+    data: null,
+    timestamp: DateTime.utc(2026, 5, 17, 9),
+  );
+
+  final savingsRemove = Transaction(
+    height: 0,
+    txId: 'tx-savings-remove',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x2222222222222222222222222222222222222222',
+    amount: BigInt.from(40),
+    asset: realUnitAsset,
+    type: TransactionTypes.savingsRemove,
+    note: null,
+    data: null,
+    timestamp: DateTime.utc(2026, 5, 16, 9),
+  );
+
+  final referral = Transaction(
+    height: 0,
+    txId: 'tx-referral-detail',
+    chainId: realUnitAsset.chainId,
+    senderAddress: kReferralPayoutSenderAddress,
+    receiverAddress: '0x1111111111111111111111111111111111111111',
+    amount: BigInt.from(20),
+    asset: realUnitAsset,
+    type: TransactionTypes.referralPayout,
+    note: '',
+    data: '246.50',
+    timestamp: DateTime.utc(2026, 5, 20, 10),
   );
 
   setUpAll(() {
@@ -100,6 +193,228 @@ void main() {
           child: TransactionDetailView(
             args: TransactionDetailArgs(
               transaction: sale,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'purchase detail page',
+      fileName: 'transaction_detail_purchase',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Kauf'), findsOneWidget);
+        expect(find.text('+ 50 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('Beleg'), findsOneWidget);
+        expect(find.text('Betrag in CHF'), findsOneWidget);
+        expect(find.text('5000.00'), findsOneWidget);
+        expect(find.text('RealUnit-Verkauf'), findsNothing);
+        expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+        expect(
+          find.text('0x1111111111111111111111111111111111111111'),
+          findsNothing,
+        );
+        expect(find.text('tx-purchase-detail'), findsNothing);
+        expect(
+          find.text('Beleg konnte nicht erstellt werden.'),
+          findsNothing,
+        );
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: purchase,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'received transfer detail page',
+      fileName: 'transaction_detail_received',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Empfangen'), findsOneWidget);
+        expect(find.text('+ 10 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('Beleg'), findsOneWidget);
+        expect(find.text('Betrag in CHF'), findsNothing);
+        expect(find.text('RealUnit-Verkauf'), findsNothing);
+        expect(
+          find.text('0x1111111111111111111111111111111111111111'),
+          findsNothing,
+        );
+        expect(find.text('tx-received-detail'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: received,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'sent transfer detail page',
+      fileName: 'transaction_detail_sent',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Gesendet'), findsOneWidget);
+        expect(find.text('- 10 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('Beleg'), findsOneWidget);
+        expect(find.text('Betrag in CHF'), findsNothing);
+        expect(find.text('RealUnit-Verkauf'), findsNothing);
+        expect(
+          find.text('0x1111111111111111111111111111111111111111'),
+          findsNothing,
+        );
+        expect(find.text('tx-sent-detail'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: sent,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'savings add detail page',
+      fileName: 'transaction_detail_savings_add',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Einzahlen'), findsOneWidget);
+        expect(find.text('100 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('Beleg'), findsOneWidget);
+        expect(find.text('+ 100 REALU'), findsNothing);
+        expect(find.text('- 100 REALU'), findsNothing);
+        expect(find.text('Betrag in CHF'), findsNothing);
+        expect(
+          find.text('0x1111111111111111111111111111111111111111'),
+          findsNothing,
+        );
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: savingsAdd,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'savings remove detail page',
+      fileName: 'transaction_detail_savings_remove',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Auszahlen'), findsOneWidget);
+        expect(find.text('40 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('Beleg'), findsOneWidget);
+        expect(find.text('+ 40 REALU'), findsNothing);
+        expect(find.text('- 40 REALU'), findsNothing);
+        expect(find.text('Betrag in CHF'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: savingsRemove,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'referral payout detail page',
+      fileName: 'transaction_detail_referral',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Empfehlungsprämie'), findsOneWidget);
+        expect(find.text('+ 20 REALU'), findsOneWidget);
+        expect(find.textContaining('246.50'), findsOneWidget);
+        expect(find.textContaining('Gutschrift'), findsOneWidget);
+        expect(find.text('Belege'), findsNothing);
+        expect(find.text('Beleg'), findsNothing);
+        expect(find.text('RealUnit-Verkauf'), findsNothing);
+        expect(find.text('tx-referral-detail'), findsNothing);
+        expect(find.byType(AppFilledButton), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: referral,
               walletAddress: '0x1111111111111111111111111111111111111111',
             ),
           ),
