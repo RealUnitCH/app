@@ -1,6 +1,6 @@
 # Visual Regression Tests
 
-Pixel-exact baseline tests for every page in the app. 82 `lib/screens/**/*_page.dart`
+Pixel-exact baseline tests for every page in the app. 84 `lib/screens/**/*_page.dart`
 files mapped to 405 Golden PNGs under `test/goldens/` (`screens/` and `widgets/`) (page renderings
 plus state variants: Buy/Sell error banners, KYC loading/failure, Dashboard
 with-balance, RestoreWallet valid/invalid, Legal-Disclaimer steps, etc.),
@@ -31,13 +31,9 @@ Buy has initial + payment-info-loaded, Settings has default +
 confirm-logout-sheet) — those produce more than one PNG each. All
 baselines live under `test/goldens/screens/<feature>/goldens/macos/*.png` or `test/goldens/widgets/<widget>/goldens/macos/*.png`.
 
-### Skipped: `web_view_page.dart`
+### In-app browser chrome
 
-The one `skip: true` in the suite. `InAppWebView` from `flutter_inappwebview` is a platform-view, not a regular widget — its rendering happens via the iOS/Android view-embedding API and has no headless representation in `flutter_test`.
-
-Method-channel stubbing alone is **not enough**: the widget's first build asserts that `InAppWebViewPlatform.instance` is set, and that interface declares five abstract `createPlatform…` methods (controller, widget, cookie manager, etc.) — each returning another platform-view-bound class. A working stub would need ~50 lines of mock subclasses and would still render the body as a blank rectangle.
-
-For a one-page edge case the cost/benefit doesn't justify it. The test is committed with `skip: true` and reactivates the moment someone wires up a full `InAppWebViewPlatform` mock — preferably published as a separate test-only package so other Flutter apps can reuse it.
+`web_view_page.dart` is not skipped. `InAppWebView` still has no headless page render, so the golden pumps `WebViewScaffold` with an empty body. Slots 394 and 395 are that chrome, with and without the external-browser button. The page body is the website and is not part of the baseline. No golden under `test/goldens/` is marked skipped.
 
 ## Regenerating baselines
 
