@@ -96,34 +96,6 @@ void main() {
     timestamp: DateTime.utc(2026, 5, 18, 14),
   );
 
-  final savingsAdd = Transaction(
-    height: 0,
-    txId: 'tx-savings-add',
-    chainId: realUnitAsset.chainId,
-    senderAddress: '0x1111111111111111111111111111111111111111',
-    receiverAddress: '0x2222222222222222222222222222222222222222',
-    amount: BigInt.from(100),
-    asset: realUnitAsset,
-    type: TransactionTypes.savingsAdd,
-    note: null,
-    data: null,
-    timestamp: DateTime.utc(2026, 5, 17, 9),
-  );
-
-  final savingsRemove = Transaction(
-    height: 0,
-    txId: 'tx-savings-remove',
-    chainId: realUnitAsset.chainId,
-    senderAddress: '0x1111111111111111111111111111111111111111',
-    receiverAddress: '0x2222222222222222222222222222222222222222',
-    amount: BigInt.from(40),
-    asset: realUnitAsset,
-    type: TransactionTypes.savingsRemove,
-    note: null,
-    data: null,
-    timestamp: DateTime.utc(2026, 5, 16, 9),
-  );
-
   final referral = Transaction(
     height: 0,
     txId: 'tx-referral-detail',
@@ -310,76 +282,6 @@ void main() {
           child: TransactionDetailView(
             args: TransactionDetailArgs(
               transaction: sent,
-              walletAddress: '0x1111111111111111111111111111111111111111',
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // This test does not commit a PNG; the regenerate workflow writes it.
-    goldenTest(
-      'savings add detail page',
-      fileName: 'transaction_detail_savings_add',
-      constraints: phoneConstraints,
-      pumpBeforeTest: (tester) async {
-        await tester.pumpAndSettle();
-        expect(find.text('Einzahlen'), findsOneWidget);
-        expect(find.text('100 REALU'), findsOneWidget);
-        expect(find.text('Belege'), findsOneWidget);
-        expect(find.text('Beleg'), findsOneWidget);
-        expect(find.text('+ 100 REALU'), findsNothing);
-        expect(find.text('- 100 REALU'), findsNothing);
-        expect(find.text('Betrag in CHF'), findsNothing);
-        expect(
-          find.text('0x1111111111111111111111111111111111111111'),
-          findsNothing,
-        );
-      },
-      builder: () => wrapForGolden(
-        MultiBlocProvider(
-          providers: [
-            BlocProvider<SettingsBloc>.value(value: settingsBloc),
-            BlocProvider<TransactionHistoryReceiptCubit>.value(
-              value: receiptCubit,
-            ),
-          ],
-          child: TransactionDetailView(
-            args: TransactionDetailArgs(
-              transaction: savingsAdd,
-              walletAddress: '0x1111111111111111111111111111111111111111',
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // This test does not commit a PNG; the regenerate workflow writes it.
-    goldenTest(
-      'savings remove detail page',
-      fileName: 'transaction_detail_savings_remove',
-      constraints: phoneConstraints,
-      pumpBeforeTest: (tester) async {
-        await tester.pumpAndSettle();
-        expect(find.text('Auszahlen'), findsOneWidget);
-        expect(find.text('40 REALU'), findsOneWidget);
-        expect(find.text('Belege'), findsOneWidget);
-        expect(find.text('Beleg'), findsOneWidget);
-        expect(find.text('+ 40 REALU'), findsNothing);
-        expect(find.text('- 40 REALU'), findsNothing);
-        expect(find.text('Betrag in CHF'), findsNothing);
-      },
-      builder: () => wrapForGolden(
-        MultiBlocProvider(
-          providers: [
-            BlocProvider<SettingsBloc>.value(value: settingsBloc),
-            BlocProvider<TransactionHistoryReceiptCubit>.value(
-              value: receiptCubit,
-            ),
-          ],
-          child: TransactionDetailView(
-            args: TransactionDetailArgs(
-              transaction: savingsRemove,
               walletAddress: '0x1111111111111111111111111111111111111111',
             ),
           ),

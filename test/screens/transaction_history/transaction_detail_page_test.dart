@@ -466,24 +466,6 @@ void main() {
     expect(find.text('tx-dash-transfer'), findsOneWidget);
   });
 
-  testWidgets('tapping a savings row opens the detail route', (tester) async {
-    await pumpRowRoute(
-      tester,
-      SavingsTransactionRow(
-        transaction: _tx(
-          type: TransactionTypes.savingsAdd,
-          txId: 'tx-savings-add',
-        ),
-        walletAddress: '0x1111111111111111111111111111111111111111',
-      ),
-    );
-
-    await tester.tap(find.byType(InkWell));
-    await tester.pumpAndSettle();
-
-    expect(find.text('tx-savings-add'), findsOneWidget);
-  });
-
   testWidgets('tapping a referral payout row opens the detail route', (
     tester,
   ) async {

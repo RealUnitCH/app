@@ -168,8 +168,6 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     final s = S.of(context);
     return switch (transaction.type) {
       TransactionTypes.referralPayout => s.referralPayout,
-      TransactionTypes.savingsAdd => s.savingsAdd,
-      TransactionTypes.savingsRemove => s.savingsRemove,
       _ => transactionTitleLabel(
         context,
         transaction,
@@ -181,19 +179,10 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
   String _leadingSymbol() {
     final transaction = widget.args.transaction;
     if (transaction.type == TransactionTypes.referralPayout) return '+';
-    if (transaction.type == TransactionTypes.savingsAdd ||
-        transaction.type == TransactionTypes.savingsRemove) {
-      return '';
-    }
     return transaction.isOutbound(widget.args.walletAddress) ? '-' : '+';
   }
 
   int _fractionalDigits() {
-    final type = widget.args.transaction.type;
-    if (type == TransactionTypes.savingsAdd ||
-        type == TransactionTypes.savingsRemove) {
-      return 2;
-    }
     return 0;
   }
 
