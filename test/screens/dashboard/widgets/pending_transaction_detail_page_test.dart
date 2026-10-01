@@ -53,7 +53,7 @@ void main() {
 
     testWidgets('sell with wallet target shows no IBAN', (tester) async {
       await tester.pumpApp(
-        PendingTransactionDetailPage(
+        const PendingTransactionDetailPage(
           args: PendingTransactionDetailArgs(
             transaction: TransactionDto(
               type: TransactionType.sell,
