@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 405 Visual-Regression Goldens (405 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 412 Visual-Regression Goldens (412 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 405 App-Screenshots dieser Seite sind Goldens aus
+            Die 412 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 405 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 412 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -4089,7 +4089,7 @@
                 <div class="file">test/goldens/screens/dashboard/</div>
               </div>
               <div class="rhs">
-                <b>10 Screens</b>
+                <b>12 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/dashboard"
@@ -4118,6 +4118,38 @@
               </div>
               <div class="desc">
                 Unter dem Kurschart erscheint die Karte <b>Ausstehende Transaktionen</b> mit noch laufenden DFX-Aufträgen: <b>Kauf / In Bearbeitung / 500 CHF</b> und <b>Verkauf / Warte auf Zahlung / 30 REALU</b>, jeweils mit Datum und drehendem Ladeindikator. Der Nutzer sieht dies, solange ein Kauf oder Verkauf beim Zahlungsdienst noch nicht abgeschlossen ist; da hier noch kein Guthaben vorliegt, folgen darunter Token-Illustration und Kaufen-Button. Ein Tipp auf eine Zeile öffnet diesen Auftrag auf einer eigenen Seite, mit dem Betrag und dem Status, und ohne Beleg-Button.
+              </div>
+            </div>
+            <div class="test" id="397-pending-transaction-detail">
+              <div class="head">
+                <a class="name permalink" href="#397-pending-transaction-detail">397-pending-transaction-detail</a>
+                <button class="copy-link" type="button" data-target="397-pending-transaction-detail" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/dashboard/goldens/macos/pending_transaction_detail.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/397-pending-transaction-detail.png"
+                  alt="Offener Kauf mit Betrag und Status"
+                />
+              </div>
+              <div class="desc">
+                Die Seite eines noch offenen Kaufs zeigt den Titel <b>Kauf</b>, den Betrag <b>5000.00 CHF</b> und den Status <b>In Bearbeitung</b>. Es gibt keinen IBAN und keinen Beleg-Button.
+              </div>
+            </div>
+            <div class="test" id="398-pending-transaction-detail-sell">
+              <div class="head">
+                <a class="name permalink" href="#398-pending-transaction-detail-sell">398-pending-transaction-detail-sell</a>
+                <button class="copy-link" type="button" data-target="398-pending-transaction-detail-sell" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/dashboard/goldens/macos/pending_transaction_detail_sell.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/398-pending-transaction-detail-sell.png"
+                  alt="Offener Verkauf mit Betrag und Status"
+                />
+              </div>
+              <div class="desc">
+                Die Seite eines noch offenen Verkaufs zeigt den Titel <b>Verkauf</b>, den Betrag <b>30.00 REALU</b>, den Status <b>Warte auf Zahlung</b> und das Feld <b>Betrag in CHF</b> mit <b>2970.00</b>. Es gibt keinen Button <b>Beleg</b> und keinen Button <b>RealUnit-Verkauf</b>.
               </div>
             </div>
             <div class="test" id="93-dashboard-recent-transactions">
@@ -4416,7 +4448,7 @@
                 <div class="file">test/goldens/screens/transaction_history/</div>
               </div>
               <div class="rhs">
-                <b>3 Screens</b>
+                <b>8 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/transaction_history"
@@ -4431,6 +4463,86 @@
           </p>
 
           <div class="tests cols-2">
+            <div class="test" id="399-transaction-detail-sale">
+              <div class="head">
+                <a class="name permalink" href="#399-transaction-detail-sale">399-transaction-detail-sale</a>
+                <button class="copy-link" type="button" data-target="399-transaction-detail-sale" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sale.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/399-transaction-detail-sale.png"
+                  alt="Verkauf mit zwei Beleg-Buttons"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite eines Verkaufs zeigt den Titel <b>Verkauf</b>, den Abschnitt <b>Belege</b>, die Buttons <b>RealUnit-Verkauf</b> und <b>Tausch ZCHF in CHF/EUR</b> und das Feld <b>Betrag in CHF</b> mit <b>1980.00</b>. Sie zeigt keine Transaktions-ID und keine Zeile <b>Absender</b> oder <b>Empfänger</b>.
+              </div>
+            </div>
+            <div class="test" id="400-transaction-detail-purchase">
+              <div class="head">
+                <a class="name permalink" href="#400-transaction-detail-purchase">400-transaction-detail-purchase</a>
+                <button class="copy-link" type="button" data-target="400-transaction-detail-purchase" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_purchase.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/400-transaction-detail-purchase.png"
+                  alt="Kauf mit einem Beleg-Button"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite eines Kaufs zeigt den Titel <b>Kauf</b>, den Betrag <b>+ 50 REALU</b>, den Abschnitt <b>Belege</b>, den Button <b>Beleg</b> und das Feld <b>Betrag in CHF</b> mit <b>5000.00</b>. Sie zeigt nicht <b>RealUnit-Verkauf</b> und nicht <b>Tausch ZCHF in CHF/EUR</b>.
+              </div>
+            </div>
+            <div class="test" id="401-transaction-detail-received">
+              <div class="head">
+                <a class="name permalink" href="#401-transaction-detail-received">401-transaction-detail-received</a>
+                <button class="copy-link" type="button" data-target="401-transaction-detail-received" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_received.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/401-transaction-detail-received.png"
+                  alt="Empfangen mit einem Beleg-Button"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite einer empfangenen Buchung zeigt den Titel <b>Empfangen</b>, den Betrag <b>+ 10 REALU</b>, den Abschnitt <b>Belege</b> und den Button <b>Beleg</b>. Sie zeigt kein Feld <b>Betrag in CHF</b>.
+              </div>
+            </div>
+            <div class="test" id="402-transaction-detail-sent">
+              <div class="head">
+                <a class="name permalink" href="#402-transaction-detail-sent">402-transaction-detail-sent</a>
+                <button class="copy-link" type="button" data-target="402-transaction-detail-sent" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sent.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/402-transaction-detail-sent.png"
+                  alt="Gesendet mit einem Beleg-Button"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite einer gesendeten Buchung zeigt den Titel <b>Gesendet</b>, den Betrag <b>- 10 REALU</b>, den Abschnitt <b>Belege</b> und den Button <b>Beleg</b>. Sie zeigt kein Feld <b>Betrag in CHF</b>.
+              </div>
+            </div>
+            <div class="test" id="403-transaction-detail-referral">
+              <div class="head">
+                <a class="name permalink" href="#403-transaction-detail-referral">403-transaction-detail-referral</a>
+                <button class="copy-link" type="button" data-target="403-transaction-detail-referral" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_referral.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/403-transaction-detail-referral.png"
+                  alt="Empfehlungsprämie ohne Beleg-Button"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite einer Empfehlungsprämie zeigt den Titel <b>Empfehlungsprämie</b>, den Betrag <b>+ 20 REALU</b> und die Gutschrift <b>246.50</b>. Sie zeigt weder den Abschnitt <b>Belege</b> noch einen Button <b>Beleg</b>.
+              </div>
+            </div>
             <div class="test" id="98-transaction-history-row-receipt-loading">
               <div class="head">
                 <a class="name permalink" href="#98-transaction-history-row-receipt-loading">98-transaction-history-row-receipt-loading</a>
