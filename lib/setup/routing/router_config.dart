@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/buy_payment_details_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/pending_transaction_detail_page.dart';
 import 'package:realunit_wallet/screens/debug_auth/debug_auth_page.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bitbox_address_recovery_page.dart';
 import 'package:realunit_wallet/screens/home/home_page.dart';
@@ -163,10 +164,13 @@ final GoRouter routerConfig = GoRouter(
           path: 'transactionDetail',
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is! TransactionDetailArgs) {
-              return const _MissingTransactionDetail();
+            if (extra is TransactionDetailArgs) {
+              return TransactionDetailPage(args: extra);
             }
-            return TransactionDetailPage(args: extra);
+            if (extra is PendingTransactionDetailArgs) {
+              return PendingTransactionDetailPage(args: extra);
+            }
+            return const _MissingTransactionDetail();
           },
         ),
       ],

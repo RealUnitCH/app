@@ -519,6 +519,7 @@
   "transactions": "Transactions",
   "transactionSell": "Sell",
   "transactionSent": "Sent",
+  "transactionSwap": "Swap",
   "transactionWaitingForPayment": "Waiting for payment",
   "twoFa": "Two-factor authentication",
   "twoFaCodeRequired": "Code is required",
