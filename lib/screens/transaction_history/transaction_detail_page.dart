@@ -88,6 +88,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
       },
       builder: (context, state) {
         final transaction = widget.args.transaction;
+        final fieldRows = _fieldRows(context);
         return Scaffold(
           appBar: AppBar(title: Text(_title(context))),
           body: SafeArea(
@@ -122,21 +123,22 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
                         ),
                       ],
                     ),
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: RealUnitColors.basic.white,
-                        border: Border.all(
-                          width: 1,
-                          color: RealUnitColors.neutral200,
+                    if (fieldRows.isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: RealUnitColors.basic.white,
+                          border: Border.all(
+                            width: 1,
+                            color: RealUnitColors.neutral200,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        child: Column(
+                          crossAxisAlignment: .start,
+                          children: fieldRows,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: .start,
-                        children: _fieldRows(context),
-                      ),
-                    ),
                     if (transaction.type !=
                         TransactionTypes.referralPayout) ...[
                       Text(
@@ -213,9 +215,6 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
       rows.add(_TransactionDetailField(label: label, value: value));
     }
 
-    addField(s.transactionDetailSender, transaction.senderAddress);
-    addField(s.receiver, transaction.receiverAddress);
-    addField(s.transactionDetailId, transaction.txId);
     addField(s.transactionDetailNote, transaction.note);
 
     if (transaction.type == TransactionTypes.referralPayout &&

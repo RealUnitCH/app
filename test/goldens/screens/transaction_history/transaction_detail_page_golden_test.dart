@@ -77,7 +77,9 @@ void main() {
         expect(find.text('Belege'), findsOneWidget);
         expect(find.text('RealUnit-Verkauf'), findsOneWidget);
         expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
-        expect(find.text('tx-sale-sheet'), findsOneWidget);
+        expect(find.text('tx-sale-sheet'), findsNothing);
+        expect(find.text('Absender'), findsNothing);
+        expect(find.text('Empfänger'), findsNothing);
       },
       builder: () => wrapForGolden(
         MultiBlocProvider(

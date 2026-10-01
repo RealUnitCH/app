@@ -30,6 +30,7 @@ Transaction _tx({
   TransferCategory? category,
   String txId = 'tx-42',
   TransactionTypes type = TransactionTypes.tokenTransfer,
+  String note = '',
 }) => Transaction(
   height: 0,
   txId: txId,
@@ -40,7 +41,7 @@ Transaction _tx({
   asset: realUnitAsset,
   type: type,
   category: category,
-  note: '',
+  note: note,
   data: null,
   timestamp: DateTime.utc(2026, 8, 24, 10),
 );
@@ -181,6 +182,11 @@ void main() {
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
       expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
       expect(find.text('Beleg'), findsNothing);
+      expect(
+        find.text('0x1111111111111111111111111111111111111111'),
+        findsNothing,
+      );
+      expect(find.text('tx-42'), findsNothing);
 
       await tester.tap(find.text('RealUnit-Verkauf'));
       await tester.pump();
@@ -211,6 +217,11 @@ void main() {
       expect(find.text('Beleg'), findsOneWidget);
       expect(find.text('RealUnit-Verkauf'), findsNothing);
       expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+      expect(
+        find.text('0x1111111111111111111111111111111111111111'),
+        findsNothing,
+      );
+      expect(find.text('tx-42'), findsNothing);
 
       await tester.tap(find.text('Beleg'));
       await tester.pump();
@@ -231,13 +242,31 @@ void main() {
   ) async {
     await pumpDetail(tester, _referral(), walletAddress: '0xabc');
 
-    expect(find.text('referral-payout-7'), findsOneWidget);
+    expect(find.text('referral-payout-7'), findsNothing);
     expect(find.byType(FrozenChfLabel), findsOneWidget);
     expect(find.text('Beleg'), findsNothing);
     expect(find.text('RealUnit-Verkauf'), findsNothing);
     expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
     expect(find.byType(AppFilledButton), findsNothing);
   });
+
+  testWidgets(
+    'transaction with a note shows Notiz and Dividende without sender or tx id',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _tx(category: TransferCategory.purchase, note: 'Dividende'),
+      );
+
+      expect(find.text('Notiz'), findsOneWidget);
+      expect(find.text('Dividende'), findsOneWidget);
+      expect(
+        find.text('0x1111111111111111111111111111111111111111'),
+        findsNothing,
+      );
+      expect(find.text('tx-42'), findsNothing);
+    },
+  );
 
   testWidgets(
     'purchase receipt button is loading when cubit is already loading',
