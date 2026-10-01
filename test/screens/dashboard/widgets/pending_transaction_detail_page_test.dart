@@ -40,7 +40,8 @@ void main() {
         expect(find.text('Betrag in REALU'), findsOneWidget);
         expect(find.text('50.00'), findsOneWidget);
         expect(find.text('In Bearbeitung'), findsOneWidget);
-        expect(find.text('CH9300762011623852957'), findsOneWidget);
+        expect(find.text('CH9300762011623852957'), findsNothing);
+        expect(find.text('IBAN'), findsNothing);
         expect(
           find.text('0x1111111111111111111111111111111111111111'),
           findsNothing,

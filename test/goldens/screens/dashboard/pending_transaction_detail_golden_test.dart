@@ -28,7 +28,8 @@ void main() {
       expect(find.text('Kauf'), findsOneWidget);
       expect(find.text('5000.00 CHF'), findsOneWidget);
       expect(find.text('In Bearbeitung'), findsOneWidget);
-      expect(find.text('CH9300762011623852957'), findsOneWidget);
+      expect(find.text('CH9300762011623852957'), findsNothing);
+      expect(find.text('IBAN'), findsNothing);
       expect(
         find.text('0x1111111111111111111111111111111111111111'),
         findsNothing,

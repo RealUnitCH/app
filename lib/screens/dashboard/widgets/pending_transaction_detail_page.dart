@@ -152,13 +152,6 @@ class PendingTransactionDetailPage extends StatelessWidget {
       }
     }
 
-    if (_isBankAccount(transaction.sourceAccount)) {
-      addField(s.iban, transaction.sourceAccount!);
-    }
-    if (_isBankAccount(transaction.targetAccount)) {
-      addField(s.iban, transaction.targetAccount!);
-    }
-
     final children = <Widget>[];
     for (var i = 0; i < rows.length; i++) {
       children.add(rows[i]);
@@ -167,11 +160,6 @@ class PendingTransactionDetailPage extends StatelessWidget {
       }
     }
     return children;
-  }
-
-  bool _isBankAccount(String? account) {
-    if (account == null || account.isEmpty) return false;
-    return !account.startsWith('0x') && !account.startsWith('0X');
   }
 }
 
