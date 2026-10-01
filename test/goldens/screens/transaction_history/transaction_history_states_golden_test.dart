@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
@@ -99,6 +100,26 @@ void main() {
     sell('0xtx2', 20, DateTime.utc(2026, 5, 18, 14)),
     buy('0xtx3', 100, DateTime.utc(2026, 5, 15, 9, 15)),
   ];
+
+  final detailTransaction = DfxTransaction(
+    dfxId: 1,
+    inputAmount: 5000,
+    inputAsset: 'CHF',
+    outputAmount: 50,
+    outputAsset: 'REALU',
+    height: transactions.first.height,
+    txId: transactions.first.txId,
+    chainId: transactions.first.chainId,
+    senderAddress: transactions.first.senderAddress,
+    receiverAddress: transactions.first.receiverAddress,
+    amount: transactions.first.amount,
+    asset: transactions.first.asset,
+    type: transactions.first.type,
+    category: transactions.first.category,
+    note: transactions.first.note,
+    data: transactions.first.data,
+    timestamp: transactions.first.timestamp,
+  );
 
   // `TransactionHistoryView` field-initializes its date models from
   // `clock.now()` when constructed inside the alchemist builder; pin it so the
@@ -282,7 +303,7 @@ void main() {
             ],
             child: TransactionDetailView(
               args: TransactionDetailArgs(
-                transaction: transactions.first,
+                transaction: detailTransaction,
                 walletAddress: walletAddress,
               ),
             ),

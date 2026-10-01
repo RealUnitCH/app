@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -24,7 +25,12 @@ void main() {
   late MockSettingsBloc settingsBloc;
   late _MockTransactionHistoryReceiptCubit receiptCubit;
 
-  final sale = Transaction(
+  final sale = DfxTransaction(
+    dfxId: 1,
+    inputAmount: 20,
+    inputAsset: 'REALU',
+    outputAmount: 1980,
+    outputAsset: 'CHF',
     height: 0,
     txId: 'tx-sale-sheet',
     chainId: realUnitAsset.chainId,
@@ -77,6 +83,8 @@ void main() {
         expect(find.text('Belege'), findsOneWidget);
         expect(find.text('RealUnit-Verkauf'), findsOneWidget);
         expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
+        expect(find.text('Betrag in CHF'), findsOneWidget);
+        expect(find.text('1980.00'), findsOneWidget);
         expect(find.text('tx-sale-sheet'), findsNothing);
         expect(find.text('Absender'), findsNothing);
         expect(find.text('Empfänger'), findsNothing);

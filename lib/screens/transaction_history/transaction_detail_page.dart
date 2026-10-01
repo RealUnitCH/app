@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -213,6 +214,21 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     void addField(String label, String? value) {
       if (value == null || value.isEmpty) return;
       rows.add(_TransactionDetailField(label: label, value: value));
+    }
+
+    if (transaction is DfxTransaction) {
+      final hideAmounts = context.watch<SettingsBloc>().state.hideAmounts;
+      void addLeg(double? amount, String? asset) {
+        if (amount == null || asset == null || asset.isEmpty) return;
+        if (asset == transaction.asset.symbol) return;
+        addField(
+          '${s.amountIn} $asset',
+          hideAmounts ? '***.**' : amount.toStringAsFixed(2),
+        );
+      }
+
+      addLeg(transaction.inputAmount, transaction.inputAsset);
+      addLeg(transaction.outputAmount, transaction.outputAsset);
     }
 
     addField(s.transactionDetailNote, transaction.note);

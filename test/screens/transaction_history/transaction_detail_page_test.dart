@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
@@ -42,6 +43,34 @@ Transaction _tx({
   type: type,
   category: category,
   note: note,
+  data: null,
+  timestamp: DateTime.utc(2026, 8, 24, 10),
+);
+
+DfxTransaction _dfxTx({
+  TransferCategory? category,
+  String txId = 'tx-42',
+  BigInt? amount,
+  double? inputAmount,
+  String? inputAsset,
+  double? outputAmount,
+  String? outputAsset,
+}) => DfxTransaction(
+  dfxId: 1,
+  inputAmount: inputAmount,
+  inputAsset: inputAsset,
+  outputAmount: outputAmount,
+  outputAsset: outputAsset,
+  height: 0,
+  txId: txId,
+  chainId: realUnitAsset.chainId,
+  senderAddress: '0x1111111111111111111111111111111111111111',
+  receiverAddress: '0x2222222222222222222222222222222222222222',
+  amount: amount ?? BigInt.from(20),
+  asset: realUnitAsset,
+  type: TransactionTypes.tokenTransfer,
+  category: category,
+  note: '',
   data: null,
   timestamp: DateTime.utc(2026, 8, 24, 10),
 );
@@ -182,6 +211,7 @@ void main() {
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
       expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
       expect(find.text('Beleg'), findsNothing);
+      expect(find.text('Betrag in CHF'), findsNothing);
       expect(
         find.text('0x1111111111111111111111111111111111111111'),
         findsNothing,
@@ -204,6 +234,32 @@ void main() {
       await tester.pump();
 
       verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
+      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+      expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'sale DfxTransaction shows the bank amount in CHF without sender or tx id',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _dfxTx(
+          category: TransferCategory.sale,
+          inputAmount: 20,
+          inputAsset: 'REALU',
+          outputAmount: 1980,
+          outputAsset: 'CHF',
+        ),
+      );
+
+      expect(find.text('Betrag in CHF'), findsOneWidget);
+      expect(find.text('1980.00'), findsOneWidget);
+      expect(
+        find.text('0x1111111111111111111111111111111111111111'),
+        findsNothing,
+      );
+      expect(find.text('tx-42'), findsNothing);
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
       expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
     },
@@ -234,6 +290,42 @@ void main() {
         ),
       ).called(1);
       verifyNever(() => receiptCubit.generateExchangeReceipt(any()));
+    },
+  );
+
+  testWidgets(
+    'purchase DfxTransaction shows the bank amount in CHF and one Beleg button',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _dfxTx(
+          category: TransferCategory.purchase,
+          amount: BigInt.from(50),
+          inputAmount: 5000,
+          inputAsset: 'CHF',
+          outputAmount: 50,
+          outputAsset: 'REALU',
+        ),
+      );
+
+      expect(find.text('Betrag in CHF'), findsOneWidget);
+      expect(find.text('5000.00'), findsOneWidget);
+      expect(find.text('Beleg'), findsOneWidget);
+      expect(find.text('RealUnit-Verkauf'), findsNothing);
+      expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+      expect(
+        find.text('0x1111111111111111111111111111111111111111'),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'token transfer that is not a DfxTransaction does not show Betrag in',
+    (tester) async {
+      await pumpDetail(tester, _tx());
+
+      expect(find.textContaining('Betrag in'), findsNothing);
     },
   );
 
