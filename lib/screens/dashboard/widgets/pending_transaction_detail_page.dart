@@ -46,8 +46,7 @@ class PendingTransactionDetailPage extends StatelessWidget {
                     if (amountText != null)
                       Text(
                         amountText,
-                        style: const TextStyle(
-                          fontSize: 32,
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -56,18 +55,16 @@ class PendingTransactionDetailPage extends StatelessWidget {
                         DateFormat(
                           'MMM dd, yyyy | H:mm',
                         ).format(transaction.date!.toLocal()),
-                        style: const TextStyle(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: RealUnitColors.neutral500,
-                          fontSize: 14,
                         ),
                       ),
                     Text(
                       transaction.state == .waitingForPayment
                           ? S.of(context).transactionWaitingForPayment
                           : S.of(context).transactionPending,
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: RealUnitColors.neutral500,
-                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -178,14 +175,15 @@ class _TransactionDetailField extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: RealUnitColors.realUnitBlue,
-              fontSize: 14,
             ),
           ),
           SelectableText(
             value,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),

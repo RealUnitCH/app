@@ -110,16 +110,14 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
                           fractionalDigits: _fractionalDigits(),
                           trimZeros: false,
                           trailingSymbol: transaction.asset.symbol,
-                          style: const TextStyle(
-                            fontSize: 32,
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
                           _formattedDate(),
-                          style: const TextStyle(
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: RealUnitColors.neutral500,
-                            fontSize: 14,
                           ),
                         ),
                       ],
@@ -314,14 +312,15 @@ class _TransactionDetailField extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: RealUnitColors.realUnitBlue,
-              fontSize: 14,
             ),
           ),
           SelectableText(
             value,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
