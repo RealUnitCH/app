@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -75,6 +76,7 @@ void main() {
       },
       builder: () => wrapForGolden(
         Scaffold(
+          appBar: AppBar(title: Builder(builder: (context) => Text(S.of(context).transactions))),
           body: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
             child: MultiBlocProvider(
