@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -83,6 +83,20 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.addColumn(transactions, transactions.category);
+      }
+      if (from < 4 && to >= 4) {
+        await m.database.customStatement(
+          'DELETE FROM transactions WHERE type IN (3, 4)',
+        );
+        await m.database.customStatement(
+          'UPDATE transactions SET type = 3 WHERE type = 5',
+        );
+      }
+      if (from >= 2 && from < 5 && to >= 5) {
+        await m.addColumn(dfxTransactionDetails, dfxTransactionDetails.inputAmount);
+        await m.addColumn(dfxTransactionDetails, dfxTransactionDetails.inputAsset);
+        await m.addColumn(dfxTransactionDetails, dfxTransactionDetails.outputAmount);
+        await m.addColumn(dfxTransactionDetails, dfxTransactionDetails.outputAsset);
       }
     },
   );

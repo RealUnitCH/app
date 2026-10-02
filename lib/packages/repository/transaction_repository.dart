@@ -99,6 +99,10 @@ class TransactionRepository {
         rate: transaction.rate.toString(),
         inputTxId: transaction.inputTxId,
         outputTxId: transaction.outputTxId,
+        inputAmount: transaction.inputAmount?.toString(),
+        inputAsset: transaction.inputAsset,
+        outputAmount: transaction.outputAmount?.toString(),
+        outputAsset: transaction.outputAsset,
       );
       return;
     }
@@ -108,6 +112,10 @@ class TransactionRepository {
       rate: transaction.rate.toString(),
       inputTxId: transaction.inputTxId,
       outputTxId: transaction.outputTxId,
+      inputAmount: transaction.inputAmount?.toString(),
+      inputAsset: transaction.inputAsset,
+      outputAmount: transaction.outputAmount?.toString(),
+      outputAsset: transaction.outputAsset,
     );
   }
 
@@ -120,6 +128,10 @@ class TransactionRepository {
       rate: transaction.rate.toString(),
       inputTxId: transaction.inputTxId,
       outputTxId: transaction.outputTxId,
+      inputAmount: transaction.inputAmount?.toString(),
+      inputAsset: transaction.inputAsset,
+      outputAmount: transaction.outputAmount?.toString(),
+      outputAsset: transaction.outputAsset,
     );
   }
 
@@ -184,6 +196,10 @@ class TransactionRepository {
             rate: double.tryParse(dfxDetails.rate ?? ''),
             inputTxId: dfxDetails.inputTxId,
             outputTxId: dfxDetails.outputTxId,
+            inputAmount: double.tryParse(dfxDetails.inputAmount ?? ''),
+            inputAsset: dfxDetails.inputAsset,
+            outputAmount: double.tryParse(dfxDetails.outputAmount ?? ''),
+            outputAsset: dfxDetails.outputAsset,
             height: txData.height,
             txId: txData.txId,
             chainId: txData.chainId,
@@ -235,16 +251,6 @@ class TransactionRepository {
         .transform<List<Transaction>>(_transformer);
   }
 
-  Stream<List<Transaction>> watchTransactionsSavings(
-    Iterable<Asset> assets,
-    String wallet,
-    int limit,
-  ) {
-    return _appDatabase
-        .watchTransfersOfSavingsLimit(assets.map((e) => e.id), wallet, limit)
-        .transform<List<Transaction>>(_transformer);
-  }
-
   StreamTransformer<List<TransactionData>, List<Transaction>> get _transformer =>
       StreamTransformer<List<TransactionData>, List<Transaction>>.fromHandlers(
         handleData: (rawTransactions, sink) async {
@@ -279,6 +285,10 @@ class TransactionRepository {
                   rate: double.tryParse(dfxDetails.rate ?? ''),
                   inputTxId: dfxDetails.inputTxId,
                   outputTxId: dfxDetails.outputTxId,
+                  inputAmount: double.tryParse(dfxDetails.inputAmount ?? ''),
+                  inputAsset: dfxDetails.inputAsset,
+                  outputAmount: double.tryParse(dfxDetails.outputAmount ?? ''),
+                  outputAsset: dfxDetails.outputAsset,
                   height: transactionData.height,
                   txId: transactionData.txId,
                   chainId: transactionData.chainId,
