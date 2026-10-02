@@ -10,6 +10,7 @@ import 'package:realunit_wallet/screens/send/cubits/send_process/send_process_cu
 import 'package:realunit_wallet/screens/send/cubits/send_recipient/send_recipient_cubit.dart';
 import 'package:realunit_wallet/screens/send/send_amount_page.dart';
 import 'package:realunit_wallet/screens/send/send_confirm_page.dart';
+import 'package:realunit_wallet/screens/send/send_info_page.dart';
 import 'package:realunit_wallet/screens/send/send_process_page.dart';
 import 'package:realunit_wallet/screens/send/send_recipient_page.dart';
 
@@ -35,6 +36,15 @@ void main() {
   setUpAll(() {
     registerFallbackValue(BigInt.zero);
     stubMobileScannerChannel();
+  });
+
+  group('$SendInfoPage', () {
+    goldenTest(
+      'shareholder transfer disclosure',
+      fileName: 'send_info_page',
+      constraints: phoneConstraints,
+      builder: () => wrapForGolden(const SendInfoPage()),
+    );
   });
 
   group('$SendRecipientView', () {
@@ -91,6 +101,63 @@ void main() {
     );
 
     goldenTest(
+      'available after Kauf — 85194',
+      fileName: 'send_holding_kauf',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(85194));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(85194));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'available after on-chain transferOut — 85094',
+      fileName: 'send_holding_transfer_out',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(85094));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(85094));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'available after on-chain transferIn — 78094',
+      fileName: 'send_holding_transfer_in',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(78094));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(78094));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
       'over-balance amount shows the insufficient error',
       fileName: 'send_amount_page_insufficient',
       constraints: phoneConstraints,
@@ -137,9 +204,9 @@ void main() {
       when(() => processCubit.state).thenReturn(const SendProcessInitial());
     });
 
-    // Terminal states (success/failure) are surfaced via a modal sheet from the
-    // listener, not the build tree — exercised in the widget test. The build
-    // tree shows the in-progress indicator with a per-state label.
+    // Success and the older failure reasons stay in the widget test: the sheet
+    // is a modal from the listener, not the build tree. The unregistered
+    // recipient wording is its own surface and has a baseline below.
     goldenTest(
       'in-progress signing state',
       fileName: 'send_process_page_signing',
@@ -149,6 +216,39 @@ void main() {
       pumpBeforeTest: pumpOnce,
       builder: () {
         when(() => processCubit.state).thenReturn(const SendProcessSigning());
+        return wrapForGolden(
+          BlocProvider<SendProcessCubit>.value(
+            value: processCubit,
+            child: const SendProcessView(),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'unregistered recipient failure sheet',
+      fileName: 'send_process_recipient_not_registered',
+      constraints: phoneConstraints,
+      // The page behind the sheet keeps a CupertinoActivityIndicator spinning,
+      // so pumpAndSettle never returns. Fixed pumps open the modal the same
+      // way the responsive matrix test does.
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      },
+      builder: () {
+        whenListen(
+          processCubit,
+          Stream<SendProcessState>.value(
+            const SendProcessFailure(
+              SendProcessFailureReason.recipientNotRegistered,
+              message: 'Recipient is not a registered RealUnit shareholder',
+            ),
+          ),
+          initialState: const SendProcessSigning(),
+        );
         return wrapForGolden(
           BlocProvider<SendProcessCubit>.value(
             value: processCubit,

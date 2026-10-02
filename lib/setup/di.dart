@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/io/install_referrer_adapter.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
@@ -30,12 +31,15 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_client_policy_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_legal_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_transfer_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_features_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
@@ -45,11 +49,29 @@ import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
+import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/database.dart';
+import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
+import 'package:realunit_wallet/setup/routing/capture_install_referrer.dart';
+import 'package:realunit_wallet/setup/startup/startup_exceptions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 final getIt = GetIt.instance;
+
+/// Clears all [getIt] registrations so initialization can run again.
+///
+/// A disposer that throws must not leave registrations behind: the next
+/// registration of the same type would then fail.
+Future<void> resetServiceLocator() async {
+  try {
+    await getIt.reset();
+  } catch (error, stackTrace) {
+    reportNonFatal(error, stackTrace: stackTrace);
+    await getIt.reset(dispose: false);
+  }
+}
 
 /// Boots the essentials the rest of `main()` depends on and returns the
 /// SQLCipher database encryption key. It registers [SharedPreferences], the
@@ -57,8 +79,12 @@ final getIt = GetIt.instance;
 /// legacy security flags, then resolves the key lifecycle: return the stored
 /// key if one exists; on a clean first boot (no key AND no database) mint,
 /// persist and return a fresh key while dropping any stale current-wallet id;
-/// and fail loud if a database is present WITHOUT its key rather than silently
-/// minting a new one (which would strand the encrypted data permanently).
+/// and fail loud if a database is present WITHOUT a usable key rather than
+/// silently minting a new one (which would strand the encrypted data
+/// permanently). Distinguishes [DatabaseKeyMissingException] (key verifiably
+/// absent — only a wallet reset helps) from
+/// [DatabaseKeyUnreadableException] (key could not be read right now — retry,
+/// never reset).
 ///
 /// [secureStorage] and [databaseFileExists] are injection seams with production
 /// defaults (`const SecureStorage()` and the real path_provider-backed check),
@@ -81,7 +107,14 @@ Future<String> setupEssentials({
 
   if (encryptionKey == null) {
     if (await databaseFileExists()) {
-      throw Exception('Database found, but key is missing!');
+      if (await secureStorage.isEncryptionKeyAbsent()) {
+        throw DatabaseKeyMissingException(
+          walletConfigured: getIt<SettingsRepository>().currentWalletId != null,
+        );
+      }
+      throw DatabaseKeyUnreadableException(
+        protectedDataAvailable: await secureStorage.isProtectedDataAvailable(),
+      );
     }
     final freshEncryptionKey = SecureStorage.getNewEncryptionKey();
     await secureStorage.setEncryptionKey(freshEncryptionKey);
@@ -94,7 +127,12 @@ Future<String> setupEssentials({
 }
 
 Future<void> finishSetup(String encryptionKey) async {
-  getIt.registerSingleton(AppDatabase(encryptionKey));
+  await captureInstallReferrer(
+    prefs: getIt<SharedPreferences>(),
+    port: const InstallReferrerAdapter(),
+  );
+
+  getIt.registerSingleton(AppDatabase(encryptionKey), dispose: (db) => db.close());
   setupRepositories();
 
   getIt.registerSingleton(
@@ -102,6 +140,7 @@ Future<void> finishSetup(String encryptionKey) async {
       () => ApiConfig(networkMode: getIt<SettingsRepository>().networkMode),
       SessionCache(getIt<CacheRepository>()),
     ),
+    dispose: (store) => store.httpClient.close(),
   );
 
   setupServices();
@@ -203,6 +242,9 @@ void setupServices() {
     () => RealUnitLegalService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
+    () => RealUnitReferralService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
     () => RealUnitPayService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
@@ -217,10 +259,12 @@ void setupServices() {
   getIt.registerFactory(
     () => RealUnitTransferService(getIt<AppStore>(), getIt<WalletService>()),
   );
+  getIt.registerFactory(() => RealUnitWalletFeaturesService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(
     () => DebugAuthService(getIt<AppStore>(), getIt<SharedPreferences>()),
   );
+  getIt.registerSingleton(RealUnitClientPolicyService(getIt<AppStore>()));
 }
 
 Future<void> setupBlocs() async {
@@ -234,7 +278,9 @@ Future<void> setupBlocs() async {
         getIt<DfxFiatService>().invalidateCache();
         getIt<DfxLanguageService>().invalidateCache();
       },
+      fetchWalletFeatures: () => getIt<RealUnitWalletFeaturesService>().get(),
     ),
+    dispose: (bloc) => bloc.close(),
   );
   getIt.registerSingleton(
     HomeBloc(
@@ -245,11 +291,29 @@ Future<void> setupBlocs() async {
       getIt<AppStore>(),
       getIt<BitboxService>(),
     ),
+    dispose: (bloc) => bloc.close(),
+  );
+  getIt.registerSingleton(
+    AccountCurrencySync(
+      settings: getIt<SettingsBloc>(),
+      kyc: getIt<DfxKycService>(),
+      currentWallet: () => getIt<HomeBloc>().state.openWallet,
+    ),
   );
 
   final pinAuthCubit = PinAuthCubit(getIt<SecureStorage>());
   await pinAuthCubit.initialize();
-  getIt.registerSingleton(pinAuthCubit);
+  getIt.registerSingleton(pinAuthCubit, dispose: (cubit) => cubit.close());
+
+  final clientPolicyCubit = ClientPolicyCubit(
+    getIt<RealUnitClientPolicyService>(),
+    getIt<CacheRepository>(),
+    getIt<SettingsRepository>(),
+  );
+  getIt.registerSingleton(clientPolicyCubit, dispose: (cubit) => cubit.close());
+  getIt<AppStore>().httpClient.onUpgradeRequired =
+      clientPolicyCubit.reportUpgradeRequired;
+  await clientPolicyCubit.initialize();
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();

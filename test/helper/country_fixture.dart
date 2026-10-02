@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 
 /// Committed snapshot of the real `GET /v1/country` response (public data, no
@@ -32,7 +33,7 @@ class _FixtureAppStore extends Fake implements AppStore {
   final http.Client _client;
 
   @override
-  http.Client get httpClient => _client;
+  RealUnitApiClient get httpClient => RealUnitApiClient(_client);
 
   @override
   ApiConfig get apiConfig => const ApiConfig(networkMode: NetworkMode.mainnet);

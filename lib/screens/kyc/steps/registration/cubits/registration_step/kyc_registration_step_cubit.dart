@@ -5,16 +5,28 @@ import 'package:realunit_wallet/generated/i18n.dart';
 part 'kyc_registration_step_state.dart';
 
 class KycRegistrationStepCubit extends Cubit<KycRegistrationStepState> {
-  KycRegistrationStepCubit()
+  final bool includeReferralStep;
+
+  KycRegistrationStepCubit({this.includeReferralStep = true})
     : super(
-        const KycRegistrationStepState(
-          step: KycRegistrationStep.personal,
-          steps: [
-            KycRegistrationStep.personal,
-            KycRegistrationStep.address,
-            KycRegistrationStep.taxResidence,
-          ],
-        ),
+        includeReferralStep
+            ? const KycRegistrationStepState(
+                step: KycRegistrationStep.referral,
+                steps: [
+                  KycRegistrationStep.referral,
+                  KycRegistrationStep.personal,
+                  KycRegistrationStep.address,
+                  KycRegistrationStep.taxResidence,
+                ],
+              )
+            : const KycRegistrationStepState(
+                step: KycRegistrationStep.personal,
+                steps: [
+                  KycRegistrationStep.personal,
+                  KycRegistrationStep.address,
+                  KycRegistrationStep.taxResidence,
+                ],
+              ),
       );
 
   void next() {

@@ -8,7 +8,7 @@
 // painting the CTA outside the parent's hit-testable region.
 //
 // A second matrix group below covers the same tappability guarantee for the
-// four DashboardActions buttons (Buy/Sell/Pay/Send) in a standalone host —
+// three DashboardActions buttons (Buy/Sell/Pay) in a standalone host —
 // pre-existing overflow debt in the surrounding dashboard sections (e.g.
 // cash_holding_box.dart) is tracked separately as issue #887 and out of
 // scope for that check.
@@ -23,11 +23,13 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/transactions/dto/transactions_dto.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/pending_transactions_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -48,6 +50,7 @@ void main() {
   late _MockBalanceCubit balanceCubit;
   late _MockPendingTransactionsCubit pendingTxCubit;
   late MockSettingsBloc settingsBloc;
+  late MockHomeBloc homeBloc;
 
   Balance zeroBalance() => Balance(
     chainId: realUnitAsset.chainId,
@@ -81,17 +84,29 @@ void main() {
     balanceCubit = _MockBalanceCubit();
     pendingTxCubit = _MockPendingTransactionsCubit();
     settingsBloc = MockSettingsBloc();
+    homeBloc = MockHomeBloc();
 
     when(() => dashboardBloc.state).thenReturn(emptyDashboardState());
     when(() => balanceCubit.state).thenReturn(zeroBalance());
     when(() => balanceCubit.asset).thenReturn(realUnitAsset);
     when(() => pendingTxCubit.state).thenReturn(const <TransactionDto>[]);
     when(() => settingsBloc.state).thenReturn(const SettingsState());
+    when(() => homeBloc.state).thenReturn(
+      HomeState(
+        hasWallet: true,
+        openWallet: SoftwareViewWallet(
+          1,
+          'Software',
+          '0x0000000000000000000000000000000000000001',
+        ),
+      ),
+    );
   });
 
   Widget buildDashboard() => MultiBlocProvider(
     providers: [
       BlocProvider<SettingsBloc>.value(value: settingsBloc),
+      BlocProvider<HomeBloc>.value(value: homeBloc),
       BlocProvider<DashboardBloc>.value(value: dashboardBloc),
       BlocProvider<BalanceCubit>.value(value: balanceCubit),
       BlocProvider<PendingTransactionsCubit>.value(value: pendingTxCubit),
@@ -99,8 +114,11 @@ void main() {
     child: const DashboardView(),
   );
 
-  Widget buildActionsHost() => BlocProvider<SettingsBloc>.value(
-    value: settingsBloc,
+  Widget buildActionsHost() => MultiBlocProvider(
+    providers: [
+      BlocProvider<SettingsBloc>.value(value: settingsBloc),
+      BlocProvider<HomeBloc>.value(value: homeBloc),
+    ],
     child: const Scaffold(
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20),
@@ -109,9 +127,9 @@ void main() {
     ),
   );
 
-  // A minimal five-route stack: '/' hosts either the full dashboard or the
+  // A minimal four-route stack: '/' hosts either the full dashboard or the
   // standalone DashboardActions host (see [homeBuilder]); '/buy', '/sell',
-  // '/pay' and '/send' are marker pages so the four action buttons' real,
+  // and '/pay' are marker pages so the three action buttons' real,
   // unmocked `context.pushNamed(...)` calls resolve instead of throwing.
   GoRouter buildRouter({
     Widget Function(BuildContext, GoRouterState)? homeBuilder,
@@ -138,13 +156,6 @@ void main() {
         path: '/pay',
         builder: (_, _) => const Scaffold(
           body: Center(child: Text('pay-page-marker')),
-        ),
-      ),
-      GoRoute(
-        name: AppRoutes.send,
-        path: '/send',
-        builder: (_, _) => const Scaffold(
-          body: Center(child: Text('send-page-marker')),
         ),
       ),
     ],
@@ -242,14 +253,15 @@ void main() {
   });
 
   group(
-    'DashboardActions responsive matrix - insider unlocked, all four actions '
+    'DashboardActions responsive matrix - insider unlocked, all three actions '
     'tappable (full device x textScale)',
     () {
       for (final cell in kFullResponsiveMatrix) {
         testWidgets(cell.id, (tester) async {
           await withTargetPlatform(cell.device.platform, () async {
-            when(() => settingsBloc.state)
-                .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+            when(() => settingsBloc.state).thenReturn(
+              const SettingsState(walletFeaturePay: true),
+            );
 
             await expectNoLayoutOverflow(
               tester,
@@ -280,14 +292,6 @@ void main() {
               find.text(S.current.pay),
               within: find.byType(DashboardActions),
               reason: '${cell.label}: pay button not tappable',
-            );
-
-            await pumpActions(tester, cell);
-            await expectFullyTappable(
-              tester,
-              find.text(S.current.send),
-              within: find.byType(DashboardActions),
-              reason: '${cell.label}: send button not tappable',
             );
           });
         });

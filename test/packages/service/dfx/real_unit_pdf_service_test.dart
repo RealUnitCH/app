@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
@@ -42,7 +43,7 @@ void main() {
   });
 
   RealUnitPdfService build(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitPdfService(appStore, walletService);
   }
 
@@ -199,6 +200,38 @@ void main() {
 
         expect(
           () => build(client).getTransactionReceipt('0xmissing', language: Language.en),
+          throwsA(isA<ApiException>()),
+        );
+      });
+    });
+
+    group('getExchangeReceipt', () {
+      test('POSTs the txHash to the exchange-receipt endpoint', () async {
+        Map<String, dynamic>? body;
+        String? path;
+        final client = MockClient((request) async {
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          path = request.url.path;
+          return http.Response(jsonEncode({'pdfData': 'EXCHANGE'}), 200);
+        });
+
+        final pdf = await build(client).getExchangeReceipt('0xabc');
+
+        expect(pdf.pdfData, 'EXCHANGE');
+        expect(path, '/v1/realunit/transactions/receipt/exchange');
+        expect(body!['txHash'], '0xabc');
+        expect(body!.containsKey('currency'), isFalse);
+        expect(body!.containsKey('language'), isFalse);
+      });
+
+      test('throws ApiException on non-2xx', () async {
+        final client = MockClient((_) async => http.Response(
+              jsonEncode({'statusCode': 404, 'message': 'no tx'}),
+              404,
+            ));
+
+        expect(
+          () => build(client).getExchangeReceipt('0xmissing'),
           throwsA(isA<ApiException>()),
         );
       });

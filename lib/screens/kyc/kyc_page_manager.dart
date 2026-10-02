@@ -58,7 +58,8 @@ class KycViewManager extends StatelessWidget {
         KycUnsupportedStepFailure() => const KycUnsupportedStepPage(),
         KycAccountMergeRequested() => const KycAccountMergePage(),
         KycMergeProcessing() => const KycMergeProcessingPage(),
-        KycManualReview() => const KycManualReviewPage(),
+        KycManualReview(:final rejectionMessage) =>
+          KycManualReviewPage(rejectionMessage: rejectionMessage),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
         KycSuccess(:final currentStep, :final urlOrToken, :final realUnitUserData) =>

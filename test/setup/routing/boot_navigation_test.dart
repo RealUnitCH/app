@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
@@ -25,6 +26,7 @@ void main() {
     bool walletLoaded = true,
     String currentLocation = '/kyc',
     String? resumeLocation,
+    ClientPolicySeverity clientPolicySeverity = ClientPolicySeverity.none,
   }) => resolveBootNavigation(
     isLoadingWallet: isLoadingWallet,
     softwareTermsAccepted: softwareTermsAccepted,
@@ -36,6 +38,32 @@ void main() {
     walletLoaded: walletLoaded,
     currentLocation: currentLocation,
     resumeLocation: resumeLocation,
+    clientPolicySeverity: clientPolicySeverity,
+  );
+
+  BootNavAction hard({
+    bool isLoadingWallet = false,
+    bool softwareTermsAccepted = true,
+    bool hasWallet = true,
+    bool onboardingCompleted = true,
+    bool isPinSetup = true,
+    bool isPinVerified = true,
+    bool bitboxAddressRecoveryNeeded = false,
+    bool walletLoaded = true,
+    String currentLocation = '/kyc',
+    String? resumeLocation,
+  }) => resolve(
+    isLoadingWallet: isLoadingWallet,
+    softwareTermsAccepted: softwareTermsAccepted,
+    hasWallet: hasWallet,
+    onboardingCompleted: onboardingCompleted,
+    isPinSetup: isPinSetup,
+    isPinVerified: isPinVerified,
+    bitboxAddressRecoveryNeeded: bitboxAddressRecoveryNeeded,
+    walletLoaded: walletLoaded,
+    currentLocation: currentLocation,
+    resumeLocation: resumeLocation,
+    clientPolicySeverity: ClientPolicySeverity.hard,
   );
 
   group('resolveBootNavigation gate ladder', () {
@@ -57,6 +85,14 @@ void main() {
 
     test('no wallet -> welcome', () {
       final action = resolve(hasWallet: false);
+      expect((action as BootNavGoNamed).routeName, OnboardingRoutes.welcome);
+    });
+
+    test('no wallet + soft still welcome', () {
+      final action = resolve(
+        hasWallet: false,
+        clientPolicySeverity: ClientPolicySeverity.soft,
+      );
       expect((action as BootNavGoNamed).routeName, OnboardingRoutes.welcome);
     });
 
@@ -167,6 +203,145 @@ void main() {
         resumeLocation: '/settings/seed',
       );
       expect((action as BootNavGoNamed).routeName, AppRoutes.dashboard);
+    });
+  });
+
+  group('hard H1-H20', () {
+    test('H1 isLoadingWallet true → WaitForLoad', () {
+      expect(hard(isLoadingWallet: true), isA<BootNavWaitForLoad>());
+    });
+
+    test('H2 softwareTermsAccepted false → GoNamed home', () {
+      final action = hard(softwareTermsAccepted: false);
+      expect((action as BootNavGoNamed).routeName, AppRoutes.home);
+    });
+
+    test('H3 hasWallet false → GoNamed updateRequired', () {
+      final action = hard(hasWallet: false);
+      expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+    });
+
+    test('H4 onboardingCompleted false → GoNamed completed', () {
+      final action = hard(onboardingCompleted: false);
+      expect((action as BootNavGoNamed).routeName, OnboardingRoutes.completed);
+    });
+
+    test('H5 isPinSetup false → GoNamed setup', () {
+      final action = hard(isPinSetup: false);
+      expect((action as BootNavGoNamed).routeName, PinRoutes.setup);
+    });
+
+    test('H6 isPinVerified false, resumeLocation /buy → GoNamed verify', () {
+      final action = hard(isPinVerified: false, resumeLocation: '/buy');
+      expect((action as BootNavGoNamed).routeName, PinRoutes.verify);
+    });
+
+    test(
+      'H7b bitboxAddressRecoveryNeeded true, currentLocation /dashboard → GoNamed updateRequired',
+      () {
+        final action = hard(
+          bitboxAddressRecoveryNeeded: true,
+          currentLocation: '/dashboard',
+        );
+        expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+      },
+    );
+
+    test('H8 walletLoaded false → LoadWallet', () {
+      expect(hard(walletLoaded: false), isA<BootNavLoadWallet>());
+    });
+
+    test('H9 currentLocation /receive, resumeLocation /buy → Stay', () {
+      expect(
+        hard(currentLocation: '/receive', resumeLocation: '/buy'),
+        isA<BootNavStay>(),
+      );
+    });
+
+    test(
+      'H10 currentLocation /settings/seed, resumeLocation /dashboard → Stay',
+      () {
+        expect(
+          hard(
+            currentLocation: '/settings/seed',
+            resumeLocation: '/dashboard',
+          ),
+          isA<BootNavStay>(),
+        );
+      },
+    );
+
+    test('H11 currentLocation /pinGate, resumeLocation /kyc → Stay', () {
+      expect(
+        hard(currentLocation: '/pinGate', resumeLocation: '/kyc'),
+        isA<BootNavStay>(),
+      );
+    });
+
+    test(
+      'H12 currentLocation /updateRequired, resumeLocation /dashboard → Stay',
+      () {
+        expect(
+          hard(
+            currentLocation: '/updateRequired',
+            resumeLocation: '/dashboard',
+          ),
+          isA<BootNavStay>(),
+        );
+      },
+    );
+
+    test(
+      'H13 currentLocation /dashboard, resumeLocation /dashboard → GoNamed updateRequired',
+      () {
+        final action = hard(
+          currentLocation: '/dashboard',
+          resumeLocation: '/dashboard',
+        );
+        expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+      },
+    );
+
+    test('H14 /buy → updateRequired', () {
+      final action = hard(currentLocation: '/buy');
+      expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+    });
+
+    test('H15 /sell → updateRequired', () {
+      final action = hard(currentLocation: '/sell');
+      expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+    });
+
+    test('H16 /kyc → updateRequired', () {
+      final action = hard(currentLocation: '/kyc');
+      expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+    });
+
+    test('H17 /support → updateRequired', () {
+      final action = hard(currentLocation: '/support');
+      expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+    });
+
+    test('H18 /settings → updateRequired', () {
+      final action = hard(currentLocation: '/settings');
+      expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+    });
+
+    test(
+      'H19 currentLocation /verifyPin, resumeLocation /buy (all passed) → GoNamed updateRequired (not Restore)',
+      () {
+        final action = hard(
+          currentLocation: '/verifyPin',
+          resumeLocation: '/buy',
+        );
+        expect(action, isNot(isA<BootNavRestore>()));
+        expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
+      },
+    );
+
+    test('H20 currentLocation /home → GoNamed updateRequired', () {
+      final action = hard(currentLocation: '/home');
+      expect((action as BootNavGoNamed).routeName, AppRoutes.updateRequired);
     });
   });
 

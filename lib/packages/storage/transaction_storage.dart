@@ -12,6 +12,7 @@ extension TransactionStorage on AppDatabase {
     String amount,
     int asset,
     int type,
+    String category,
     String note,
     String data,
     DateTime timeStamp,
@@ -25,6 +26,7 @@ extension TransactionStorage on AppDatabase {
       amount: amount,
       asset: asset,
       type: type,
+      category: Value(category),
       note: note,
       data: data,
       timeStamp: timeStamp,
@@ -40,6 +42,7 @@ extension TransactionStorage on AppDatabase {
     String? amount,
     int? asset,
     int? type,
+    String? category,
     String? note,
     String? data,
     DateTime? timeStamp,
@@ -52,6 +55,7 @@ extension TransactionStorage on AppDatabase {
       amount: Value.absentIfNull(amount),
       asset: Value.absentIfNull(asset),
       type: Value.absentIfNull(type),
+      category: Value.absentIfNull(category),
       note: Value.absentIfNull(note),
       data: Value.absentIfNull(data),
       timeStamp: Value.absentIfNull(timeStamp),
@@ -81,7 +85,8 @@ extension TransactionStorage on AppDatabase {
             ..where(
               (row) => Expression.and([
                 row.asset.isIn(assets),
-                row.type.equals(2),
+                // 2 = tokenTransfer, 3 = referralPayout
+                row.type.isIn([2, 3]),
                 _involvesWallet(row, wallet),
               ]),
             )
@@ -97,24 +102,8 @@ extension TransactionStorage on AppDatabase {
             ..where(
               (row) => Expression.and([
                 row.asset.isIn(assets),
-                row.type.equals(2),
-                _involvesWallet(row, wallet),
-              ]),
-            )
-            ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])
-            ..limit(limit))
-          .watch();
-
-  Stream<List<TransactionData>> watchTransfersOfSavingsLimit(
-    Iterable<int> assets,
-    String wallet,
-    int limit,
-  ) =>
-      (select(transactions)
-            ..where(
-              (row) => Expression.and([
-                row.asset.isIn(assets),
-                row.type.isIn([3, 4]),
+                // 2 = tokenTransfer, 3 = referralPayout
+                row.type.isIn([2, 3]),
                 _involvesWallet(row, wallet),
               ]),
             )
@@ -130,6 +119,19 @@ extension TransactionStorage on AppDatabase {
 
   Future<TransactionData?> getTransaction(String txId) =>
       (select(transactions)..where((row) => row.txId.equals(txId))).getSingleOrNull();
+
+  /// Hex tx hashes are stored as the API sent them (checksum or lower).
+  /// Prefer an exact match so an update writes the row that already exists.
+  Future<TransactionData?> getTransactionIgnoreCase(String txId) async {
+    final rows = await (select(
+      transactions,
+    )..where((row) => row.txId.collate(Collate.noCase).equals(txId))).get();
+    if (rows.isEmpty) return null;
+    return rows.firstWhere((row) => row.txId == txId, orElse: () => rows.first);
+  }
+
+  Future<int> deleteTransaction(String txId) =>
+      (delete(transactions)..where((row) => row.txId.equals(txId))).go();
 }
 
 // The schema getters below are read by `drift_dev` at codegen time and the
@@ -155,6 +157,10 @@ class Transactions extends Table {
   IntColumn get asset => integer()(); // coverage:ignore-line
 
   IntColumn get type => integer()(); // coverage:ignore-line
+
+  // Business category of the transfer as delivered by the API ('' = uncategorized, legacy
+  // rows and events without a category). Added in schema v3.
+  TextColumn get category => text().withDefault(const Constant(''))(); // coverage:ignore-line
 
   TextColumn get note => text()(); // coverage:ignore-line
 

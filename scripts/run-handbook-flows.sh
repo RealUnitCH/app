@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #
-# Tier-3 navigation smoke for the 26 .maestro/handbook/*.yaml flows.
+# Tier-3 navigation smoke for the 26 .maestro/handbook/*.yaml flows
+# (01-welcome … 26-terms). Handbook pages 276–292 (referral/promo) are
+# golden-mapped in assemble-handbook-screenshots.sh and are not Maestro
+# flows: the sequential onboarding chain cannot reach an eligible
+# Empfehler (KYC Level 30 + 70 REALU).
 #
 # For each flow (alphabetical order):
 #   1. run the Maestro flow — navigates the real built app to the target
@@ -40,24 +44,30 @@
 #   Silicon + iOS 26.x (see mobile-dev-inc/maestro#3137); the pin
 #   targets a known-good release. The retry remains as a safety net
 #   for residual Apple-XCTest crashes (~10 % per the #3137 thread):
-#   each flow is retried up to MAESTRO_MAX_ATTEMPTS times (default 3)
+#   each flow is retried up to MAESTRO_MAX_ATTEMPTS times (default 3);
+#   a hung JVM is killed after MAESTRO_ATTEMPT_TIMEOUT_SEC (default 480)
 #   when the CLI tee-log or `--debug-output` maestro.log matches the
 #   driver hang/death class. `IOSDriverTimeoutException` matches
 #   anywhere in the file. ConnectException / `Failed to connect to
-#   /127.0.0.1:7001` / `Connection refused` / `Connection reset` only
+#   /127.0.0.1:7001` / `Connection refused` / `Connection reset` /
+#   `UnknownFailure` HTTP 500 on `:7001/deviceInfo` only
 #   count from the first `Running flow ` line onward (inclusive) —
 #   every iOS start logs those strings during the XCTest installer
 #   status-check *before* the flow. If `Running flow ` is absent the
 #   whole file is searched (driver never came up). Maestro often
 #   disguises XCUITest-driver death as a later assertion failure on
 #   stdout while the ConnectException lives only in the debug log.
-#   Assertion failures without those patterns are NEVER retried —
-#   those are real regressions and must surface as red CI checks.
+#   A hung JVM after that 500 is killed per attempt
+#   (`MAESTRO_ATTEMPT_TIMEOUT_SEC`) so the job does not sit until
+#   GitHub cancels the workflow. Assertion failures without those
+#   patterns are NEVER retried — those are real regressions and
+#   must surface as red CI checks.
 #
 # Usage:
 #   scripts/run-handbook-flows.sh                    # run ALL handbook flows
 #   scripts/run-handbook-flows.sh 25-restore-wallet  # run only matching flows
 #   scripts/run-handbook-flows.sh '2*' 12-settings   # multiple glob patterns
+#   scripts/run-handbook-flows.sh --matcher-self-test
 #
 #   With no arguments every flow in .maestro/handbook/*.yaml runs (the
 #   default, full-suite behaviour). With one or more positional arguments,
@@ -80,6 +90,81 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MAESTRO="${MAESTRO:-$HOME/.maestro/bin/maestro}"
 FLOWS_DIR="$REPO_ROOT/.maestro/handbook"
 CAPTURES_DIR="$REPO_ROOT/build/handbook-captures"
+
+# True when $1 is a readable file that matches the XCUITest-driver
+# hang/death class. Maestro often disguises driver death as a later
+# assertion failure on CLI stdout while the ConnectException lives
+# only in `--debug-output` maestro.log — callers must pass both.
+# ConnectException-class strings before `Running flow ` are installer
+# status-check noise, not driver death; slice them out. Do not pipe
+# awk into grep under pipefail (SIGPIPE would false-negative).
+is_driver_hang_or_death() {
+  local log="$1"
+  [ -f "$log" ] || return 1
+
+  if grep -qF 'IOSDriverTimeoutException' "$log"; then
+    return 0
+  fi
+
+  local haystack="$log"
+  local tmp=""
+  if grep -qF 'Running flow ' "$log"; then
+    tmp="$(mktemp)"
+    awk 'p || /Running flow / { p=1; print }' "$log" > "$tmp"
+    haystack="$tmp"
+  fi
+
+  local rc=0
+  grep -qF \
+    -e 'Failed to connect to /127.0.0.1:7001' \
+    -e 'java.net.ConnectException' \
+    -e 'Connection refused' \
+    -e 'Connection reset' \
+    -e 'deviceInfo failed, code: 500' \
+    "$haystack" || rc=$?
+  if [ -n "$tmp" ]; then
+    rm -f "$tmp"
+  fi
+  return "$rc"
+}
+
+if [ "${1:-}" = '--matcher-self-test' ]; then
+  tmp="$(mktemp)"
+  trap 'rm -f "$tmp"' EXIT
+  printf '%s\n' \
+    'Running flow 01-welcome' \
+    'Assert that "Start" is visible...Exception in thread "main" UnknownFailure(errorResponse=Request for http://127.0.0.1:7001/deviceInfo failed, code: 500, body: )' \
+    > "$tmp"
+  is_driver_hang_or_death "$tmp" || {
+    echo 'expected HTTP 500 deviceInfo after Running flow to match' >&2
+    exit 1
+  }
+  printf '%s\n' 'Running flow 01-welcome' 'Assert that "Start" is visible' > "$tmp"
+  if is_driver_hang_or_death "$tmp"; then
+    echo 'bare assertion must not match' >&2
+    exit 1
+  fi
+  printf '%s\n' \
+    'Running flow 01-welcome' \
+    'GET http://127.0.0.1:7001/deviceInfo' \
+    > "$tmp"
+  if is_driver_hang_or_death "$tmp"; then
+    echo 'deviceInfo URL without failure must not match' >&2
+    exit 1
+  fi
+  printf '%s\n' 'Running flow 01-welcome' 'UnknownFailure(errorResponse=unrelated)' > "$tmp"
+  if is_driver_hang_or_death "$tmp"; then
+    echo 'UnknownFailure without deviceInfo 500 must not match' >&2
+    exit 1
+  fi
+  printf '%s\n' 'java.net.ConnectException: Connection refused' > "$tmp"
+  is_driver_hang_or_death "$tmp" || {
+    echo 'expected ConnectException without Running flow to match' >&2
+    exit 1
+  }
+  echo ok
+  exit 0
+fi
 
 mkdir -p "$CAPTURES_DIR"
 
@@ -187,10 +272,15 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 # Per-attempt retry budget for the upstream driver-hang class. The per-flow
 # / per-attempt timing logged below is the data to size the workflow's
 # `timeout-minutes` (see tier3-handbook.yaml) and to target a real speed-up.
-# Worst-case the entire suite is 3 × 26 × ~1 min plus 3 × ~6 min
-# driver-startup-timeout per failed attempt, which still fits inside
-# the workflow's 60 min envelope.
+# Happy-path the suite is ~26 × ~1–3 min plus driver startup and still
+# fits the workflow's 60 min envelope. Per-attempt 480s timeouts are
+# the rare hang class, not the budget for every flow.
 MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
+# Cap a single `maestro test` so a JVM that prints Exception-in-main
+# and then never exits cannot consume the remaining job budget.
+# 8 min is above a healthy flow (typically 1–3 min) and below the
+# 40 min hang seen when :7001/deviceInfo returns HTTP 500.
+MAESTRO_ATTEMPT_TIMEOUT_SEC="${MAESTRO_ATTEMPT_TIMEOUT_SEC:-480}"
 
 # Maestro's `--debug-output` writes per-attempt view-hierarchy.json +
 # screenshot + maestro.log into the given directory. On flow failure
@@ -233,40 +323,124 @@ fmt_duration() {
   printf '%dm %02ds' $(( $1 / 60 )) $(( $1 % 60 ))
 }
 
-# True when $1 is a readable file that matches the XCUITest-driver
-# hang/death class. Maestro often disguises driver death as a later
-# assertion failure on CLI stdout while the ConnectException lives
-# only in `--debug-output` maestro.log — callers must pass both.
-# ConnectException-class strings before `Running flow ` are installer
-# status-check noise, not driver death; slice them out. Do not pipe
-# awk into grep under pipefail (SIGPIPE would false-negative).
-is_driver_hang_or_death() {
+# Run one `maestro test`, tee to $1, kill the process group if it
+# outlives MAESTRO_ATTEMPT_TIMEOUT_SEC. Exit 124 on timeout so the
+# retry path can treat it as driver hang/death.
+run_maestro_attempt() {
   local log="$1"
-  [ -f "$log" ] || return 1
+  shift
+  MAESTRO_ATTEMPT_TIMEOUT_SEC="$MAESTRO_ATTEMPT_TIMEOUT_SEC" \
+    /usr/bin/python3 - "$log" "$@" <<'PY'
+import os, select, signal, subprocess, sys, threading, time
 
-  if grep -qF 'IOSDriverTimeoutException' "$log"; then
-    return 0
-  fi
+log_path = sys.argv[1]
+cmd = sys.argv[2:]
+timeout = int(os.environ.get("MAESTRO_ATTEMPT_TIMEOUT_SEC", "480"))
+log = open(log_path, "wb")
+p = subprocess.Popen(
+    cmd,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    stdin=subprocess.DEVNULL,
+    start_new_session=True,
+)
+timed_out = {"v": False}
 
-  local haystack="$log"
-  local tmp=""
-  if grep -qF 'Running flow ' "$log"; then
-    tmp="$(mktemp)"
-    awk 'p || /Running flow / { p=1; print }' "$log" > "$tmp"
-    haystack="$tmp"
-  fi
+def stop_process():
+    # macOS can refuse killpg with EPERM for a session we started.
+    # Swallow that and signal the direct child. Do not raise: an
+    # uncaught PermissionError aborts the suite.
+    try:
+        os.killpg(p.pid, signal.SIGKILL)
+        return
+    except ProcessLookupError:
+        return
+    except PermissionError:
+        pass
+    try:
+        p.kill()
+    except (ProcessLookupError, PermissionError):
+        pass
 
-  local rc=0
-  grep -qF \
-    -e 'Failed to connect to /127.0.0.1:7001' \
-    -e 'java.net.ConnectException' \
-    -e 'Connection refused' \
-    -e 'Connection reset' \
-    "$haystack" || rc=$?
-  if [ -n "$tmp" ]; then
-    rm -f "$tmp"
-  fi
-  return "$rc"
+def on_timeout():
+    # Only the budget timer is a retryable hang. Cleanup must not set
+    # this: a live driver whose output pipe hiccups is not a 480s hang,
+    # and treating it as one reboots the simulator mid-chain.
+    timed_out["v"] = True
+    stop_process()
+
+def on_signal(signum, _frame):
+    stop_process()
+    try:
+        p.wait(timeout=5)
+    except Exception:
+        pass
+    log.close()
+    sys.exit(128 + signum)
+
+signal.signal(signal.SIGTERM, on_signal)
+signal.signal(signal.SIGINT, on_signal)
+signal.signal(signal.SIGHUP, on_signal)
+
+timer = threading.Timer(timeout, on_timeout)
+timer.daemon = True
+timer.start()
+try:
+    fd = p.stdout.fileno()
+    while True:
+        if timed_out["v"]:
+            break
+        if p.poll() is not None:
+            rest = os.read(fd, 65536) if p.stdout is not None else b""
+            while rest:
+                sys.stdout.buffer.write(rest)
+                log.write(rest)
+                rest = os.read(fd, 65536)
+            break
+        ready, _, _ = select.select([p.stdout], [], [], 1.0)
+        if not ready:
+            continue
+        try:
+            chunk = os.read(fd, 4096)
+        except (InterruptedError, BlockingIOError):
+            continue
+        except OSError:
+            if p.poll() is None:
+                continue
+            break
+        if not chunk:
+            # A closed pipe while the driver is still alive is not
+            # completion and not a hang. Keep waiting for the budget.
+            if p.poll() is None:
+                time.sleep(0.2)
+                continue
+            break
+        sys.stdout.buffer.write(chunk)
+        sys.stdout.buffer.flush()
+        log.write(chunk)
+finally:
+    timer.cancel()
+    if p.poll() is None:
+        # The budget timer already stopped the driver and set the hang
+        # flag. Any other way out must stop it too, without looking
+        # like a hang, or the session keeps running into the next flow.
+        if not timed_out["v"]:
+            stop_process()
+        try:
+            p.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+log.close()
+if timed_out["v"]:
+    sys.stdout.write("\nmaestro attempt timed out after %ss\n" % timeout)
+    sys.exit(124)
+# Only the budget timer may exit 124. A child that finishes with that
+# status is not a hang, and a missing status is not a success.
+rc = p.returncode
+if rc is None or rc == 124:
+    sys.exit(1)
+sys.exit(rc)
+PY
 }
 
 suite_start=$(date +%s)
@@ -286,8 +460,11 @@ for flow in "${flows[@]}"; do
     attempt_start=$(date +%s)
     flow_log="$TMP_DIR/$base.attempt-$attempt.log"
     debug_dir="$MAESTRO_DEBUG_ROOT/$base-attempt-$attempt"
-    if "$MAESTRO" test --reinstall-driver="$reinstall_driver" \
-         --debug-output "$debug_dir" --flatten-debug-output "$flow" 2>&1 | tee "$flow_log"; then
+    maestro_rc=0
+    run_maestro_attempt "$flow_log" \
+      "$MAESTRO" test --reinstall-driver="$reinstall_driver" \
+      --debug-output "$debug_dir" --flatten-debug-output "$flow" || maestro_rc=$?
+    if [ "$maestro_rc" -eq 0 ]; then
       echo "  attempt $attempt passed in $(fmt_duration $(( $(date +%s) - attempt_start )))"
       # Driver is up after a successful invocation — keep reusing it
       # (a prior retry may have flipped this to true for a reinstall).
@@ -298,12 +475,30 @@ for flow in "${flows[@]}"; do
     # tee-log AND `--debug-output` maestro.log: driver death is often
     # reported on stdout as a later assertion failure (`Assert that
     # "Start" is visible`) while ConnectException lives only in the
-    # debug log. Assertion failures without these patterns are real
+    # debug log. A timed-out hung JVM (exit 124) is the same class.
+    # Assertion failures without these patterns are real
     # regressions and must surface red — never retry them.
-    if { is_driver_hang_or_death "$flow_log" || \
-         is_driver_hang_or_death "$debug_dir/maestro.log"; } && \
+    elapsed=$(( $(date +%s) - attempt_start ))
+    driver_dead=false
+    if is_driver_hang_or_death "$flow_log" || \
+       is_driver_hang_or_death "$debug_dir/maestro.log"; then
+      driver_dead=true
+    fi
+    # A timeout reported well under the budget is the wrapper giving up,
+    # not a hung driver. Rebooting here wipes the chain, and the retried
+    # flow then fails a real assertion (the network screen never shows
+    # Mainnet because onboarding is gone). A dead driver still reboots:
+    # the next flow cannot talk to it.
+    if [ "$maestro_rc" -eq 124 ] && \
+       [ "$elapsed" -lt "$MAESTRO_ATTEMPT_TIMEOUT_SEC" ] && \
+       [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ] && \
+       [ "$driver_dead" = false ]; then
+      echo "  wrapper reported a timeout after $(fmt_duration "$elapsed"), under the $(fmt_duration "$MAESTRO_ATTEMPT_TIMEOUT_SEC") budget; retrying without rebooting the simulator"
+      continue
+    fi
+    if { [ "$maestro_rc" -eq 124 ] || [ "$driver_dead" = true ]; } && \
        [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ]; then
-      echo "  driver hang/death on attempt $attempt of $MAESTRO_MAX_ATTEMPTS after $(fmt_duration $(( $(date +%s) - attempt_start ))); restarting simulator and retrying"
+      echo "  driver hang/death on attempt $attempt of $MAESTRO_MAX_ATTEMPTS after $(fmt_duration "$elapsed"); restarting simulator and retrying"
       xcrun simctl shutdown "$UDID" || true
       xcrun simctl boot "$UDID"
       xcrun simctl bootstatus "$UDID" -b >/dev/null

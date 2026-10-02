@@ -30,5 +30,19 @@ void main() {
         ),
       ),
     );
+
+    goldenTest(
+      'rejection sentence',
+      fileName: 'kyc_manual_review_page_rejection',
+      constraints: phoneConstraints,
+      builder: () => wrapForGolden(
+        BlocProvider<KycCubit>.value(
+          value: kycCubit,
+          child: const KycManualReviewPage(
+            rejectionMessage: 'Please enter your full name (first and last name).',
+          ),
+        ),
+      ),
+    );
   });
 }

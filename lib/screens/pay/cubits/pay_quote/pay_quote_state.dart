@@ -19,9 +19,12 @@ class PayQuoteReady extends PayQuoteState {
   final double zchfAmount;
   final String? merchantName;
   final String? merchantCity;
-  final double? realuAmount;
-  final double? realuEstimatedZchf;
-  final double? realuFeesTotal;
+  final DateTime expiresAt;
+  final SwapPaymentInfo swap;
+  final double? billEur;
+  final double? feeEur;
+  final double? roundingEur;
+  final double? totalEur;
 
   const PayQuoteReady({
     required this.paymentLinkId,
@@ -29,12 +32,18 @@ class PayQuoteReady extends PayQuoteState {
     required this.fiatAsset,
     required this.fiatAmount,
     required this.zchfAmount,
+    required this.swap,
+    required this.expiresAt,
     this.merchantName,
     this.merchantCity,
-    this.realuAmount,
-    this.realuEstimatedZchf,
-    this.realuFeesTotal,
+    this.billEur,
+    this.feeEur,
+    this.roundingEur,
+    this.totalEur,
   });
+
+  bool get hasEurReceipt =>
+      billEur != null && feeEur != null && roundingEur != null && totalEur != null;
 
   @override
   List<Object?> get props => [
@@ -45,9 +54,12 @@ class PayQuoteReady extends PayQuoteState {
     zchfAmount,
     merchantName,
     merchantCity,
-    realuAmount,
-    realuEstimatedZchf,
-    realuFeesTotal,
+    expiresAt,
+    swap,
+    billEur,
+    feeEur,
+    roundingEur,
+    totalEur,
   ];
 }
 

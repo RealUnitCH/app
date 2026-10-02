@@ -22,11 +22,15 @@ import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payme
 import 'package:realunit_wallet/screens/sell/widgets/sell_button.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_executed_sheet.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 class _MockSellPaymentInfoCubit extends MockCubit<SellPaymentInfoState>
     implements SellPaymentInfoCubit {}
+
+class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState> implements SettingsBloc {}
 
 class _MockSellConverterCubit extends MockCubit<SellConverterState>
     implements SellConverterCubit {}
@@ -89,6 +93,7 @@ SellPaymentInfo _paymentInfoFixture() => const SellPaymentInfo(
 void main() {
   late _MockSellPaymentInfoCubit sellPaymentInfoCubit;
   late _MockSellConverterCubit sellConverterCubit;
+  late _MockSettingsBloc settingsBloc;
 
   setUpAll(() {
     GetIt.instance.registerSingleton<RealUnitSellPaymentInfoService>(
@@ -101,11 +106,16 @@ void main() {
   setUp(() {
     sellPaymentInfoCubit = _MockSellPaymentInfoCubit();
     sellConverterCubit = _MockSellConverterCubit();
+    settingsBloc = _MockSettingsBloc();
+    when(() => settingsBloc.state).thenReturn(const SettingsState());
     when(() => sellPaymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
     when(() => sellConverterCubit.state).thenReturn(const SellConverterState());
   });
 
-  Future<_RouteCapturingObserver> pumpSellButton(WidgetTester tester) async {
+  Future<_RouteCapturingObserver> pumpSellButton(
+    WidgetTester tester, {
+    ValueChanged<String?>? onKycPushed,
+  }) async {
     final observer = _RouteCapturingObserver();
     final router = GoRouter(
       observers: [observer],
@@ -124,21 +134,32 @@ void main() {
             ),
           ),
         ),
+        GoRoute(
+          name: AppRoutes.kyc,
+          path: '/kyc',
+          builder: (_, state) {
+            onKycPushed?.call(state.uri.queryParameters['context']);
+            return const Scaffold(body: Text('kyc'));
+          },
+        ),
       ],
     );
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MaterialApp.router(
-        theme: realUnitTheme,
-        routerConfig: router,
-        localizationsDelegates: const [
-          S.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: S.delegate.supportedLocales,
+      BlocProvider<SettingsBloc>.value(
+        value: settingsBloc,
+        child: MaterialApp.router(
+          theme: realUnitTheme,
+          routerConfig: router,
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -211,6 +232,44 @@ void main() {
           isTrue,
           reason: 'sell_button.dart must push SellExecutedSheet with isScrollControlled: true.',
         );
+      },
+    );
+  });
+
+  group('$SellButton KYC context forwarding', () {
+    testWidgets(
+      'forwards the API-supplied context to the KYC route on kycRequired',
+      (tester) async {
+        whenListen(
+          sellPaymentInfoCubit,
+          Stream.value(
+            const SellPaymentInfoFailure(.kycRequired, context: 'RealunitSell'),
+          ),
+          initialState: const SellPaymentInfoInitial(),
+        );
+
+        String? pushedContext;
+        await pumpSellButton(tester, onKycPushed: (context) => pushedContext = context);
+
+        expect(pushedContext, 'RealunitSell');
+      },
+    );
+
+    testWidgets(
+      'forwards the API-supplied context to the KYC route on registrationRequired',
+      (tester) async {
+        whenListen(
+          sellPaymentInfoCubit,
+          Stream.value(
+            const SellPaymentInfoFailure(.registrationRequired, context: 'RealunitSell'),
+          ),
+          initialState: const SellPaymentInfoInitial(),
+        );
+
+        String? pushedContext;
+        await pumpSellButton(tester, onKycPushed: (context) => pushedContext = context);
+
+        expect(pushedContext, 'RealunitSell');
       },
     );
   });

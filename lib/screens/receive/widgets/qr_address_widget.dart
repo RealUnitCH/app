@@ -8,34 +8,37 @@ class QRAddressWidget extends StatelessWidget {
     super.key,
     required this.uri,
     required this.subtitle,
+    this.addressAbove = false,
   });
 
   final String uri;
   final String subtitle;
 
+  /// Shows the address row above the QR code instead of below it.
+  final bool addressAbove;
+
   @override
-  Widget build(BuildContext context) => Column(
-    spacing: 12.0,
-    children: [
-      QrImageView(
-        data: uri,
-        size: 250,
-        dataModuleStyle: const QrDataModuleStyle(
-          color: RealUnitColors.realUnitBlack,
-        ),
+  Widget build(BuildContext context) {
+    final qr = QrImageView(
+      data: uri,
+      size: 250,
+      dataModuleStyle: const QrDataModuleStyle(
+        color: RealUnitColors.realUnitBlack,
       ),
-      InkWell(
-        borderRadius: .circular(16.0),
-        enableFeedback: false,
-        onTap: _copyToClipboard,
-        child: Container(
-          padding: const .all(8.0),
-          child: Row(
-            mainAxisSize: .min,
-            crossAxisAlignment: .center,
-            spacing: 20.0,
-            children: [
-              Text.rich(
+    );
+    final address = InkWell(
+      borderRadius: .circular(16.0),
+      enableFeedback: false,
+      onTap: _copyToClipboard,
+      child: Container(
+        padding: const .all(8.0),
+        child: Row(
+          mainAxisSize: .min,
+          crossAxisAlignment: .center,
+          spacing: 20.0,
+          children: [
+            Flexible(
+              child: Text.rich(
                 TextSpan(
                   children: [
                     TextSpan(
@@ -58,18 +61,23 @@ class QRAddressWidget extends StatelessWidget {
                   ],
                 ),
                 style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: .center,
               ),
-              const Icon(
-                Icons.copy_outlined,
-                color: RealUnitColors.realUnitBlue,
-                size: 16,
-              ),
-            ],
-          ),
+            ),
+            const Icon(
+              Icons.copy_outlined,
+              color: RealUnitColors.realUnitBlue,
+              size: 16,
+            ),
+          ],
         ),
       ),
-    ],
-  );
+    );
+    return Column(
+      spacing: 12.0,
+      children: addressAbove ? [address, qr] : [qr, address],
+    );
+  }
 
   Future<void> _copyToClipboard() => Clipboard.setData(ClipboardData(text: subtitle));
 

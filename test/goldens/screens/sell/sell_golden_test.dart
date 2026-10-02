@@ -109,6 +109,7 @@ void main() {
     balanceCubit = _MockSellBalanceCubit();
 
     when(() => converterCubit.state).thenReturn(const SellConverterState());
+    when(() => converterCubit.onSharesChanged(any())).thenAnswer((_) async {});
     when(() => paymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
     when(() => selectedBankAccountCubit.state).thenReturn(null);
     when(() => balanceCubit.state).thenReturn(zeroBalance());
@@ -145,6 +146,52 @@ void main() {
             contractAddress: '0x0',
             walletAddress: '0x0',
             balance: BigInt.from(1000000000000000000),
+            asset: realUnitAsset,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'holding after Kauf — Max fills 85194',
+      fileName: 'sell_holding_kauf',
+      constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.text('MAX'));
+        await tester.pump();
+        return null;
+      },
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(85194),
+            asset: realUnitAsset,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'holding after Verkauf — Max fills 77994',
+      fileName: 'sell_holding_verkauf',
+      constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.text('MAX'));
+        await tester.pump();
+        return null;
+      },
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(77994),
             asset: realUnitAsset,
           ),
         );

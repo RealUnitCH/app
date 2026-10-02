@@ -8,13 +8,17 @@ import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
+import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 import 'package:realunit_wallet/setup/error_handling/error_handlers.dart';
 import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
+import 'package:realunit_wallet/setup/startup/app_startup.dart';
 import 'package:realunit_wallet/styles/themes.dart';
+import 'package:realunit_wallet/widgets/testnet_banner.dart';
 
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -27,13 +31,11 @@ Future<void> main() async {
   // installed above, while installErrorHandlers overwrites the async hook.
   await initCrashReporting();
 
-  // only preserve splash screen for 3 seconds for release version
-  if (kReleaseMode) {
-    await _initializeWithSplashDuration();
-    FlutterNativeSplash.remove();
-  } else {
-    await _initialize();
-  }
+  await startApp(
+    initialize: _initialize,
+    minimumSplashDuration: kReleaseMode ? const Duration(seconds: 3) : Duration.zero,
+    removeSplash: kReleaseMode ? FlutterNativeSplash.remove : null,
+  );
 }
 
 Future<void> _initialize() async {
@@ -45,13 +47,6 @@ Future<void> _initialize() async {
   );
 }
 
-Future<void> _initializeWithSplashDuration() async {
-  await Future.wait([
-    _initialize(),
-    Future.delayed(const Duration(seconds: 3)),
-  ]);
-}
-
 class WalletApp extends StatefulWidget {
   const WalletApp({super.key});
 
@@ -60,6 +55,8 @@ class WalletApp extends StatefulWidget {
 }
 
 class _WalletAppState extends State<WalletApp> {
+  late final AccountCurrencySync _accountCurrency = getIt<AccountCurrencySync>();
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +69,7 @@ class _WalletAppState extends State<WalletApp> {
       BlocProvider.value(value: getIt<HomeBloc>()),
       BlocProvider.value(value: getIt<SettingsBloc>()),
       BlocProvider.value(value: getIt<PinAuthCubit>()),
+      BlocProvider.value(value: getIt<ClientPolicyCubit>()),
     ],
     child: BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) => MaterialApp.router(
@@ -86,25 +84,62 @@ class _WalletAppState extends State<WalletApp> {
         ],
         locale: Locale(settingsState.language.code),
         routerConfig: routerConfig,
-        builder: (context, child) => MultiBlocListener(
-          listeners: [
-            BlocListener<HomeBloc, HomeState>(
-              listener: (context, homeState) {
-                if (!homeState.isLoadingWallet) {
+        builder: (context, child) => TestnetBanner(
+          child: MultiBlocListener(
+            listeners: [
+              BlocListener<HomeBloc, HomeState>(
+                listenWhen: (previous, current) =>
+                    previous.openWallet == null && current.openWallet != null,
+                listener: (context, homeState) {
+                  _accountCurrency.onOpened(homeState.openWallet);
+                },
+              ),
+              BlocListener<HomeBloc, HomeState>(
+                listenWhen: (previous, current) =>
+                    previous.openWallet != null &&
+                    current.openWallet != null &&
+                    !identical(previous.openWallet, current.openWallet),
+                listener: (context, homeState) {
+                  _accountCurrency.onSwitched(homeState.openWallet);
+                },
+              ),
+              BlocListener<HomeBloc, HomeState>(
+                listenWhen: (previous, current) =>
+                    previous.openWallet != null && current.openWallet == null,
+                listener: (context, homeState) {
+                  _accountCurrency.onClosed();
+                },
+              ),
+              BlocListener<HomeBloc, HomeState>(
+                listener: (context, homeState) {
+                  if (!homeState.isLoadingWallet) {
+                    _navigate();
+                  }
+                },
+              ),
+              BlocListener<HomeBloc, HomeState>(
+                listenWhen: (previous, current) =>
+                    !previous.historySyncFailed && current.historySyncFailed,
+                listener: (context, _) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(S.of(context).historySyncFailed)),
+                  );
+                },
+              ),
+              BlocListener<PinAuthCubit, PinAuthState>(
+                listener: (context, pinState) {
+                  if (pinState.isPinVerified) {
+                    _loadWalletIfNeeded();
+                  }
                   _navigate();
-                }
-              },
-            ),
-            BlocListener<PinAuthCubit, PinAuthState>(
-              listener: (context, pinState) {
-                if (pinState.isPinVerified) {
-                  _loadWalletIfNeeded();
-                }
-                _navigate();
-              },
-            ),
-          ],
-          child: child ?? const SizedBox.shrink(),
+                },
+              ),
+              BlocListener<ClientPolicyCubit, ClientPolicyState>(
+                listener: (_, _) => _navigate(),
+              ),
+            ],
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     ),
@@ -134,6 +169,7 @@ class _WalletAppState extends State<WalletApp> {
       walletLoaded: homeState.openWallet != null,
       currentLocation: current,
       resumeLocation: pin.peekResumeLocation(),
+      clientPolicySeverity: getIt<ClientPolicyCubit>().severity,
     );
 
     applyBootNavAction(

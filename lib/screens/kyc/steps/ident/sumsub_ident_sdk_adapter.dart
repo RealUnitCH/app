@@ -46,7 +46,12 @@ class SumsubIdentSdkAdapter implements SumsubIdentPort {
     final snsMobileSDK = SNSMobileSDK.init(
       token,
       onTokenExpiration,
-    ).withHandlers(onStatusChanged: onStatusChanged).withLocale(Locale(localeCode)).build();
+    )
+        .withHandlers(onStatusChanged: onStatusChanged)
+        .withLocale(Locale(localeCode))
+        // Replaces the Sumsub account default (unmonitored); same as the in-app contact tile.
+        .withSupportEmail('info@realunit.ch')
+        .build();
 
     final SNSMobileSDKResult result = await snsMobileSDK.launch();
     log('Completed with result: $result');

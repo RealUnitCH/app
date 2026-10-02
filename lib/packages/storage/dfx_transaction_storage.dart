@@ -9,6 +9,10 @@ extension DfxTransactionStorage on AppDatabase {
     String? rate,
     String? inputTxId,
     String? outputTxId,
+    String? inputAmount,
+    String? inputAsset,
+    String? outputAmount,
+    String? outputAsset,
   }) => into(dfxTransactionDetails).insert(
     DfxTransactionDetailsCompanion.insert(
       txId: txId,
@@ -16,6 +20,10 @@ extension DfxTransactionStorage on AppDatabase {
       rate: Value.absentIfNull(rate),
       inputTxId: Value.absentIfNull(inputTxId),
       outputTxId: Value.absentIfNull(outputTxId),
+      inputAmount: Value(inputAmount),
+      inputAsset: Value(inputAsset),
+      outputAmount: Value(outputAmount),
+      outputAsset: Value(outputAsset),
     ),
   );
 
@@ -25,12 +33,20 @@ extension DfxTransactionStorage on AppDatabase {
     String? rate,
     String? inputTxId,
     String? outputTxId,
+    String? inputAmount,
+    String? inputAsset,
+    String? outputAmount,
+    String? outputAsset,
   }) => (update(dfxTransactionDetails)..where((row) => row.txId.equals(txId))).write(
     DfxTransactionDetailsCompanion(
       dfxId: Value.absentIfNull(dfxId),
       rate: Value.absentIfNull(rate),
       inputTxId: Value.absentIfNull(inputTxId),
       outputTxId: Value.absentIfNull(outputTxId),
+      inputAmount: Value(inputAmount),
+      inputAsset: Value(inputAsset),
+      outputAmount: Value(outputAmount),
+      outputAsset: Value(outputAsset),
     ),
   );
 
@@ -45,6 +61,23 @@ extension DfxTransactionStorage on AppDatabase {
 
   Future<List<DfxTransactionDetailsData>> get allDfxTransactionDetails =>
       dfxTransactionDetails.all().get();
+
+  Future<int> deleteDfxTransactionDetails(String txId) =>
+      (delete(dfxTransactionDetails)..where((row) => row.txId.equals(txId))).go();
+
+  /// Hex hashes are stored as the API sent them. Drop Beleg metadata for a
+  /// prize even when the payout hash casing differs from the history row.
+  Future<int> deleteDfxTransactionDetailsIgnoreCase(String txId) async {
+    final rows = await (select(
+      dfxTransactionDetails,
+    )..where((row) => row.txId.collate(Collate.noCase).equals(txId))).get();
+    if (rows.isEmpty) return 0;
+    var n = 0;
+    for (final row in rows) {
+      n += await deleteDfxTransactionDetails(row.txId);
+    }
+    return n;
+  }
 }
 
 // The schema getters below are read by `drift_dev` at codegen time and the
@@ -64,4 +97,12 @@ class DfxTransactionDetails extends Table {
   TextColumn get inputTxId => text().nullable()(); // coverage:ignore-line
 
   TextColumn get outputTxId => text().nullable()(); // coverage:ignore-line
+
+  TextColumn get inputAmount => text().nullable()(); // coverage:ignore-line
+
+  TextColumn get inputAsset => text().nullable()(); // coverage:ignore-line
+
+  TextColumn get outputAmount => text().nullable()(); // coverage:ignore-line
+
+  TextColumn get outputAsset => text().nullable()(); // coverage:ignore-line
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
@@ -53,6 +54,50 @@ Future<void> initCrashReporting({
       error: error,
       stackTrace: stackTrace,
     );
+  }
+}
+
+/// Sink for a condition the app caught and handled but that should not have
+/// happened. Matches [reportNonFatal] so a caller can hold the seam as a field
+/// and a test can record instead of report.
+typedef NonFatalReporter = void Function(Object error);
+
+/// Like [NonFatalReporter], but also accepts an optional [stackTrace] for
+/// callers that already caught with `on Object catch (error, stackTrace)`.
+typedef TracedNonFatalReporter = void Function(Object error, {StackTrace? stackTrace});
+
+/// Records [error] as a non-fatal event: a `developer.log` line for an attached
+/// developer plus, when the crash reporter is running, an error event carrying
+/// the same object.
+///
+/// Same channel and same pinned option surface as the uncaught-error path — no
+/// PII, no attachments, no breadcrumb widening — so callers must pass an error
+/// object that describes the condition in its own `toString()` and nothing
+/// about the user.
+///
+/// Gated on the same [crashReportingDsn] that decides whether [initCrashReporting]
+/// starts the SDK at all: without an injected DSN — every local and test build —
+/// nothing was ever started, and the report is a pure log line.
+///
+/// @no-integration-test: the capture branch only runs in a build that injects a
+/// DSN, which no test build does; the DSN gate and the never-throws contract
+/// are covered by unit tests.
+void reportNonFatal(Object error, {StackTrace? stackTrace}) {
+  try {
+    developer.log(
+      'non-fatal: $error',
+      name: 'WalletApp',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    if (crashReportingDsn.isEmpty) return;
+    Sentry.captureException(error, stackTrace: stackTrace).ignore();
+  } catch (_) {
+    // A caller-visible throw here must never happen, since this runs before
+    // a required emit in KycCubit. `.ignore()` discards both the eventual
+    // value and any asynchronous error; the try/catch covers a synchronous
+    // throw from the log line, the error's own `toString()` or the capture
+    // call itself.
   }
 }
 

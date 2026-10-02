@@ -39,12 +39,18 @@ class RealUnitRegistrationInfoDto {
   /// (legacy backend tolerance).
   final bool? manualReview;
 
+  /// Company rejection sentence when [manualReview] is true. Optional and
+  /// absent on older servers; a missing key, JSON null, or a blank string is
+  /// stored as null.
+  final String? rejectionMessage;
+
   RealUnitRegistrationInfoDto({
     required this.state,
     this.realUnitUserDataDto,
     this.emailConfirmed,
     this.confirmedDate,
     this.manualReview,
+    this.rejectionMessage,
   });
 
   factory RealUnitRegistrationInfoDto.fromJson(Map<String, dynamic> json) {
@@ -58,6 +64,14 @@ class RealUnitRegistrationInfoDto {
           ? DateTime.parse(json['confirmedDate'] as String)
           : null,
       manualReview: json['manualReview'] as bool?,
+      rejectionMessage: _optionalRejectionMessage(json['rejectionMessage']),
     );
   }
+}
+
+/// Wire `rejectionMessage`: missing, JSON null, non-string, or blank → null.
+String? _optionalRejectionMessage(Object? value) {
+  if (value is! String) return null;
+  if (value.trim().isEmpty) return null;
+  return value;
 }

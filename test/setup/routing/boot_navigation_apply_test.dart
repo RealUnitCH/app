@@ -1,11 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_bind_result_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
+import 'package:realunit_wallet/setup/routing/referral_bind.dart';
+import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 
 // Drives the real `_navigate` wiring — `resolveBootNavigation` + the go_router
 // side effect `applyBootNavAction` — against a real [GoRouter]. This is the seam
@@ -15,40 +25,74 @@ import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 // on) that route. Pumping the full `WalletApp` is impractical (it depends on the
 // whole DI graph + the global router building real, service-backed pages), so we
 // exercise the smallest faithful seam instead.
+class _MockReferralService extends Mock implements RealUnitReferralService {}
+
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    debugSetPendingReferralCodeSync(null);
+    debugResetBindInFlight();
+  });
+
+  tearDown(() async {
+    await GetIt.instance.reset();
+  });
+
   // Only the routes this seam touches. `/buyPaymentDetails` mirrors the real
   // builder's non-nullable `extra` cast, so building it from a bare path throws
   // — exactly the crash the restore allowlist must prevent.
-  GoRouter buildRouter() => GoRouter(
-    initialLocation: '/verifyPin',
-    routes: [
-      GoRoute(
-        name: PinRoutes.verify,
-        path: '/verifyPin',
-        builder: (_, _) => const Text('verify'),
-      ),
-      GoRoute(
-        name: AppRoutes.dashboard,
-        path: '/dashboard',
-        builder: (_, _) => const Text('dashboard'),
-      ),
-      GoRoute(
-        name: AppRoutes.kyc,
-        path: '/kyc',
-        builder: (_, _) => const Text('kyc'),
-      ),
-      GoRoute(
-        name: AppRoutes.buyPaymentDetails,
-        path: '/buyPaymentDetails',
-        builder: (_, state) => Text('buy ${state.extra as Object}'),
-      ),
-      GoRoute(
-        name: AppRoutes.pay,
-        path: '/pay',
-        builder: (_, state) => Text('pay ${state.extra}'),
-      ),
-    ],
-  );
+  GoRouter buildRouter() {
+    final router = GoRouter(
+      initialLocation: '/verifyPin',
+      routes: [
+        GoRoute(
+          name: PinRoutes.verify,
+          path: '/verifyPin',
+          builder: (_, _) => const Text('verify'),
+        ),
+        GoRoute(
+          name: AppRoutes.dashboard,
+          path: '/dashboard',
+          builder: (_, _) => const Text('dashboard'),
+        ),
+        GoRoute(
+          name: SettingsRoutes.settings,
+          path: '/settings',
+          builder: (_, _) => const Text('settings'),
+        ),
+        // Mirrors the production builder: the KYC context is read off the URL,
+        // not off `extra`, so a restore by bare location keeps the flow scoped.
+        GoRoute(
+          name: AppRoutes.kyc,
+          path: '/kyc',
+          builder: (_, state) =>
+              Text('kyc:${state.uri.queryParameters['context'] ?? 'unscoped'}'),
+        ),
+        GoRoute(
+          name: AppRoutes.buyPaymentDetails,
+          path: '/buyPaymentDetails',
+          builder: (_, state) => Text('buy ${state.extra as Object}'),
+        ),
+        GoRoute(
+          name: AppRoutes.pay,
+          path: '/pay',
+          builder: (_, state) => Text('pay ${state.extra}'),
+        ),
+        GoRoute(
+          name: AppRoutes.updateRequired,
+          path: '/updateRequired',
+          builder: (_, _) => const Text('updateRequired'),
+        ),
+        GoRoute(
+          name: AppRoutes.receive,
+          path: '/receive',
+          builder: (_, _) => const Text('receive'),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    return router;
+  }
 
   // Fully-passed post-gate input: the router is on the PIN gate right after a
   // re-lock, so a captured non-gate route can be restored.
@@ -84,7 +128,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('kyc'), findsOneWidget);
+      expect(find.text('kyc:unscoped'), findsOneWidget);
       expect(effectiveLocation(router.routerDelegate.currentConfiguration), '/kyc');
       expect(cleared, isTrue);
 
@@ -96,6 +140,79 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('dashboard'), findsOneWidget);
       expect(locationOf(router), '/dashboard');
+    },
+  );
+
+  testWidgets(
+    'restore to /settings binds a pending code without popping the route',
+    (tester) async {
+      final service = _MockReferralService();
+      when(() => service.bind(code: 'AB12CD')).thenAnswer(
+        (_) async => const ReferralBindResultDto(kind: 'Invite'),
+      );
+      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
+      await stashPendingReferralCode('AB12CD');
+
+      final router = buildRouter();
+      // The bind result opens a dialog that reads S.of(context); without the
+      // localization delegates that build throws a null-check error.
+      await tester.pumpWidget(
+        MaterialApp.router(
+          locale: const Locale('de'),
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        resolveAfterRelock('/settings'),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      // Bind is scheduled on the next frame, not when /settings pops.
+      await tester.pump();
+      await tester.pump();
+
+      verify(() => service.bind(code: 'AB12CD')).called(1);
+      expect(find.text('settings'), findsOneWidget);
+      expect(effectiveLocation(router.routerDelegate.currentConfiguration), '/settings');
+      expect(router.canPop(), isTrue);
+      expect(await peekPendingReferralCode(), isNull);
+    },
+  );
+
+  // The KYC flow is scoped by the context its entry point reported, and a
+  // background lock must not silently drop that scope. The restore re-pushes
+  // the captured location by bare path — it has no `extra` to give — so the
+  // context has to ride in the URL to survive.
+  testWidgets(
+    'restore keeps the KYC context the flow was entered with',
+    (tester) async {
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        resolveAfterRelock('/kyc?context=RealunitBuy'),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('kyc:RealunitBuy'), findsOneWidget);
+      expect(
+        effectiveLocation(router.routerDelegate.currentConfiguration),
+        '/kyc?context=RealunitBuy',
+      );
     },
   );
 
@@ -234,9 +351,7 @@ void main() {
         // via the AFTER-pop check below where /dashboard is onstage again.
         expect(find.text('pay lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD'), findsOneWidget);
         expect(
-          router.routerDelegate.currentConfiguration.matches
-              .map((m) => m.matchedLocation)
-              .toList(),
+          router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList(),
           ['/dashboard', '/pay'],
         );
         expect(peekPendingPaymentDeeplink(), isNull);
@@ -310,9 +425,7 @@ void main() {
 
         expect(find.text('pay lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD'), findsOneWidget);
         expect(
-          router.routerDelegate.currentConfiguration.matches
-              .map((m) => m.matchedLocation)
-              .toList(),
+          router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList(),
           ['/dashboard', '/pay'],
         );
         expect(peekPendingPaymentDeeplink(), isNull);
@@ -345,16 +458,47 @@ void main() {
         // where /kyc is onstage again.
         expect(find.text('pay lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD'), findsOneWidget);
         expect(
-          router.routerDelegate.currentConfiguration.matches
-              .map((m) => m.matchedLocation)
-              .toList(),
+          router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList(),
           ['/dashboard', '/kyc', '/pay'],
         );
         expect(peekPendingPaymentDeeplink(), isNull);
         expect(router.canPop(), isTrue);
         router.pop();
         await tester.pumpAndSettle();
-        expect(find.text('kyc'), findsOneWidget);
+        expect(find.text('kyc:unscoped'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'restore /kyc with /pay on top does not bind a pending referral code',
+      (tester) async {
+        final service = _MockReferralService();
+        when(() => service.bind(code: any(named: 'code'))).thenAnswer(
+          (_) async => const ReferralBindResultDto(kind: 'Invite'),
+        );
+        GetIt.instance.registerSingleton<RealUnitReferralService>(service);
+        await stashPendingReferralCode('AB12CD');
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
+        applyBootNavAction(
+          resolveAfterRelock('/kyc'),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+        await tester.pump();
+
+        verifyNever(() => service.bind(code: any(named: 'code')));
+        expect(await peekPendingReferralCode(), 'AB12CD');
+        expect(
+          router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList(),
+          ['/dashboard', '/kyc', '/pay'],
+        );
       },
     );
 
@@ -382,9 +526,7 @@ void main() {
 
         expect(find.text('pay lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD'), findsOneWidget);
         expect(
-          router.routerDelegate.currentConfiguration.matches
-              .map((m) => m.matchedLocation)
-              .toList(),
+          router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList(),
           ['/dashboard', '/pay'],
         );
         expect(peekPendingPaymentDeeplink(), isNull);
@@ -392,6 +534,55 @@ void main() {
         router.pop();
         await tester.pumpAndSettle();
         expect(find.text('dashboard'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'BootNavStay on /receive with a stash clears it and never pushes /pay',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        router.go('/receive');
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
+        var cleared = false;
+        applyBootNavAction(
+          const BootNavStay(),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () => cleared = true,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('receive'), findsOneWidget);
+        expect(find.textContaining(RegExp(r'^pay ')), findsNothing);
+        expect(peekPendingPaymentDeeplink(), isNull);
+        expect(cleared, isTrue);
+      },
+    );
+
+    testWidgets(
+      'updateRequired landing clears the stash and never replays /pay',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('pay-me');
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.updateRequired),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(peekPendingPaymentDeeplink(), isNull);
+        expect(find.text('updateRequired'), findsOneWidget);
+        expect(find.textContaining(RegExp(r'^pay ')), findsNothing);
       },
     );
   });

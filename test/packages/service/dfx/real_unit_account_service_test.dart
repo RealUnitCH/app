@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -50,7 +51,7 @@ void main() {
   });
 
   RealUnitAccountService build(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitAccountService(appStore);
   }
 

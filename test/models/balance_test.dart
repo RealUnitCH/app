@@ -33,14 +33,33 @@ void main() {
       expect(b.balance, BigInt.from(20));
     });
 
-    test('two Balances with the same (chain, contract, wallet) are ==', () {
-      final a = _balance(amount: BigInt.from(1));
-      final b = _balance(amount: BigInt.from(999));
+    test(
+      'two Balances with the same (chain, contract, wallet) AND same amount are ==',
+      () {
+        final a = _balance(amount: BigInt.from(77994));
+        final b = _balance(amount: BigInt.from(77994));
 
-      // Equality is by identity tuple, NOT by amount — pinned so a stream
-      // emit with a new amount can still match a prior key in a map / set.
-      expect(a, equals(b));
-      expect(a.hashCode, b.hashCode);
+        expect(a, equals(b));
+        expect(a.hashCode, b.hashCode);
+      },
+    );
+
+    test(
+      'two Balances with the same slot tuple but different amounts are not ==',
+      () {
+        final a = _balance(amount: BigInt.from(77994));
+        final b = _balance(amount: BigInt.from(85194));
+
+        expect(a, isNot(equals(b)));
+      },
+    );
+
+    test('id does not depend on amount', () {
+      final a = _balance(amount: BigInt.from(77994));
+      final b = _balance(amount: BigInt.from(85194));
+
+      expect(a.id, b.id);
+      expect(a.id, fastHash('0xw:1:0xa'));
     });
 
     test('a different chainId produces a different == identity', () {

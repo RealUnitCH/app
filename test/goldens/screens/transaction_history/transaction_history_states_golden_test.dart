@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
@@ -15,9 +16,11 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/filter/transaction_history_filter_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/multi_receipt/transaction_history_multi_receipt_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
+import 'package:realunit_wallet/screens/transaction_history/transaction_detail_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_download_button.dart';
-import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_row.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/styles/language.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
 import '../../../helper/helper.dart';
@@ -26,7 +29,7 @@ import '../../../helper/helper.dart';
 // `transaction_history_golden_test.dart` — both mock the filter cubit with an
 // empty `filtered` list, so they render the same empty page (the `_with_...`
 // baseline never actually shows a row). This file adds the surfaces that base
-// file leaves uncovered: a populated list, the per-row receipt spinner, the
+// file leaves uncovered: a populated list, the receipt states on the detail page, the
 // multi-receipt spinner, the receipt-failure SnackBar and the date picker.
 //
 // Determinism note — dates: `TransactionHistoryRow` formats via
@@ -98,6 +101,26 @@ void main() {
     buy('0xtx3', 100, DateTime.utc(2026, 5, 15, 9, 15)),
   ];
 
+  final detailTransaction = DfxTransaction(
+    dfxId: 1,
+    inputAmount: 5000,
+    inputAsset: 'CHF',
+    outputAmount: 50,
+    outputAsset: 'REALU',
+    height: transactions.first.height,
+    txId: transactions.first.txId,
+    chainId: transactions.first.chainId,
+    senderAddress: transactions.first.senderAddress,
+    receiverAddress: transactions.first.receiverAddress,
+    amount: transactions.first.amount,
+    asset: transactions.first.asset,
+    type: transactions.first.type,
+    category: transactions.first.category,
+    note: transactions.first.note,
+    data: transactions.first.data,
+    timestamp: transactions.first.timestamp,
+  );
+
   // `TransactionHistoryView` field-initializes its date models from
   // `clock.now()` when constructed inside the alchemist builder; pin it so the
   // date-picker fields (and, for the picker overlay, `showDatePicker`) render
@@ -154,6 +177,97 @@ void main() {
       },
     );
 
+    goldenTest(
+      'referral prize with frozen CHF',
+      fileName: 'transaction_history_page_referral_payout',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(language: Language.de),
+        );
+        final prize = Transaction(
+          height: 0,
+          txId: 'referral-payout-7',
+          chainId: realUnitAsset.chainId,
+          senderAddress: kReferralPayoutSenderAddress,
+          receiverAddress: walletAddress,
+          amount: BigInt.from(20),
+          asset: realUnitAsset,
+          type: TransactionTypes.referralPayout,
+          note: '',
+          data: '246.50',
+          // Prize date must fall inside the pinned clock's default filter window.
+          timestamp: DateTime.utc(2026, 5, 20, 10),
+        );
+        return withClock(pinnedClock, () {
+          when(() => filterCubit.state).thenReturn(
+            TransactionHistoryFilterState(all: [prize], filtered: [prize]),
+          );
+          return wrapForGolden(buildSubject());
+        });
+      },
+    );
+
+    goldenTest(
+      'referral prize shows stored EUR when EUR is selected',
+      fileName: 'transaction_history_page_referral_payout_eur',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(language: Language.de, currency: Currency.eur),
+        );
+        final prize = Transaction(
+          height: 0,
+          txId: 'referral-payout-7',
+          chainId: realUnitAsset.chainId,
+          senderAddress: kReferralPayoutSenderAddress,
+          receiverAddress: walletAddress,
+          amount: BigInt.from(20),
+          asset: realUnitAsset,
+          type: TransactionTypes.referralPayout,
+          note: '',
+          data: '246.50|230.10',
+          timestamp: DateTime.utc(2026, 5, 20, 10),
+        );
+        return withClock(pinnedClock, () {
+          when(() => filterCubit.state).thenReturn(
+            TransactionHistoryFilterState(all: [prize], filtered: [prize]),
+          );
+          return wrapForGolden(buildSubject());
+        });
+      },
+    );
+
+    goldenTest(
+      'referral prize keeps stored CHF when EUR is selected but no EUR was stored',
+      fileName: 'transaction_history_page_referral_payout_chf_only',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(language: Language.de, currency: Currency.eur),
+        );
+        final prize = Transaction(
+          height: 0,
+          txId: 'referral-payout-7',
+          chainId: realUnitAsset.chainId,
+          senderAddress: kReferralPayoutSenderAddress,
+          receiverAddress: walletAddress,
+          amount: BigInt.from(20),
+          asset: realUnitAsset,
+          type: TransactionTypes.referralPayout,
+          note: '',
+          data: '246.50',
+          timestamp: DateTime.utc(2026, 5, 20, 10),
+        );
+        return withClock(pinnedClock, () {
+          when(() => filterCubit.state).thenReturn(
+            TransactionHistoryFilterState(all: [prize], filtered: [prize]),
+          );
+          return wrapForGolden(buildSubject());
+        });
+      },
+    );
+
     // Tapping a DatePickerField opens the platform date picker. Headless the
     // `DeviceInfo.instance.isIOS` guard (`date_picker.dart:13`) is false, so the
     // deterministic Material `showDatePicker` dialog renders — pinned to the
@@ -171,8 +285,8 @@ void main() {
     );
   });
 
-  // ---- B) TransactionHistoryRowView: per-row receipt spinner + failure ----
-  group('$TransactionHistoryRowView', () {
+  // ---- B) TransactionDetailView: receipt loading + failure ----
+  group('$TransactionDetailView', () {
     late _MockTransactionHistoryReceiptCubit receiptCubit;
 
     setUp(() {
@@ -182,27 +296,24 @@ void main() {
     });
 
     Widget rowSubject() => wrapForGolden(
-          Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-              child: MultiBlocProvider(
-                providers: [
-                  BlocProvider<SettingsBloc>.value(value: settingsBloc),
-                  BlocProvider<TransactionHistoryReceiptCubit>.value(value: receiptCubit),
-                ],
-                child: TransactionHistoryRowView(
-                  transaction: transactions.first,
-                  isOutbound: false,
-                ),
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SettingsBloc>.value(value: settingsBloc),
+              BlocProvider<TransactionHistoryReceiptCubit>.value(value: receiptCubit),
+            ],
+            child: TransactionDetailView(
+              args: TransactionDetailArgs(
+                transaction: detailTransaction,
+                walletAddress: walletAddress,
               ),
             ),
           ),
         );
 
     goldenTest(
-      'receipt generating — 12px spinner replaces the download icon',
+      'receipt generating — Beleg button is loading',
       fileName: 'transaction_history_row_receipt_loading',
-      // The 12px CircularProgressIndicator never settles; freeze the first frame.
+      // The loading indicator never settles; freeze the first frame.
       pumpBeforeTest: pumpOnce,
       constraints: phoneConstraints,
       builder: () {
@@ -212,8 +323,8 @@ void main() {
       },
     );
 
-    // Emitting a failure drives the BlocConsumer listener
-    // (`transaction_history_row.dart:52-59`) to show the red error SnackBar.
+    // Emitting a failure drives the detail page listener to show the red
+    // error SnackBar.
     goldenTest(
       'receipt failure SnackBar (red)',
       fileName: 'transaction_history_row_receipt_failure',

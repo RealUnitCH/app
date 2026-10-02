@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/debug_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -38,7 +39,7 @@ void main() {
   });
 
   Future<DebugAuthService> build(http.Client client) async {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     final prefs = await SharedPreferences.getInstance();
     return DebugAuthService(appStore, prefs);
   }
@@ -115,7 +116,8 @@ void main() {
       const signature = '0xdeadbeef';
 
       final svc = await build(client);
-      await svc.authenticate(addressLower, signature);
+      const message = 'sign-this-please';
+      await svc.authenticate(addressLower, signature, message: message);
 
       expect(sentUri!.path, '/v1/auth');
       expect(body!['wallet'], 'RealUnit');
@@ -126,6 +128,7 @@ void main() {
       expect(session.authToken, 'jwt-OK');
       // Signature lands under the EIP-55 checksum address.
       expect(session.signatureAddress, checksum);
+      expect(session.signatureMessage, message);
       // The raw address + signature persist to SharedPreferences.
       expect(svc.savedAddress, addressLower);
       expect(svc.savedSignature, signature);
@@ -135,7 +138,7 @@ void main() {
       final client = MockClient((_) async => http.Response('boom', 500));
 
       expect(
-        () async => (await build(client)).authenticate('0xabc', '0xsig'),
+        () async => (await build(client)).authenticate('0xabc', '0xsig', message: 'm'),
         throwsA(
           predicate((e) => e.toString().contains('500')),
         ),

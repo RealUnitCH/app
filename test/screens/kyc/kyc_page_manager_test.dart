@@ -301,6 +301,30 @@ void main() {
       await tester.pumpApp(viewWithState(cubit));
 
       expect(find.byType(KycManualReviewPage), findsOneWidget);
+      expect(
+        tester.widget<KycManualReviewPage>(find.byType(KycManualReviewPage)).rejectionMessage,
+        isNull,
+      );
+    },
+  );
+
+  testWidgets(
+    'KycViewManager passes rejectionMessage to KycManualReviewPage',
+    (tester) async {
+      const sentence = 'Please enter your full name (first and last name).';
+      final cubit = _MockKycCubit();
+      when(() => cubit.state).thenReturn(
+        const KycManualReview(rejectionMessage: sentence),
+      );
+
+      await tester.pumpApp(viewWithState(cubit));
+
+      expect(find.byType(KycManualReviewPage), findsOneWidget);
+      expect(
+        tester.widget<KycManualReviewPage>(find.byType(KycManualReviewPage)).rejectionMessage,
+        sentence,
+      );
+      expect(find.text(sentence), findsOneWidget);
     },
   );
 

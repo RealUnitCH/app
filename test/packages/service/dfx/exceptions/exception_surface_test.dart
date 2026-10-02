@@ -2,13 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/kyc_unsupported_step_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
+import 'package:realunit_wallet/setup/startup/startup_exceptions.dart';
 
 // Guard against a recurring failure mode: an Exception subclass without a
 // toString() override gets rendered as `Instance of '...'` whenever a cubit
@@ -24,6 +27,7 @@ void main() {
       const BitboxAddressUnavailableException(),
       const SigningCancelledException(),
       const ApiException(code: 'TEST', message: 'test'),
+      const UpgradeRequiredException(minSupportedVersion: '1.3.0'),
       const RegistrationRejectedException(code: 'TEST', message: 'test'),
       const RegistrationRequiredException(code: 'TEST', message: 'test'),
       const KycLevelRequiredException(
@@ -35,6 +39,7 @@ void main() {
       const SeedDecryptionException('test'),
       const AlreadyConfirmedException(code: 'TEST', message: 'test'),
       const InvalidPaymentLinkException('test'),
+      const PayConfirmNotSubmittedException('test'),
       const PaySignatureUnsupportedException(),
       const PayUnsignedTxMismatchException('test'),
       const InvalidRecipientAddressException('test'),
@@ -42,6 +47,14 @@ void main() {
       const TransferGasFundingUnavailableException(),
       const TransferConfirmMismatchException(),
       const TransferAlreadyConfirmedException(code: 'TEST', message: 'test'),
+      const TransferReceiptTimeoutException(
+        code: 'TEST',
+        message: 'test',
+        txHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      ),
+      const KycUnsupportedStepException(KycStepName.statutes),
+      const DatabaseKeyMissingException(walletConfigured: false),
+      const DatabaseKeyUnreadableException(protectedDataAvailable: null),
     ];
 
     for (final ex in exceptions) {
@@ -57,5 +70,12 @@ void main() {
         expect(rendered, isNotEmpty);
       });
     }
+  });
+
+  group('ApiException.userFacingMessage', () {
+    test('UpgradeRequiredException is empty', () {
+      const error = UpgradeRequiredException(minSupportedVersion: '1.3.0');
+      expect(ApiException.userFacingMessage(error), '');
+    });
   });
 }

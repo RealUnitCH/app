@@ -37,6 +37,32 @@ void main() {
       );
     });
 
+    testWidgets('shows the address below the QR code by default',
+        (tester) async {
+      await tester.pumpWidget(_host(
+        const QRAddressWidget(uri: 'ethereum:$_address', subtitle: _address),
+      ));
+
+      final qrTop = tester.getTopLeft(find.byType(QrImageView)).dy;
+      final addressTop = tester.getTopLeft(find.byType(InkWell)).dy;
+      expect(addressTop, greaterThan(qrTop));
+    });
+
+    testWidgets('shows the address above the QR code when addressAbove is set',
+        (tester) async {
+      await tester.pumpWidget(_host(
+        const QRAddressWidget(
+          uri: 'ethereum:$_address',
+          subtitle: _address,
+          addressAbove: true,
+        ),
+      ));
+
+      final qrTop = tester.getTopLeft(find.byType(QrImageView)).dy;
+      final addressTop = tester.getTopLeft(find.byType(InkWell)).dy;
+      expect(addressTop, lessThan(qrTop));
+    });
+
     testWidgets('renders a copy icon next to the address', (tester) async {
       await tester.pumpWidget(_host(
         const QRAddressWidget(uri: '', subtitle: _address),
@@ -73,6 +99,25 @@ void main() {
         const QRAddressWidget(uri: '', subtitle: ''),
       ));
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('address row shrink-wraps so the parent Column can center it',
+        (tester) async {
+      await tester.pumpWidget(_host(
+        const QRAddressWidget(uri: 'ethereum:$_address', subtitle: _address),
+      ));
+
+      final row = tester.widget<Row>(
+        find.descendant(
+          of: find.byType(InkWell),
+          matching: find.byType(Row),
+        ),
+      );
+      expect(row.mainAxisSize, MainAxisSize.min);
+
+      final inkSize = tester.getSize(find.byType(InkWell));
+      final screenWidth = tester.getSize(find.byType(Scaffold)).width;
+      expect(inkSize.width, lessThan(screenWidth));
     });
   });
 }

@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_status_dto.dart';
@@ -53,6 +54,8 @@ Map<String, dynamic> _swapInfoJson() => {
   'ethBalance': 1.0,
   'requiredGasEth': 0.001,
   'isValid': true,
+  'ethereumTransactionFeeChf': 0.05,
+  'ethereumTransactionFeeRealu': 0.01234567,
 };
 
 void main() {
@@ -78,7 +81,7 @@ void main() {
   });
 
   RealUnitPayService build(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitPayService(appStore, walletService);
   }
 
@@ -145,6 +148,8 @@ void main() {
       expect(info.id, 99);
       expect(info.estimatedAmount, 960);
       expect(info.isValid, isTrue);
+      expect(info.ethereumTransactionFeeChf, 0.05);
+      expect(info.ethereumTransactionFeeRealu, 0.01234567);
     });
 
     test('non-200 → ApiException', () async {
@@ -242,12 +247,17 @@ void main() {
       });
 
       final dto = await build(client).createPayUnsignedTransaction(
-        const RealUnitOcpPayDto(paymentLinkId: 'pl_realunit_ocp_sepolia', quoteId: 'q1'),
+        const RealUnitOcpPayDto(
+          paymentLinkId: 'pl_realunit_ocp_sepolia',
+          quoteId: 'q1',
+          swapRequestId: 99,
+        ),
       );
 
       expect(sentUri!.path, '/v1/realunit/pay/unsigned-transaction');
       expect(body!['paymentLinkId'], 'pl_realunit_ocp_sepolia');
       expect(body!['quoteId'], 'q1');
+      expect(body!['swapRequestId'], 99);
       expect(dto.recipient, '0xfB2a9731cdA8b3FCa015723EF40f310C1E48366b');
       expect(dto.tokenAddress, '0xD3117681cA462268048f57D106d312Ba0b1215eA');
       expect(dto.amountWei, '2000000000000000000');
@@ -261,7 +271,7 @@ void main() {
       );
       expect(
         () => build(client).createPayUnsignedTransaction(
-          const RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q1'),
+          const RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q1', swapRequestId: 99),
         ),
         throwsA(isA<ApiException>()),
       );
@@ -286,11 +296,13 @@ void main() {
           v: 27,
           paymentLinkId: 'pl_abc',
           quoteId: 'q1',
+          swapRequestId: 99,
         ),
       );
 
       expect(sentUri!.path, '/v1/realunit/pay/submit');
       expect(body!['paymentLinkId'], 'pl_abc');
+      expect(body!['swapRequestId'], 99);
       expect(txId, '0xTxId');
     });
 
@@ -307,6 +319,7 @@ void main() {
             v: 27,
             paymentLinkId: 'pl_abc',
             quoteId: 'q1',
+            swapRequestId: 99,
           ),
         ),
         throwsA(isA<ApiException>()),

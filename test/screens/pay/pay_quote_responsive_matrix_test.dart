@@ -10,12 +10,14 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_page.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 import '../../helper/helper.dart';
@@ -62,12 +64,25 @@ Future<void> _pumpScreen(WidgetTester tester, MatrixCell cell, Widget child) asy
 }
 
 void main() {
-  const ready = PayQuoteReady(
+  const swap = SwapPaymentInfo(
+    id: 99,
+    amount: 2,
+    estimatedAmount: 2.4,
+    targetAsset: 'ZCHF',
+    ethBalance: 1,
+    requiredGasEth: 0.001,
+    isValid: true,
+    ethereumTransactionFeeChf: 0.05,
+    ethereumTransactionFeeRealu: 0.05 / 1.2,
+  );
+  final ready = PayQuoteReady(
     paymentLinkId: 'pl_realunit_ocp_sepolia',
     quoteId: 'plq_realunit_ocp_sepolia',
     fiatAsset: 'CHF',
     fiatAmount: 2,
     zchfAmount: 2.0,
+    expiresAt: DateTime.utc(2099),
+    swap: swap,
   );
 
   late _MockPayQuoteCubit quoteCubit;
@@ -100,8 +115,13 @@ void main() {
     for (final cell in kFullResponsiveMatrix) {
       testWidgets(cell.id, (tester) async {
         await withTargetPlatform(cell.device.platform, () async {
-          final subject = BlocProvider<PayQuoteCubit>.value(
-            value: quoteCubit,
+          final settingsBloc = MockSettingsBloc();
+          when(() => settingsBloc.state).thenReturn(const SettingsState());
+          final subject = MultiBlocProvider(
+            providers: [
+              BlocProvider<SettingsBloc>.value(value: settingsBloc),
+              BlocProvider<PayQuoteCubit>.value(value: quoteCubit),
+            ],
             child: const PayQuoteView(),
           );
 

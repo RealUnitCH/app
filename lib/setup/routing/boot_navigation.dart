@@ -1,9 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/packages/utils/marketing_version.dart';
+import 'package:realunit_wallet/setup/routing/effective_location.dart';
+import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
+
+export 'package:realunit_wallet/setup/routing/effective_location.dart';
 
 /// The outcome of the boot/lock navigation decision (see
 /// [resolveBootNavigation]) driven by `main.dart`'s `_navigate`. The decision
@@ -44,21 +50,6 @@ final class BootNavStay extends BootNavAction {
   const BootNavStay();
 }
 
-/// The location the user actually sees, including imperatively pushed routes.
-///
-/// `RouteMatchList.uri` only reflects declarative (`go`) matches — after a
-/// `push` (how the KYC flow is entered from Buy/Sell) it still reports the
-/// base route underneath. Everything that judges or captures "where the user
-/// is" (the boot machine's `currentLocation`, the background capture, the
-/// scheme-open redirect) must read this helper instead, or a pushed flow is
-/// invisible to it.
-String effectiveLocation(RouteMatchList configuration) {
-  final matches = configuration.matches;
-  final last = matches.isEmpty ? null : matches.last;
-  if (last is ImperativeRouteMatch) return last.matches.uri.toString();
-  return configuration.uri.toString();
-}
-
 /// Locations that are boot/lock gates: `_navigate` re-derives them from state
 /// and must never treat one as an in-flight route to restore. What *is*
 /// restorable is governed by the [restorableLocations] allowlist below — not
@@ -75,6 +66,7 @@ const Set<String> gateLocations = {
   '/verifyPin',
   '/bitboxAddressRecovery',
   '/debugAuth',
+  '/updateRequired',
 };
 
 /// Whether [loc] resolves to one of the [gateLocations] gates. Compares the
@@ -107,6 +99,15 @@ const Set<String> restorableLocations = {
 /// string ignored).
 bool isRestorableLocation(String loc) => restorableLocations.contains(Uri.parse(loc).path);
 
+/// After PIN, the hard client-policy gate may leave the user on these paths.
+/// Soft is not hard — it falls through the ladder like [ClientPolicySeverity.none].
+const Set<String> hardAllowedLocations = {
+  '/updateRequired',
+  '/receive',
+  '/settings/seed',
+  '/pinGate',
+};
+
 /// Pure boot/lock routing decision, evaluated on every HomeBloc / PinAuthCubit
 /// emission.
 ///
@@ -126,15 +127,19 @@ BootNavAction resolveBootNavigation({
   required bool walletLoaded,
   required String currentLocation,
   required String? resumeLocation,
+  ClientPolicySeverity clientPolicySeverity = ClientPolicySeverity.none,
 }) {
   if (isLoadingWallet) return const BootNavWaitForLoad();
   if (!softwareTermsAccepted) return const BootNavGoNamed(AppRoutes.home);
+  final hard = clientPolicySeverity == ClientPolicySeverity.hard;
+  if (hard && !hasWallet) return const BootNavGoNamed(AppRoutes.updateRequired);
   if (!hasWallet) return const BootNavGoNamed(OnboardingRoutes.welcome);
-  if (!onboardingCompleted) {
-    return const BootNavGoNamed(OnboardingRoutes.completed);
-  }
+  if (!onboardingCompleted) return const BootNavGoNamed(OnboardingRoutes.completed);
   if (!isPinSetup) return const BootNavGoNamed(PinRoutes.setup);
   if (!isPinVerified) return const BootNavGoNamed(PinRoutes.verify);
+  if (hard && bitboxAddressRecoveryNeeded) {
+    return const BootNavGoNamed(AppRoutes.updateRequired);
+  }
   if (bitboxAddressRecoveryNeeded) {
     // A BitBox wallet was persisted with an empty/invalid address — divert to
     // the re-pairing recovery flow instead of loading it into the dashboard
@@ -142,6 +147,11 @@ BootNavAction resolveBootNavigation({
     return const BootNavGoNamed(AppRoutes.bitboxAddressRecovery);
   }
   if (!walletLoaded) return const BootNavLoadWallet();
+  if (hard) {
+    final path = Uri.parse(currentLocation).path;
+    if (hardAllowedLocations.contains(path)) return const BootNavStay();
+    return const BootNavGoNamed(AppRoutes.updateRequired);
+  }
 
   // All gates passed.
   if (!isGateLocation(currentLocation)) return const BootNavStay();
@@ -211,6 +221,13 @@ void applyBootNavAction(
       onLoadWallet();
       return;
     case BootNavGoNamed(:final routeName):
+      // Hard-gate landing: drop a stashed /pay so it cannot replay on top of
+      // /updateRequired. Do not take/replay the payload here.
+      if (routeName == AppRoutes.updateRequired) {
+        clearPendingPaymentDeeplink();
+        router.goNamed(routeName);
+        return;
+      }
       // Reaching the dashboard is the final landing — drop any stale resume
       // capture so a later benign emission can't bounce the user around, and
       // replay a cold-start / locked-warm-resume payment deeplink now that the
@@ -222,6 +239,7 @@ void applyBootNavAction(
         if (payload != null) {
           router.goNamed(routeName);
           unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
+          unawaited(bindPendingReferralCode(router));
           return;
         }
       }
@@ -231,6 +249,9 @@ void applyBootNavAction(
       // locked-warm-resume payment deeplinks can still replay. Do NOT clear
       // the pending-payment stash here.
       router.goNamed(routeName);
+      if (routeName == AppRoutes.dashboard) {
+        unawaited(bindPendingReferralCode(router));
+      }
       return;
     case BootNavRestore(:final location):
       // Return to the in-flight route the user was on before the re-lock,
@@ -244,7 +265,8 @@ void applyBootNavAction(
       // push on top of the restored location (same post-unlock terminal
       // consumption as the dashboard branch).
       onClearResume();
-      if (Uri.parse(location).path == '/dashboard') {
+      final restorePath = Uri.parse(location).path;
+      if (restorePath == '/dashboard') {
         router.go(location);
       } else {
         router.goNamed(AppRoutes.dashboard);
@@ -254,18 +276,36 @@ void applyBootNavAction(
       if (payload != null) {
         unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
       }
+      // Bind after this frame so the restored location is current. Do not
+      // wait for the pushed route to pop — staying on /settings would
+      // otherwise never bind. Restored KYC (even with /pay on top) stays
+      // unbound; `_isKycLocation` walks the whole match list.
+      final restoreIsKyc =
+          restorePath == '/kyc' || restorePath.startsWith('/kyc/');
+      if (!restoreIsKyc) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          unawaited(bindPendingReferralCode(router));
+        });
+      }
       return;
     case BootNavStay():
       // Already on a valid non-gate route — discard any stale resume capture.
-      // This is a post-unlock terminal landing: if a payment deeplink was
-      // stashed while locked, replay it as an imperative /pay push on top of
-      // the current location (the only navigation this branch performs when
-      // a stash exists).
+      // Hard-allowed locations must not replay /pay on top of receive / seed /
+      // pinGate / updateRequired; drop the stash instead. Elsewhere this is a
+      // post-unlock terminal landing and replays like today.
       onClearResume();
-      final payload = takePendingPaymentDeeplink();
-      if (payload != null) {
-        unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
+      final path = Uri.parse(
+        effectiveLocation(router.routerDelegate.currentConfiguration),
+      ).path;
+      if (hardAllowedLocations.contains(path)) {
+        clearPendingPaymentDeeplink();
+      } else {
+        final payload = takePendingPaymentDeeplink();
+        if (payload != null) {
+          unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
+        }
       }
+      unawaited(bindPendingReferralCode(router));
       return;
   }
 }

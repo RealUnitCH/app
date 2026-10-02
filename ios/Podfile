@@ -5,6 +5,10 @@ platform :ios, '15.0'
 source 'https://cdn.cocoapods.org/'
 source 'https://github.com/SumSubstance/Specs.git'
 
+# Video identification needs the optional Idensic module. The plugin
+# podspec links IdensicMobileSDK/VideoIdent only when this is set.
+ENV['IDENSIC_WITH_VIDEOIDENT'] = 'true'
+
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 

@@ -18,11 +18,15 @@ class LnurlpPaymentDto {
 
   final LnurlpRecipientDto? recipient;
 
+  /// Shop name on the payment link. Used when [recipient] has no name.
+  final String? displayName;
+
   const LnurlpPaymentDto({
     required this.requestedAmount,
     required this.quote,
     required this.transferAmounts,
     this.recipient,
+    this.displayName,
   });
 
   factory LnurlpPaymentDto.fromJson(Map<String, dynamic> json) {
@@ -43,6 +47,7 @@ class LnurlpPaymentDto {
       recipient: json['recipient'] == null
           ? null
           : LnurlpRecipientDto.fromJson(json['recipient'] as Map<String, dynamic>),
+      displayName: json['displayName'] as String?,
     );
   }
 }
