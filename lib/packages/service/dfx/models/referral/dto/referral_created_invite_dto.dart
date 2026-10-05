@@ -10,7 +10,7 @@ class ReferralCreatedInviteDto {
   final String? copyText;
   final String? copyTextEn;
   final String? inviterName;
-  /// `personal` or `impersonal`. Absent API `kind` is personal.
+  /// `Personal` or `Impersonal`. Absent API `kind` is Personal.
   final String kind;
   /// Owner's own credited prizes for this invite, not registrations.
   /// Absent API `prizeCount` is 0.
@@ -23,7 +23,7 @@ class ReferralCreatedInviteDto {
     this.copyText,
     this.copyTextEn,
     this.inviterName,
-    this.kind = 'personal',
+    this.kind = 'Personal',
     this.prizeCount = 0,
   });
 
@@ -52,7 +52,7 @@ class ReferralCreatedInviteDto {
       copyText: referralJsonString(json['copyText']),
       copyTextEn: referralJsonString(json['copyTextEn']),
       inviterName: referralPersonName(json['inviterName']),
-      kind: referralJsonString(json['kind']) ?? 'personal',
+      kind: referralJsonString(json['kind']) ?? 'Personal',
       prizeCount: referralJsonInt(json['prizeCount']),
     );
   }

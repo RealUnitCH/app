@@ -76,6 +76,8 @@ void main() {
 
     expect(find.text('Ihre Einladung für Alice'), findsOneWidget);
     expect(find.text('Persönlicher Einladungslink'), findsOneWidget);
+    expect(find.text('Persönlich'), findsNothing);
+    expect(find.text('Unpersönlich'), findsNothing);
     expect(
       find.text(
         'Hallo Alice\n\nKennst du die RealUnit App? Ich nutze RealUnit mit dem Ziel, mein Vermögen langfristig zu schützen. Mit dem Kauf von RealUnit-Aktientoken wirst du AktionärIn der RealUnit Schweiz AG, einer Schweizer Investmentgesellschaft, die u.a. in physisches Gold, Silber und Firmen investiert.\n\nGib bei der Registrierung meinen Code AB12CD ein oder benutze für den App-Download am einfachsten diesen Link: https://realunit.app/invite/AB12CD\n\nDieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: realunit.ch/downloads (Schweiz) | realunit.de/downloads (Deutschland/EU).',
@@ -957,7 +959,7 @@ void main() {
           code: 'IMP1',
           url: 'https://realunit.app/invite/IMP1',
           guestName: '',
-          kind: 'impersonal',
+          kind: 'Impersonal',
           copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
         ),
       );
@@ -990,6 +992,22 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Vorname der eingeladenen Person'), findsNothing);
+      expect(
+        find.text('Share IMP1: https://realunit.app/invite/IMP1'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Persönlich'));
+      await tester.pump();
+      expect(find.byType(TextFormField), findsOneWidget);
+
+      await tester.tap(find.text('Unpersönlich'));
+      await tester.pump();
+      await tester.pump();
+      expect(
+        find.text('Share IMP1: https://realunit.app/invite/IMP1'),
+        findsOneWidget,
+      );
       verify(() => service.createImpersonalInvite()).called(1);
     },
   );

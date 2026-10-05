@@ -560,7 +560,7 @@ void main() {
         'status': 'Open',
         'created': '2026-08-24T10:00:00Z',
       });
-      expect(omitted.kind, 'personal');
+      expect(omitted.kind, 'Personal');
       expect(omitted.prizeCount, 0);
       expect(omitted.isImpersonal, isFalse);
 
@@ -571,10 +571,10 @@ void main() {
         'guestName': 'Hidden',
         'status': 'Open',
         'created': '2026-08-24T10:00:00Z',
-        'kind': 'impersonal',
+        'kind': 'Impersonal',
         'prizeCount': 2,
       });
-      expect(impersonal.kind, 'impersonal');
+      expect(impersonal.kind, 'Impersonal');
       expect(impersonal.prizeCount, 2);
       expect(impersonal.isImpersonal, isTrue);
       expect(impersonal.guestName, 'Hidden');
@@ -1018,17 +1018,17 @@ void main() {
         'url': 'https://realunit.app/invite/AB12',
         'guestName': 'Alice',
       });
-      expect(omitted.kind, 'personal');
+      expect(omitted.kind, 'Personal');
       expect(omitted.prizeCount, 0);
       expect(omitted.isImpersonal, isFalse);
 
       final impersonal = ReferralCreatedInviteDto.fromJson({
         'code': 'IMP1',
         'url': 'https://realunit.app/invite/IMP1',
-        'kind': 'impersonal',
+        'kind': 'Impersonal',
         'prizeCount': 3,
       });
-      expect(impersonal.kind, 'impersonal');
+      expect(impersonal.kind, 'Impersonal');
       expect(impersonal.prizeCount, 3);
       expect(impersonal.isImpersonal, isTrue);
       expect(impersonal.guestName, isEmpty);

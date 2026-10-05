@@ -92,6 +92,40 @@ void main() {
     );
 
     goldenTest(
+      'overview with open impersonal invite',
+      fileName: 'referral_overview_page_impersonal',
+      constraints: phoneConstraints,
+      builder: () {
+        const summary = ReferralSummaryDto(
+          eligible: true,
+          termsAccepted: true,
+          minHolding: 70,
+          openCount: 1,
+          creditedCount: 2,
+          realuSum: 40,
+          chfSum: 512.4,
+          sharePriceLabel: 'Aktienkurs',
+          sharePrice: 1.38,
+        );
+        final invites = [
+          ReferralInviteDto(
+            id: 1,
+            code: 'IMP1',
+            url: 'https://realunit.app/invite/IMP1',
+            guestName: 'Hidden',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            kind: 'Impersonal',
+            prizeCount: 0,
+          ),
+        ];
+        return buildOverview(
+          ReferralOverviewLoaded(summary: summary, invites: invites),
+        );
+      },
+    );
+
+    goldenTest(
       'empty overview with zero counts',
       fileName: 'referral_overview_page_empty',
       constraints: phoneConstraints,

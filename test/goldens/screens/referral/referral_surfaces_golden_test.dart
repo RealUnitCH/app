@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
@@ -263,6 +266,136 @@ void main() {
         settings: const SettingsState(language: Language.de, currency: Currency.eur),
         data: '246.50',
       ),
+    );
+  });
+
+  group('referral create impersonal', () {
+    tearDown(() {
+      if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
+        GetIt.instance.unregister<RealUnitReferralService>();
+      }
+    });
+
+    goldenTest(
+      'create page impersonal',
+      fileName: 'referral_create_page_impersonal',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.tap(find.text('Unpersönlich'));
+        for (var i = 0; i < 5; i++) {
+          await tester.pump();
+          if (find.byType(CupertinoActivityIndicator).evaluate().isEmpty) {
+            break;
+          }
+        }
+        for (var i = 0; i < 5; i++) {
+          if (find.text('Unpersönlicher Einladungslink').evaluate().isNotEmpty) {
+            break;
+          }
+          await tester.pump();
+        }
+      },
+      builder: () {
+        final service = _MockService();
+        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
+          GetIt.instance.unregister<RealUnitReferralService>();
+        }
+        GetIt.instance.registerSingleton<RealUnitReferralService>(service);
+        when(() => service.createImpersonalInvite()).thenAnswer(
+          (_) async => const ReferralCreatedInviteDto(
+            code: 'IMP1',
+            url: 'https://realunit.app/invite/IMP1',
+            guestName: '',
+            kind: 'Impersonal',
+            copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
+          ),
+        );
+        when(() => cubit.state).thenReturn(
+          const ReferralCreateReady(summary: _summary),
+        );
+        whenListen(
+          cubit,
+          const Stream<ReferralState>.empty(),
+          initialState: const ReferralCreateReady(summary: _summary),
+        );
+        return wrapForGolden(
+          BlocProvider<ReferralCubit>.value(
+            value: cubit,
+            child: const ReferralCreateView(),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'create page impersonal creating',
+      fileName: 'referral_create_page_impersonal_creating',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.tap(find.text('Unpersönlich'));
+        await tester.pump();
+        await tester.pump();
+      },
+      builder: () {
+        final service = _MockService();
+        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
+          GetIt.instance.unregister<RealUnitReferralService>();
+        }
+        GetIt.instance.registerSingleton<RealUnitReferralService>(service);
+        final completer = Completer<ReferralCreatedInviteDto>();
+        when(
+          () => service.createImpersonalInvite(),
+        ).thenAnswer((_) => completer.future);
+        when(() => cubit.state).thenReturn(
+          const ReferralCreateReady(summary: _summary),
+        );
+        whenListen(
+          cubit,
+          const Stream<ReferralState>.empty(),
+          initialState: const ReferralCreateReady(summary: _summary),
+        );
+        return wrapForGolden(
+          BlocProvider<ReferralCubit>.value(
+            value: cubit,
+            child: const ReferralCreateView(),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'create page impersonal error',
+      fileName: 'referral_create_page_impersonal_error',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.tap(find.text('Unpersönlich'));
+        await tester.pump();
+        await tester.pump();
+      },
+      builder: () {
+        final service = _MockService();
+        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
+          GetIt.instance.unregister<RealUnitReferralService>();
+        }
+        GetIt.instance.registerSingleton<RealUnitReferralService>(service);
+        when(
+          () => service.createImpersonalInvite(),
+        ).thenThrow(TimeoutException('create'));
+        when(() => cubit.state).thenReturn(
+          const ReferralCreateReady(summary: _summary),
+        );
+        whenListen(
+          cubit,
+          const Stream<ReferralState>.empty(),
+          initialState: const ReferralCreateReady(summary: _summary),
+        );
+        return wrapForGolden(
+          BlocProvider<ReferralCubit>.value(
+            value: cubit,
+            child: const ReferralCreateView(),
+          ),
+        );
+      },
     );
   });
 }

@@ -311,7 +311,7 @@ void main() {
             'code': 'IMP1',
             'url': 'https://realunit.app/invite/IMP1',
             'guestName': '',
-            'kind': 'impersonal',
+            'kind': 'Impersonal',
             'prizeCount': 0,
             'copyText': 'Share IMP1: https://realunit.app/invite/IMP1',
           }),
@@ -323,10 +323,10 @@ void main() {
 
       expect(capturedRequest.method, 'POST');
       expect(capturedRequest.url.path, '/v1/realunit/referral/invites');
-      expect(jsonDecode(capturedRequest.body), {'kind': 'impersonal'});
+      expect(jsonDecode(capturedRequest.body), {'kind': 'Impersonal'});
       expect(capturedRequest.headers['Idempotency-Key'], isNull);
       expect(created.code, 'IMP1');
-      expect(created.kind, 'impersonal');
+      expect(created.kind, 'Impersonal');
       expect(created.prizeCount, 0);
       expect(created.guestName, isEmpty);
       expect(created.isImpersonal, isTrue);
