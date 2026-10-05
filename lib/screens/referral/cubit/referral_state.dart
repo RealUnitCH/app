@@ -94,6 +94,8 @@ class ReferralOverviewLoaded extends ReferralState {
             i.status,
             i.url,
             i.guestName,
+            i.kind,
+            i.prizeCount,
             i.copyText,
             i.copyTextEn,
             i.inviterName,

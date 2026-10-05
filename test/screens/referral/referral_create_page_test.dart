@@ -947,4 +947,50 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'impersonal pill hides the name field and shows the impersonal description',
+    (tester) async {
+      final service = _MockService();
+      when(() => service.createImpersonalInvite()).thenAnswer(
+        (_) async => const ReferralCreatedInviteDto(
+          code: 'IMP1',
+          url: 'https://realunit.app/invite/IMP1',
+          guestName: '',
+          kind: 'impersonal',
+          copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
+        ),
+      );
+      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
+      addTearDown(() async {
+        await GetIt.instance.reset();
+      });
+
+      when(() => cubit.state).thenReturn(const ReferralCreateReady(summary: _summary));
+      whenListen(
+        cubit,
+        const Stream<ReferralState>.empty(),
+        initialState: const ReferralCreateReady(summary: _summary),
+      );
+
+      await pumpCreateView(tester);
+      await tester.pump();
+
+      expect(find.byType(TextFormField), findsOneWidget);
+
+      await tester.tap(find.text('Unpersönlich'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(TextFormField), findsNothing);
+      expect(
+        find.text(
+          'Verwenden Sie den nachfolgenden Code für mehrfache, unpersönliche Weiterempfehlungen.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Vorname der eingeladenen Person'), findsNothing);
+      verify(() => service.createImpersonalInvite()).called(1);
+    },
+  );
 }
