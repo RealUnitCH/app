@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 417 Visual-Regression Goldens (417 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 418 Visual-Regression Goldens (418 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 417 App-Screenshots dieser Seite sind Goldens aus
+            Die 418 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 417 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 418 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -13146,6 +13146,24 @@
             <div class="desc">
               Übersicht mit offener unpersönlicher Einladung. Titel
               <b>Unpersönlicher Einladungslink</b>. Text <b>0 Prämien</b>.
+              Der Name Hidden ist nicht sichtbar.
+            </div>
+          </div>
+          <div class="test" id="409-referral-overview-impersonal-one">
+            <div class="head">
+              <a class="name permalink" href="#409-referral-overview-impersonal-one">409-referral-overview-impersonal-one</a>
+              <button class="copy-link" type="button" data-target="409-referral-overview-impersonal-one" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_overview_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/409-referral-overview-impersonal-one.png"
+                alt="Übersicht mit einer unpersönlichen Prämie"
+              />
+            </div>
+            <div class="desc">
+              Übersicht mit offener unpersönlicher Einladung und genau einer Prämie. Titel
+              <b>Unpersönlicher Einladungslink</b>. Text <b>1 Prämie</b>.
               Der Name Hidden ist nicht sichtbar.
             </div>
           </div>

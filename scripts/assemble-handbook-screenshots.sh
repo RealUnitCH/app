@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 417 handbook screenshots from the visual-regression Golden
+# Assemble the 418 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -459,6 +459,7 @@ MAPPING=(
   "406-referral-create-impersonal-creating=screens/referral/goldens/macos/referral_create_page_impersonal_creating.png"
   "407-referral-create-impersonal-error=screens/referral/goldens/macos/referral_create_page_impersonal_error.png"
   "408-referral-overview-impersonal=screens/referral/goldens/macos/referral_overview_page_impersonal.png"
+  "409-referral-overview-impersonal-one=screens/referral/goldens/macos/referral_overview_page_impersonal_one.png"
 )
 
 missing=()
