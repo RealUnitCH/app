@@ -366,7 +366,7 @@ class _OpenInviteTile extends StatelessWidget {
           ),
           if (impersonal)
             Text(
-              '${invite.prizeCount} ${s.referralImpersonalPrizes}',
+              '${invite.prizeCount} ${invite.prizeCount == 1 ? s.referralImpersonalPrize : s.referralImpersonalPrizes}',
               style: Theme.of(context).textTheme.bodyMedium,
             )
           else

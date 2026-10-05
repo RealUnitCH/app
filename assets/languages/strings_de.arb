@@ -291,6 +291,7 @@
   "referralGuestName": "Vorname der eingeladenen Person",
   "referralGuestNameRequired": "Bitte den Vornamen der eingeladenen Person eingeben.",
   "referralImpersonalDescription": "Verwenden Sie den nachfolgenden Code für mehrfache, unpersönliche Weiterempfehlungen.",
+  "referralImpersonalPrize": "Prämie",
   "referralImpersonalPrizes": "Prämien",
   "referralImpersonalTitle": "Unpersönlicher Einladungslink",
   "referralInviteRecognized": "Einladung von ${inviter} erkannt. Sind Sie verifiziert und umfasst Ihr erster Kauf mindestens 200 Aktientoken, kann ${inviter} dafür eine Prämie gemäss Teilnahmebedingungen erhalten.",

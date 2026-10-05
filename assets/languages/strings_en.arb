@@ -291,6 +291,7 @@
   "referralGuestName": "First name of the invited person",
   "referralGuestNameRequired": "Please enter the first name of the person you are inviting.",
   "referralImpersonalDescription": "Use the code below for repeated, impersonal referrals.",
+  "referralImpersonalPrize": "Reward",
   "referralImpersonalPrizes": "Rewards",
   "referralImpersonalTitle": "Impersonal invite link",
   "referralInviteRecognized": "Invitation from ${inviter} recognised. If you are verified and your first purchase is for at least 200 share tokens, ${inviter} may receive a reward for it under the terms of participation.",

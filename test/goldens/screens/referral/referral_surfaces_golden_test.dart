@@ -16,6 +16,7 @@ import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
 import 'package:realunit_wallet/screens/referral/referral_create_page.dart';
+import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
 import 'package:realunit_wallet/screens/referral/referral_page.dart';
 import 'package:realunit_wallet/screens/referral/referral_terms_page.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_entry_card.dart';
@@ -270,12 +271,6 @@ void main() {
   });
 
   group('referral create impersonal', () {
-    tearDown(() {
-      if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
-        GetIt.instance.unregister<RealUnitReferralService>();
-      }
-    });
-
     goldenTest(
       'create page impersonal',
       fileName: 'referral_create_page_impersonal',
@@ -296,28 +291,26 @@ void main() {
         }
       },
       builder: () {
-        final service = _MockService();
-        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
-          GetIt.instance.unregister<RealUnitReferralService>();
-        }
-        GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-        when(() => service.createImpersonalInvite()).thenAnswer(
-          (_) async => const ReferralCreatedInviteDto(
-            code: 'IMP1',
-            url: 'https://realunit.app/invite/IMP1',
-            guestName: '',
-            kind: 'Impersonal',
-            copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
-          ),
-        );
-        when(() => cubit.state).thenReturn(
-          const ReferralCreateReady(summary: _summary),
-        );
+        final controller = StreamController<ReferralState>.broadcast();
         whenListen(
           cubit,
-          const Stream<ReferralState>.empty(),
+          controller.stream,
           initialState: const ReferralCreateReady(summary: _summary),
         );
+        when(() => cubit.createImpersonalInvite()).thenAnswer((_) async {
+          controller.add(
+            const ReferralImpersonalReady(
+              summary: _summary,
+              invite: ReferralCreatedInviteDto(
+                code: 'IMP1',
+                url: 'https://realunit.app/invite/IMP1',
+                guestName: '',
+                kind: 'Impersonal',
+                copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
+              ),
+            ),
+          );
+        });
         return wrapForGolden(
           BlocProvider<ReferralCubit>.value(
             value: cubit,
@@ -337,23 +330,17 @@ void main() {
         await tester.pump();
       },
       builder: () {
-        final service = _MockService();
-        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
-          GetIt.instance.unregister<RealUnitReferralService>();
-        }
-        GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-        final completer = Completer<ReferralCreatedInviteDto>();
-        when(
-          () => service.createImpersonalInvite(),
-        ).thenAnswer((_) => completer.future);
-        when(() => cubit.state).thenReturn(
-          const ReferralCreateReady(summary: _summary),
-        );
+        final controller = StreamController<ReferralState>.broadcast();
+        final pending = Completer<void>();
         whenListen(
           cubit,
-          const Stream<ReferralState>.empty(),
+          controller.stream,
           initialState: const ReferralCreateReady(summary: _summary),
         );
+        when(() => cubit.createImpersonalInvite()).thenAnswer((_) {
+          controller.add(const ReferralImpersonalLoading(summary: _summary));
+          return pending.future;
+        });
         return wrapForGolden(
           BlocProvider<ReferralCubit>.value(
             value: cubit,
@@ -373,22 +360,20 @@ void main() {
         await tester.pump();
       },
       builder: () {
-        final service = _MockService();
-        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
-          GetIt.instance.unregister<RealUnitReferralService>();
-        }
-        GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-        when(
-          () => service.createImpersonalInvite(),
-        ).thenThrow(TimeoutException('create'));
-        when(() => cubit.state).thenReturn(
-          const ReferralCreateReady(summary: _summary),
-        );
+        final controller = StreamController<ReferralState>.broadcast();
         whenListen(
           cubit,
-          const Stream<ReferralState>.empty(),
+          controller.stream,
           initialState: const ReferralCreateReady(summary: _summary),
         );
+        when(() => cubit.createImpersonalInvite()).thenAnswer((_) async {
+          controller.add(
+            ReferralImpersonalFailure(
+              summary: _summary,
+              message: referralErrorMessage(TimeoutException('create')),
+            ),
+          );
+        });
         return wrapForGolden(
           BlocProvider<ReferralCubit>.value(
             value: cubit,

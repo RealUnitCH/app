@@ -21,6 +21,7 @@ class ReferralCubit extends Cubit<ReferralState> {
   /// failure may carry a different name, and reusing the key would let a
   /// conforming server answer with the previous name's invite.
   String? _createIdempotencyName;
+  ReferralCreatedInviteDto? _impersonalInvite;
 
   ReferralCubit(this._service) : super(const ReferralInitial());
 
@@ -168,6 +169,76 @@ class ReferralCubit extends Cubit<ReferralState> {
     } else if (current is ReferralInviteCreated) {
       _emitIfOpen(ReferralCreateReady(summary: current.summary));
     }
+  }
+
+  Future<void> createImpersonalInvite({bool retry = false}) async {
+    final current = state;
+    if (current is ReferralImpersonalLoading) return;
+    if (current is ReferralImpersonalReady) return;
+    if (current is ReferralImpersonalFailure && !retry) return;
+    if (_impersonalInvite != null && current is! ReferralImpersonalFailure) {
+      final cachedSummary = switch (current) {
+        ReferralCreateReady(:final summary) => summary,
+        ReferralOverviewLoaded(:final summary) => summary,
+        _ => null,
+      };
+      if (cachedSummary != null) {
+        _emitIfOpen(
+          ReferralImpersonalReady(
+            summary: cachedSummary,
+            invite: _impersonalInvite!,
+          ),
+        );
+      }
+      return;
+    }
+    final summary = switch (current) {
+      ReferralCreateReady(:final summary) => summary,
+      ReferralOverviewLoaded(:final summary) => summary,
+      ReferralImpersonalFailure(:final summary) => summary,
+      _ => null,
+    };
+    if (summary == null) return;
+
+    _emitIfOpen(ReferralImpersonalLoading(summary: summary));
+    try {
+      final created = await _service.createImpersonalInvite();
+      _impersonalInvite = created;
+      _emitIfOpen(ReferralImpersonalReady(summary: summary, invite: created));
+    } on ApiException catch (e) {
+      if (e.code == 'NOT_ELIGIBLE') {
+        _emitIfOpen(const ReferralNotEligible());
+        return;
+      }
+      if (e.code == 'NEEDS_TERMS') {
+        _emitIfOpen(ReferralNeedsTerms(summary: summary));
+        return;
+      }
+      _emitIfOpen(
+        ReferralImpersonalFailure(
+          summary: summary,
+          message: referralErrorMessage(e),
+        ),
+      );
+    } catch (e) {
+      _emitIfOpen(
+        ReferralImpersonalFailure(
+          summary: summary,
+          message: referralErrorMessage(e),
+        ),
+      );
+    }
+  }
+
+  void showPersonalCreate() {
+    final summary = switch (state) {
+      ReferralImpersonalLoading(:final summary) => summary,
+      ReferralImpersonalReady(:final summary) => summary,
+      ReferralImpersonalFailure(:final summary) => summary,
+      _ => null,
+    };
+    if (summary == null) return;
+    _emitIfOpen(ReferralCreateReady(summary: summary));
   }
 
   Future<void> refreshOverview() async {

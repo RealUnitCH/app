@@ -41,6 +41,11 @@ void main() {
   setUp(() {
     cubit = _MockReferralCubit();
     when(() => cubit.isClosed).thenReturn(false);
+    when(() => cubit.createImpersonalInvite()).thenAnswer((_) async {});
+    when(
+      () => cubit.createImpersonalInvite(retry: any(named: 'retry')),
+    ).thenAnswer((_) async {});
+    when(() => cubit.showPersonalCreate()).thenReturn(null);
   });
 
   Future<void> pumpCreateView(WidgetTester tester, {Locale locale = const Locale('de')}) {
@@ -953,27 +958,31 @@ void main() {
   testWidgets(
     'impersonal pill hides the name field and shows the impersonal description',
     (tester) async {
-      final service = _MockService();
-      when(() => service.createImpersonalInvite()).thenAnswer(
-        (_) async => const ReferralCreatedInviteDto(
-          code: 'IMP1',
-          url: 'https://realunit.app/invite/IMP1',
-          guestName: '',
-          kind: 'Impersonal',
-          copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
-        ),
+      const invite = ReferralCreatedInviteDto(
+        code: 'IMP1',
+        url: 'https://realunit.app/invite/IMP1',
+        guestName: '',
+        kind: 'Impersonal',
+        copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
       );
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-      addTearDown(() async {
-        await GetIt.instance.reset();
-      });
-
-      when(() => cubit.state).thenReturn(const ReferralCreateReady(summary: _summary));
+      final controller = StreamController<ReferralState>.broadcast();
+      addTearDown(controller.close);
+      when(() => cubit.state).thenReturn(
+        const ReferralCreateReady(summary: _summary),
+      );
       whenListen(
         cubit,
-        const Stream<ReferralState>.empty(),
+        controller.stream,
         initialState: const ReferralCreateReady(summary: _summary),
       );
+      when(() => cubit.createImpersonalInvite()).thenAnswer((_) async {
+        controller.add(
+          const ReferralImpersonalReady(summary: _summary, invite: invite),
+        );
+      });
+      when(() => cubit.showPersonalCreate()).thenAnswer((_) {
+        controller.add(const ReferralCreateReady(summary: _summary));
+      });
 
       await pumpCreateView(tester);
       await tester.pump();
@@ -1008,7 +1017,7 @@ void main() {
         find.text('Share IMP1: https://realunit.app/invite/IMP1'),
         findsOneWidget,
       );
-      verify(() => service.createImpersonalInvite()).called(1);
+      verify(() => cubit.createImpersonalInvite()).called(2);
     },
   );
 }

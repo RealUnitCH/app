@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/io/normalize_referral_code.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_created_invite_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
@@ -53,10 +52,17 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
   final _formKey = GlobalKey<FormState>();
   bool _submitting = false;
   _CreateInviteMode _mode = _CreateInviteMode.personal;
-  ReferralCreatedInviteDto? _impersonalInvite;
-  String? _impersonalError;
-  bool _impersonalCreating = false;
-  bool _impersonalRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final current = context.read<ReferralCubit>().state;
+    if (current is ReferralImpersonalLoading ||
+        current is ReferralImpersonalReady ||
+        current is ReferralImpersonalFailure) {
+      _mode = _CreateInviteMode.impersonal;
+    }
+  }
 
   @override
   void dispose() {
@@ -66,33 +72,14 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
 
   void _onModeSelected(_CreateInviteMode mode) {
     if (_mode == mode) return;
+    final cubit = context.read<ReferralCubit>();
+    if (mode == _CreateInviteMode.personal) {
+      cubit.showPersonalCreate();
+      setState(() => _mode = mode);
+      return;
+    }
     setState(() => _mode = mode);
-    if (mode == _CreateInviteMode.impersonal) {
-      _ensureImpersonalInvite();
-    }
-  }
-
-  Future<void> _ensureImpersonalInvite({bool retry = false}) async {
-    if (_impersonalInvite != null) return;
-    if (_impersonalCreating) return;
-    if (_impersonalRequested && !retry) return;
-    _impersonalRequested = true;
-    setState(() => _impersonalCreating = true);
-    try {
-      final invite = await getIt<RealUnitReferralService>().createImpersonalInvite();
-      if (!mounted) return;
-      setState(() {
-        _impersonalInvite = invite;
-        _impersonalCreating = false;
-        _impersonalError = null;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _impersonalCreating = false;
-        _impersonalError = referralErrorMessage(e);
-      });
-    }
+    cubit.createImpersonalInvite();
   }
 
   Future<void> _submit(BuildContext context) async {
@@ -148,9 +135,10 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         if (!context.mounted) return;
+        final cubitState = context.read<ReferralCubit>().state;
         final created =
-            context.read<ReferralCubit>().state is ReferralInviteCreated ||
-            _impersonalInvite != null;
+            cubitState is ReferralInviteCreated ||
+            cubitState is ReferralImpersonalReady;
         Navigator.of(context).pop(created);
       },
       child: Scaffold(
@@ -300,7 +288,12 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
 
               final creating = state is ReferralCreating || _submitting;
               if (_mode == _CreateInviteMode.impersonal) {
-                return _impersonalBody(context, s, switchLocked: creating);
+                return _impersonalBody(
+                  context,
+                  s,
+                  state,
+                  switchLocked: creating,
+                );
               }
 
               final error = state is ReferralCreateReady
@@ -442,10 +435,15 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
     );
   }
 
-  Widget _impersonalBody(BuildContext context, S s, {required bool switchLocked}) {
-    final invite = _impersonalInvite;
-    final error = _impersonalError;
-    final creating = _impersonalCreating;
+  Widget _impersonalBody(
+    BuildContext context,
+    S s,
+    ReferralState state, {
+    required bool switchLocked,
+  }) {
+    final invite = state is ReferralImpersonalReady ? state.invite : null;
+    final error = state is ReferralImpersonalFailure ? state.message : null;
+    final creating = state is ReferralImpersonalLoading;
     final lang = Localizations.localeOf(context).languageCode;
     final text = invite == null
         ? null
@@ -504,7 +502,9 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
                 state: creating ? FilledButtonState.loading : FilledButtonState.idle,
                 onPressed: creating
                     ? null
-                    : () => _ensureImpersonalInvite(retry: true),
+                    : () => context.read<ReferralCubit>().createImpersonalInvite(
+                        retry: true,
+                      ),
               ),
             ),
         ],

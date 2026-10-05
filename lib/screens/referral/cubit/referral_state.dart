@@ -151,6 +151,45 @@ class ReferralInviteCreated extends ReferralState {
   ];
 }
 
+class ReferralImpersonalLoading extends ReferralState {
+  final ReferralSummaryDto summary;
+
+  const ReferralImpersonalLoading({required this.summary});
+
+  @override
+  List<Object?> get props => [summary.openCount];
+}
+
+class ReferralImpersonalReady extends ReferralState {
+  final ReferralSummaryDto summary;
+  final ReferralCreatedInviteDto invite;
+
+  const ReferralImpersonalReady({required this.summary, required this.invite});
+
+  @override
+  List<Object?> get props => [
+    summary.openCount,
+    invite.code,
+    invite.url,
+    invite.guestName,
+    invite.copyText,
+    invite.copyTextEn,
+  ];
+}
+
+class ReferralImpersonalFailure extends ReferralState {
+  final ReferralSummaryDto summary;
+  final String message;
+
+  const ReferralImpersonalFailure({
+    required this.summary,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [summary.openCount, message];
+}
+
 class ReferralFailure extends ReferralState {
   final String message;
 
