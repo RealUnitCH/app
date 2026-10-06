@@ -46,6 +46,7 @@ void main() {
       () => cubit.createImpersonalInvite(retry: any(named: 'retry')),
     ).thenAnswer((_) async {});
     when(() => cubit.showPersonalCreate()).thenReturn(null);
+    when(() => cubit.impersonalInviteCreated()).thenAnswer((_) async => false);
   });
 
   Future<void> pumpCreateView(WidgetTester tester, {Locale locale = const Locale('de')}) {
@@ -1018,6 +1019,53 @@ void main() {
         findsOneWidget,
       );
       verify(() => cubit.createImpersonalInvite()).called(2);
+    },
+  );
+
+  testWidgets(
+    'app-bar back on create-ready pops true when impersonalInviteCreated is true',
+    (tester) async {
+      when(() => cubit.state).thenReturn(const ReferralCreateReady(summary: _summary));
+      whenListen(
+        cubit,
+        const Stream<ReferralState>.empty(),
+        initialState: const ReferralCreateReady(summary: _summary),
+      );
+      when(() => cubit.impersonalInviteCreated()).thenAnswer((_) async => true);
+
+      bool? popped;
+      NavigatorState? hostNavigator;
+      await tester.pumpApp(
+        Builder(
+          builder: (context) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final navigator = Navigator.of(context);
+              hostNavigator = navigator;
+              popped = await navigator.push<bool>(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider<ReferralCubit>.value(
+                    value: cubit,
+                    child: const ReferralCreateView(),
+                  ),
+                ),
+              );
+            });
+            return const SizedBox();
+          },
+        ),
+        locale: const Locale('de'),
+        theme: realUnitTheme,
+      );
+      await tester.pumpAndSettle();
+      if (find.byType(BackButton).evaluate().isNotEmpty) {
+        await tester.tap(find.byType(BackButton));
+      } else {
+        await hostNavigator!.maybePop();
+      }
+      await tester.pumpAndSettle();
+
+      expect(popped, isTrue);
+      verify(() => cubit.impersonalInviteCreated()).called(1);
     },
   );
 }

@@ -132,13 +132,13 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
     final s = S.of(context);
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
+      onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (!context.mounted) return;
-        final cubitState = context.read<ReferralCubit>().state;
+        final cubit = context.read<ReferralCubit>();
         final created =
-            cubitState is ReferralInviteCreated ||
-            cubitState is ReferralImpersonalReady;
+            cubit.state is ReferralInviteCreated ||
+            await cubit.impersonalInviteCreated();
+        if (!context.mounted || cubit.isClosed) return;
         Navigator.of(context).pop(created);
       },
       child: Scaffold(

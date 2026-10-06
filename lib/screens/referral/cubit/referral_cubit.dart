@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
@@ -22,6 +24,7 @@ class ReferralCubit extends Cubit<ReferralState> {
   /// conforming server answer with the previous name's invite.
   String? _createIdempotencyName;
   ReferralCreatedInviteDto? _impersonalInvite;
+  Future<void>? _impersonalInviteInFlight;
 
   ReferralCubit(this._service) : super(const ReferralInitial());
 
@@ -200,6 +203,17 @@ class ReferralCubit extends Cubit<ReferralState> {
     };
     if (summary == null) return;
 
+    final run = Completer<void>();
+    final inFlight = run.future;
+    _impersonalInviteInFlight = inFlight;
+    unawaited(
+      inFlight.whenComplete(() {
+        // identical: this completion must not clear a newer in-flight POST.
+        if (identical(_impersonalInviteInFlight, inFlight)) {
+          _impersonalInviteInFlight = null;
+        }
+      }),
+    );
     _emitIfOpen(ReferralImpersonalLoading(summary: summary));
     try {
       final created = await _service.createImpersonalInvite();
@@ -227,7 +241,17 @@ class ReferralCubit extends Cubit<ReferralState> {
           message: referralErrorMessage(e),
         ),
       );
+    } finally {
+      if (!run.isCompleted) run.complete();
     }
+  }
+
+  Future<bool> impersonalInviteCreated() async {
+    final inFlight = _impersonalInviteInFlight;
+    if (inFlight != null) {
+      await inFlight;
+    }
+    return _impersonalInvite != null;
   }
 
   void showPersonalCreate() {
