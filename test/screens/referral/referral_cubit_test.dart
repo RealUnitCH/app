@@ -1357,6 +1357,115 @@ void main() {
   );
 
   blocTest<ReferralCubit, ReferralState>(
+    'createImpersonalInvite keeps the open impersonal invite with the smaller id',
+    build: () {
+      when(() => service.getSummary()).thenAnswer((_) async => _eligible);
+      when(() => service.getInvites()).thenAnswer(
+        (_) async => [
+          ReferralInviteDto(
+            id: 3,
+            code: 'PER',
+            url: 'https://realunit.app/invite/PER',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share PER: https://realunit.app/invite/PER',
+            kind: 'Personal',
+          ),
+          ReferralInviteDto(
+            id: 9,
+            code: 'IMP9',
+            url: 'https://realunit.app/invite/IMP9',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share IMP9: https://realunit.app/invite/IMP9',
+            kind: 'Impersonal',
+            prizeCount: 2,
+          ),
+          ReferralInviteDto(
+            id: 4,
+            code: 'IMP4',
+            url: 'https://realunit.app/invite/IMP4',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share IMP4: https://realunit.app/invite/IMP4',
+            kind: 'Impersonal',
+            prizeCount: 1,
+          ),
+        ],
+      );
+      return ReferralCubit(service);
+    },
+    act: (cubit) async {
+      await cubit.load();
+      cubit.openCreate();
+      await cubit.createImpersonalInvite();
+    },
+    expect: () => [
+      const ReferralLoading(),
+      ReferralOverviewLoaded(
+        summary: _eligible,
+        invites: [
+          ReferralInviteDto(
+            id: 3,
+            code: 'PER',
+            url: 'https://realunit.app/invite/PER',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share PER: https://realunit.app/invite/PER',
+            kind: 'Personal',
+          ),
+          ReferralInviteDto(
+            id: 9,
+            code: 'IMP9',
+            url: 'https://realunit.app/invite/IMP9',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share IMP9: https://realunit.app/invite/IMP9',
+            kind: 'Impersonal',
+            prizeCount: 2,
+          ),
+          ReferralInviteDto(
+            id: 4,
+            code: 'IMP4',
+            url: 'https://realunit.app/invite/IMP4',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share IMP4: https://realunit.app/invite/IMP4',
+            kind: 'Impersonal',
+            prizeCount: 1,
+          ),
+        ],
+      ),
+      const ReferralCreateReady(summary: _eligible),
+      const ReferralImpersonalReady(
+        summary: _eligible,
+        invite: ReferralCreatedInviteDto(
+          code: 'IMP4',
+          url: 'https://realunit.app/invite/IMP4',
+          guestName: '',
+          kind: 'Impersonal',
+          copyText: 'Share IMP4: https://realunit.app/invite/IMP4',
+          prizeCount: 1,
+        ),
+      ),
+    ],
+    verify: (cubit) {
+      verifyNever(() => service.createImpersonalInvite());
+      expect(cubit.state, isA<ReferralImpersonalReady>());
+      final invite = (cubit.state as ReferralImpersonalReady).invite;
+      expect(invite.code, 'IMP4');
+      expect(invite.prizeCount, 1);
+      expect(invite.kind, 'Impersonal');
+    },
+  );
+
+  blocTest<ReferralCubit, ReferralState>(
     'createImpersonalInvite from ready does not hit the service again',
     build: () {
       when(() => service.createImpersonalInvite()).thenAnswer(
