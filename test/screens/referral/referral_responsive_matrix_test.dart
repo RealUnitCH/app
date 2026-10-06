@@ -286,15 +286,22 @@ void main() {
             reason: 'overflow on ${cell.label}',
           );
 
+          final copy = find.widgetWithText(AppFilledButton, 'Einladungslink kopieren');
+          await tester.ensureVisible(copy);
+          await tester.pump();
           await expectFullyTappable(
             tester,
-            find.widgetWithText(AppFilledButton, 'Einladungslink kopieren'),
+            copy,
             within: find.byType(ReferralCreateView),
             reason: '${cell.label}: impersonal copy CTA not tappable',
           );
+
+          final share = find.widgetWithText(AppFilledButton, 'Einladungslink versenden');
+          await tester.ensureVisible(share);
+          await tester.pump();
           await expectFullyTappable(
             tester,
-            find.widgetWithText(AppFilledButton, 'Einladungslink versenden'),
+            share,
             within: find.byType(ReferralCreateView),
             reason: '${cell.label}: impersonal share CTA not tappable',
           );
