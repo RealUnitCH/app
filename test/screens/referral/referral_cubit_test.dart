@@ -1290,6 +1290,73 @@ void main() {
   );
 
   blocTest<ReferralCubit, ReferralState>(
+    'createImpersonalInvite uses the open invite from load and does not post again',
+    build: () {
+      when(() => service.getSummary()).thenAnswer((_) async => _eligible);
+      when(() => service.getInvites()).thenAnswer(
+        (_) async => [
+          ReferralInviteDto(
+            id: 7,
+            code: 'IMP1',
+            url: 'https://realunit.app/invite/IMP1',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
+            kind: 'Impersonal',
+            prizeCount: 1,
+          ),
+        ],
+      );
+      return ReferralCubit(service);
+    },
+    act: (cubit) async {
+      await cubit.load();
+      cubit.openCreate();
+      await cubit.createImpersonalInvite();
+    },
+    expect: () => [
+      const ReferralLoading(),
+      ReferralOverviewLoaded(
+        summary: _eligible,
+        invites: [
+          ReferralInviteDto(
+            id: 7,
+            code: 'IMP1',
+            url: 'https://realunit.app/invite/IMP1',
+            guestName: '',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
+            kind: 'Impersonal',
+            prizeCount: 1,
+          ),
+        ],
+      ),
+      const ReferralCreateReady(summary: _eligible),
+      const ReferralImpersonalReady(
+        summary: _eligible,
+        invite: ReferralCreatedInviteDto(
+          code: 'IMP1',
+          url: 'https://realunit.app/invite/IMP1',
+          guestName: '',
+          kind: 'Impersonal',
+          copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
+          prizeCount: 1,
+        ),
+      ),
+    ],
+    verify: (cubit) {
+      verifyNever(() => service.createImpersonalInvite());
+      expect(cubit.state, isA<ReferralImpersonalReady>());
+      final invite = (cubit.state as ReferralImpersonalReady).invite;
+      expect(invite.code, 'IMP1');
+      expect(invite.prizeCount, 1);
+      expect(invite.kind, 'Impersonal');
+    },
+  );
+
+  blocTest<ReferralCubit, ReferralState>(
     'createImpersonalInvite from ready does not hit the service again',
     build: () {
       when(() => service.createImpersonalInvite()).thenAnswer(
