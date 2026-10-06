@@ -52,6 +52,8 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
   final _formKey = GlobalKey<FormState>();
   bool _submitting = false;
   _CreateInviteMode _mode = _CreateInviteMode.personal;
+  // Stays true so a second back cannot pop the route underneath.
+  bool _popInFlight = false;
 
   @override
   void initState() {
@@ -134,6 +136,8 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
+        if (_popInFlight) return;
+        _popInFlight = true;
         final cubit = context.read<ReferralCubit>();
         final created =
             cubit.state is ReferralInviteCreated ||

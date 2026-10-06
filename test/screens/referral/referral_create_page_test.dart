@@ -1068,4 +1068,61 @@ void main() {
       verify(() => cubit.impersonalInviteCreated()).called(1);
     },
   );
+
+  testWidgets(
+    'system back twice while impersonalInviteCreated is pending pops once and keeps the host route',
+    (tester) async {
+      when(() => cubit.state).thenReturn(const ReferralCreateReady(summary: _summary));
+      whenListen(
+        cubit,
+        const Stream<ReferralState>.empty(),
+        initialState: const ReferralCreateReady(summary: _summary),
+      );
+      final pending = Completer<bool>();
+      when(() => cubit.impersonalInviteCreated()).thenAnswer((_) => pending.future);
+
+      bool? popped;
+      NavigatorState? hostNavigator;
+      await tester.pumpApp(
+        Builder(
+          builder: (context) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final navigator = Navigator.of(context);
+              hostNavigator = navigator;
+              popped = await navigator.push<bool>(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider<ReferralCubit>.value(
+                    value: cubit,
+                    child: const ReferralCreateView(),
+                  ),
+                ),
+              );
+            });
+            return const SizedBox();
+          },
+        ),
+        locale: const Locale('de'),
+        theme: realUnitTheme,
+      );
+      await tester.pumpAndSettle();
+      if (find.byType(BackButton).evaluate().isNotEmpty) {
+        await tester.tap(find.byType(BackButton));
+      } else {
+        await hostNavigator!.maybePop();
+      }
+      if (find.byType(BackButton).evaluate().isNotEmpty) {
+        await tester.tap(find.byType(BackButton));
+      } else {
+        await hostNavigator!.maybePop();
+      }
+
+      pending.complete(true);
+      await tester.pumpAndSettle();
+
+      expect(popped, isTrue);
+      verify(() => cubit.impersonalInviteCreated()).called(1);
+      expect(find.byType(ReferralCreateView), findsNothing);
+      expect(find.byType(SizedBox), findsOneWidget);
+    },
+  );
 }
