@@ -30,6 +30,16 @@ void main() {
     );
   });
 
+  test('a places body must be a map whose places field is a list', () {
+    expect(payLocationsPlacesBodyIsList({'places': []}), isTrue);
+    expect(payLocationsPlacesBodyIsList({'places': <Object?>[{}]}), isTrue);
+    expect(payLocationsPlacesBodyIsList([]), isFalse);
+    expect(payLocationsPlacesBodyIsList(null), isFalse);
+    expect(payLocationsPlacesBodyIsList(1), isFalse);
+    expect(payLocationsPlacesBodyIsList({'places': <String, Object>{}}), isFalse);
+    expect(payLocationsPlacesBodyIsList(<String, Object>{}), isFalse);
+  });
+
   test('drops a place without a matching support pair', () {
     final pins = keepPayLocationPins(
       {

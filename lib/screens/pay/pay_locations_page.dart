@@ -66,7 +66,13 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         return;
       }
 
-      final choices = parsePayLocationFilters(jsonDecode(response.body));
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map) {
+        _showError(generation);
+        return;
+      }
+
+      final choices = parsePayLocationFilters(decoded);
       if (!mounted || generation != _generation) {
         return;
       }
@@ -99,8 +105,14 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         return;
       }
 
+      final decoded = jsonDecode(response.body);
+      if (!payLocationsPlacesBodyIsList(decoded)) {
+        _showError(generation);
+        return;
+      }
+
       final pins = keepPayLocationPins(
-        jsonDecode(response.body),
+        decoded,
         _blockchain,
         _asset,
       );

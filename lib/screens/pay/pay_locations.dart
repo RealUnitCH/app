@@ -32,6 +32,10 @@ class PayLocationPin {
   });
 }
 
+bool payLocationsPlacesBodyIsList(Object? body) {
+  return body is Map && body['places'] is List;
+}
+
 List<PayLocationPin> keepPayLocationPins(
   Object? body,
   String blockchain,
