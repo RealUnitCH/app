@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
@@ -15,36 +16,29 @@ class PayInfoPage extends StatelessWidget {
 
   const PayInfoPage({super.key, this.initialPayload, this.locationsClient});
 
-  WidgetSpan _payLocationsLink(
+  TextSpan _payLocationsLink(
     BuildContext context, {
     required String text,
     TextStyle? style,
   }) {
-    return WidgetSpan(
-      child: GestureDetector(
-        onTap: () {
+    return TextSpan(
+      text: text,
+      style:
+          style ??
+          const TextStyle(
+            color: RealUnitColors.realUnitBlue,
+            decoration: TextDecoration.underline,
+          ),
+      recognizer: TapGestureRecognizer()
+        ..onTap = () {
+          final client = locationsClient;
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) {
-                final client = locationsClient;
-                if (client == null) {
-                  return const PayLocationsPage();
-                }
-                return PayLocationsPage(httpClient: client);
-              },
+            MaterialPageRoute<void>(
+              builder: (_) =>
+                  client == null ? const PayLocationsPage() : PayLocationsPage(httpClient: client),
             ),
           );
         },
-        child: Text(
-          text,
-          style:
-              style ??
-              const TextStyle(
-                color: RealUnitColors.realUnitBlue,
-                decoration: TextDecoration.underline,
-              ),
-        ),
-      ),
     );
   }
 
