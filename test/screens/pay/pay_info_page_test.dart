@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pay/pay_info_page.dart';
+import 'package:realunit_wallet/screens/pay/pay_locations_page.dart';
 import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
 
 import '../../helper/helper.dart';
@@ -13,6 +15,16 @@ import '../../helper/helper.dart';
 class _BitboxWallet extends Fake implements BitboxWallet {
   @override
   WalletType get walletType => WalletType.bitbox;
+}
+
+class _FakeLocationsClient implements http.Client {
+  @override
+  Future<http.Response> get(Uri url, {Map<String, String>? headers}) async {
+    return http.Response('no', 500);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -33,11 +45,16 @@ void main() {
 
   group('$PayInfoPage', () {
     testWidgets('shows the OpenCryptoPay exchange disclosure', (tester) async {
-      await tester.pumpApp(hosted(const PayInfoPage()));
+      final client = _FakeLocationsClient();
+      await tester.pumpApp(hosted(PayInfoPage(locationsClient: client)));
 
       expect(find.text(S.current.payInfoTitle), findsOneWidget);
       expect(find.text(S.current.payInfoBody), findsOneWidget);
       expect(find.text(S.current.payInfoLocationsLink), findsOneWidget);
+      await tester.tap(find.text(S.current.payInfoLocationsLink));
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(PayLocationsPage), findsOneWidget);
       expect(find.text(S.current.next), findsOneWidget);
       // The approved wording (RealUnit legal, 28.09.2026) states that every payment is a
       // sale of REALU and that the sale is rounded up to whole REALU.
