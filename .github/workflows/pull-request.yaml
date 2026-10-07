@@ -12,9 +12,8 @@ name: RealUnit Build
 #    push-vs-pull_request events, so allowing both would double
 #    macOS-runner load on the release lane for no signal.
 #  - Draft pull requests run these jobs. Marking a pull request ready
-#    does not start CI. `ready_for_review` stays in the trigger list so
-#    a pull request opened before that change still runs when it leaves
-#    draft.
+#    does not start CI. `ready_for_review` is not a trigger, so leaving
+#    draft does not run these jobs a second time.
 #  - `labeled` / `unlabeled` are intentionally omitted: realunit-app has
 #    no label-gated heavy job here (Tier 3 has its own workflow).
 #  - `push: develop` keeps post-merge verification as an authoritative
@@ -28,7 +27,7 @@ on:
     branches: [develop]
   pull_request:
     branches-ignore: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
 
 # Group PR runs by PR number, and push/dispatch runs by ref. A new SHA
 # cancels work for the outdated SHA in the same lane. Staging push

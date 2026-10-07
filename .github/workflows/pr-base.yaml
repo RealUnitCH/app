@@ -17,7 +17,9 @@ name: PR base
 #   repository has to be this one.
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened, ready_for_review]
+    # `edited` stays so a base change is rechecked. `ready_for_review`
+    # is not a trigger: leaving draft must not start this check again.
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
