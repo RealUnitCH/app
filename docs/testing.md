@@ -65,6 +65,7 @@ blocTest<KycCubit, KycState>(
     when(() => kycService.getKycStatus())
         .thenAnswer((_) async => _kycStatus(level: KycLevel.level30));
     when(() => kycService.getUser()).thenAnswer((_) async => _user());
+    when(() => legalService.getLegalInfo()).thenAnswer((_) async => _legalInfo());
     // The cubit re-fetches the server-side registration info after the
     // disclaimer gate and dispatches on its `state` field. Seed
     // `AlreadyRegistered` to fall through to the `processStatus` dispatch
@@ -77,10 +78,7 @@ blocTest<KycCubit, KycState>(
     );
   },
   build: buildCubit,
-  act: (cubit) async {
-    cubit.markLegalDisclaimerAccepted();
-    await cubit.checkKyc();
-  },
+  act: (cubit) => cubit.checkKyc(),
   expect: () => [const KycLoading(), const KycCompleted()],
 );
 ```

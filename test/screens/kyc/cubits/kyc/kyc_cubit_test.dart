@@ -1467,7 +1467,6 @@ void main() {
           final states = <KycState>[];
           final sub = cubit.stream.listen(states.add);
 
-          cubit.markLegalDisclaimerAccepted();
           unawaited(cubit.checkKyc());
           async.flushMicrotasks();
 
