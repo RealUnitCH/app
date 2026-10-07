@@ -1,20 +1,19 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/pay/pay_locations_page.dart';
 import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class PayInfoPage extends StatelessWidget {
   final String? initialPayload;
-  final http.Client? locationsClient;
 
-  const PayInfoPage({super.key, this.initialPayload, this.locationsClient});
+  const PayInfoPage({super.key, this.initialPayload});
 
   TextSpan _payLocationsLink(
     BuildContext context, {
@@ -31,13 +30,7 @@ class PayInfoPage extends StatelessWidget {
           ),
       recognizer: TapGestureRecognizer()
         ..onTap = () {
-          final client = locationsClient;
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) =>
-                  client == null ? const PayLocationsPage() : PayLocationsPage(httpClient: client),
-            ),
-          );
+          GoRouter.of(context).pushNamed(AppRoutes.payLocations);
         },
     );
   }

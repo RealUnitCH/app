@@ -6,7 +6,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class PayLocationsPage extends StatefulWidget {
@@ -52,7 +54,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     if (client != null) {
       return client.get(url);
     }
-    return http.get(url);
+    return getIt<AppStore>().httpClient.get(url);
   }
 
   Future<void> _loadFilters() async {
@@ -173,56 +175,74 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
           padding: const .symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
             children: [
-              Text(
-                S.of(context).payLocationsBlockchain,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              DropdownButton<String>(
-                isExpanded: true,
-                value: _blockchain,
-                items: _blockchains
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 8,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        S.of(context).payLocationsBlockchain,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                    )
-                    .toList(),
-                onChanged: _selectBlockchain,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                S.of(context).payLocationsAsset,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              DropdownButton<String>(
-                isExpanded: true,
-                value: _asset,
-                items: _assets
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
+                      DropdownButton<String>(
+                        isExpanded: true,
+                        value: _blockchain,
+                        items: _blockchains
+                            .map(
+                              (value) => DropdownMenuItem(
+                                value: value,
+                                child: Text(
+                                  value,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: _selectBlockchain,
                       ),
-                    )
-                    .toList(),
-                onChanged: _selectAsset,
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        S.of(context).payLocationsAsset,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      DropdownButton<String>(
+                        isExpanded: true,
+                        value: _asset,
+                        items: _assets
+                            .map(
+                              (value) => DropdownMenuItem(
+                                value: value,
+                                child: Text(
+                                  value,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: _selectAsset,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
               Expanded(child: _buildContent()),
-              if (_selectedPin case final pin?) ...[
-                const SizedBox(height: 12),
-                Text(pin.name, style: Theme.of(context).textTheme.bodyMedium),
-                if (pin.category case final category? when category.isNotEmpty)
-                  Text(category, style: Theme.of(context).textTheme.bodyMedium),
-              ],
+              if (_selectedPin case final pin?)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(pin.name, style: Theme.of(context).textTheme.bodyMedium),
+                    if (pin.category case final category? when category.isNotEmpty)
+                      Text(category, style: Theme.of(context).textTheme.bodyMedium),
+                  ],
+                ),
             ],
           ),
         ),
@@ -270,12 +290,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       options: const MapOptions(
         initialCenter: LatLng(46.8, 8.23),
         initialZoom: 7,
+        backgroundColor: RealUnitColors.neutral100,
       ),
       children: [
-        TileLayer(
-          urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-          userAgentPackageName: 'realunit_wallet',
-        ),
         MarkerLayer(
           markers: _pins
               .map(
@@ -296,12 +313,6 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
                 ),
               )
               .toList(),
-        ),
-        const RichAttributionWidget(
-          attributions: [
-            TextSourceAttribution('OpenStreetMap contributors'),
-            TextSourceAttribution('CARTO'),
-          ],
         ),
       ],
     );
