@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
 
@@ -106,5 +108,29 @@ void main() {
       ['Ethereum'],
     );
     expect(parsePayLocationFilters(null).assets, ['ZCHF']);
+  });
+
+  test('keeps a decoded place whose support pair matches', () {
+    final pins = keepPayLocationPins(
+      jsonDecode(
+        '{"places":[{"name":"Shop","category":"store","lat":47.1,"lon":8.2,'
+        '"supports":[{"blockchain":"Ethereum","asset":"dEURO"}]}]}',
+      ),
+      'Ethereum',
+      'dEURO',
+    );
+
+    expect(pins, hasLength(1));
+    expect(pins.single.name, 'Shop');
+    expect(pins.single.category, 'store');
+  });
+
+  test('reads decoded filter lists', () {
+    final choices = parsePayLocationFilters(
+      jsonDecode('{"blockchains":["Polygon"],"assets":["dEURO"]}'),
+    );
+
+    expect(choices.blockchains, ['Ethereum', 'Polygon']);
+    expect(choices.assets, ['ZCHF', 'dEURO']);
   });
 }

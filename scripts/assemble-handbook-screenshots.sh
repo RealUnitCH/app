@@ -462,6 +462,10 @@ MAPPING=(
   "407-referral-create-impersonal-error=screens/referral/goldens/macos/referral_create_page_impersonal_error.png"
   "408-referral-overview-impersonal=screens/referral/goldens/macos/referral_overview_page_impersonal.png"
   "409-referral-overview-impersonal-one=screens/referral/goldens/macos/referral_overview_page_impersonal_one.png"
+  "410-pay-locations-loading=screens/pay/goldens/macos/pay_locations_page_loading.png"
+  "411-pay-locations-error=screens/pay/goldens/macos/pay_locations_page_error.png"
+  "412-pay-locations-empty=screens/pay/goldens/macos/pay_locations_page_empty.png"
+  "413-pay-locations-places=screens/pay/goldens/macos/pay_locations_page_places.png"
 )
 
 missing=()

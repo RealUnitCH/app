@@ -37,7 +37,7 @@ List<PayLocationPin> keepPayLocationPins(
   String blockchain,
   String asset,
 ) {
-  if (body is! Map<Object?, Object?>) {
+  if (body is! Map) {
     return const [];
   }
 
@@ -48,7 +48,7 @@ List<PayLocationPin> keepPayLocationPins(
 
   final pins = <PayLocationPin>[];
   for (final place in places) {
-    if (place is! Map<Object?, Object?>) {
+    if (place is! Map) {
       continue;
     }
 
@@ -62,9 +62,7 @@ List<PayLocationPin> keepPayLocationPins(
     if (supports is! List ||
         !supports.any(
           (support) =>
-              support is Map<Object?, Object?> &&
-              support['blockchain'] == blockchain &&
-              support['asset'] == asset,
+              support is Map && support['blockchain'] == blockchain && support['asset'] == asset,
         )) {
       continue;
     }
@@ -98,7 +96,7 @@ PayLocationChoices parsePayLocationFilters(Object? body) {
   final blockchains = <String>[];
   final assets = <String>[];
 
-  if (body is Map<Object?, Object?>) {
+  if (body is Map) {
     final rawBlockchains = body['blockchains'];
     if (rawBlockchains is List) {
       blockchains.addAll(rawBlockchains.whereType<String>());

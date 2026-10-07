@@ -1,17 +1,27 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class PayLocationsPage extends StatefulWidget {
-  const PayLocationsPage({super.key, this.mapBuilder, this.httpClient});
+  const PayLocationsPage({
+    super.key,
+    this.mapBuilder,
+    this.httpClient,
+    this.loadOnStart = true,
+  });
 
   final Widget Function(List<PayLocationPin> pins)? mapBuilder;
   final http.Client? httpClient;
+
+  /// False keeps the initial loading frame and does not start a request.
+  final bool loadOnStart;
 
   @override
   State<PayLocationsPage> createState() => _PayLocationsPageState();
@@ -32,7 +42,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   @override
   void initState() {
     super.initState();
-    _loadFilters();
+    if (widget.loadOnStart) {
+      _loadFilters();
+    }
   }
 
   Future<http.Response> _get(Uri url) {
@@ -156,48 +168,63 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).payLocationsTitle)),
-      body: Padding(
-        padding: const .symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(S.of(context).payLocationsBlockchain),
-            DropdownButton<String>(
-              isExpanded: true,
-              value: _blockchain,
-              items: _blockchains
-                  .map(
-                    (value) => DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    ),
-                  )
-                  .toList(),
-              onChanged: _selectBlockchain,
-            ),
-            const SizedBox(height: 8),
-            Text(S.of(context).payLocationsAsset),
-            DropdownButton<String>(
-              isExpanded: true,
-              value: _asset,
-              items: _assets
-                  .map(
-                    (value) => DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    ),
-                  )
-                  .toList(),
-              onChanged: _selectAsset,
-            ),
-            const SizedBox(height: 12),
-            Expanded(child: _buildContent()),
-            if (_selectedPin case final pin?) ...[
+      body: SafeArea(
+        child: Padding(
+          padding: const .symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                S.of(context).payLocationsBlockchain,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              DropdownButton<String>(
+                isExpanded: true,
+                value: _blockchain,
+                items: _blockchains
+                    .map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _selectBlockchain,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                S.of(context).payLocationsAsset,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              DropdownButton<String>(
+                isExpanded: true,
+                value: _asset,
+                items: _assets
+                    .map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _selectAsset,
+              ),
               const SizedBox(height: 12),
-              Text(pin.name),
-              if (pin.category case final category? when category.isNotEmpty) Text(category),
+              Expanded(child: _buildContent()),
+              if (_selectedPin case final pin?) ...[
+                const SizedBox(height: 12),
+                Text(pin.name, style: Theme.of(context).textTheme.bodyMedium),
+                if (pin.category case final category? when category.isNotEmpty)
+                  Text(category, style: Theme.of(context).textTheme.bodyMedium),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -205,10 +232,16 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
 
   Widget _buildContent() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CupertinoActivityIndicator());
     }
     if (_error) {
-      return Center(child: Text(S.of(context).payLocationsError));
+      return Center(
+        child: Text(
+          S.of(context).payLocationsError,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: RealUnitColors.neutral500),
+        ),
+      );
     }
 
     final map = widget.mapBuilder?.call(_pins) ?? _buildMap();
@@ -220,7 +253,11 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
             child: Card(
               child: Padding(
                 padding: const .all(12),
-                child: Text(S.of(context).payLocationsEmpty),
+                child: Text(
+                  S.of(context).payLocationsEmpty,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
             ),
           ),
@@ -250,9 +287,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
                     onTap: () => setState(() => _selectedPin = pin),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD23B3B),
+                        color: RealUnitColors.status.red600,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: RealUnitColors.basic.white, width: 2),
                       ),
                     ),
                   ),
