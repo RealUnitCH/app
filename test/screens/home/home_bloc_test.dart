@@ -26,6 +26,8 @@ class _MockBitboxService extends Mock implements BitboxService {}
 
 class _MockSessionCache extends Mock implements SessionCache {}
 
+class _MockBitboxWallet extends Mock implements BitboxWallet {}
+
 class _FakeWallet extends Fake implements AWallet {}
 
 const _debugAddress = '0x0000000000000000000000000000000000000001';
@@ -39,6 +41,7 @@ void main() {
   late _MockAppStore appStore;
   late _MockBitboxService bitboxService;
   late _MockSessionCache sessionCache;
+  late int resetDevicePinCalls;
 
   setUpAll(() {
     registerFallbackValue(_FakeWallet());
@@ -55,6 +58,7 @@ void main() {
     appStore = _MockAppStore();
     bitboxService = _MockBitboxService();
     sessionCache = _MockSessionCache();
+    resetDevicePinCalls = 0;
 
     // Sensible defaults so the auto-fired CheckWalletExistsEvent doesn't crash
     // and the AppStore-driven side effects (`primaryAddress`, `sessionCache`,
@@ -83,6 +87,9 @@ void main() {
     settingsService,
     appStore,
     bitboxService,
+    () async {
+      resetDevicePinCalls++;
+    },
   );
 
   group('$HomeBloc', () {
@@ -434,6 +441,7 @@ void main() {
         verify(() => sessionCache.clear()).called(1);
         verify(() => walletService.deleteCurrentWallet()).called(1);
         verify(() => settingsService.setTermsAccepted(false)).called(1);
+        expect(resetDevicePinCalls, 1);
       });
 
       test('with no wallet → still clears session, does NOT call deleteCurrentWallet', () async {
@@ -453,6 +461,7 @@ void main() {
         // termsAccepted is NOT cleared again (it was never true to begin with).
         verifyNever(() => walletService.deleteCurrentWallet());
         verifyNever(() => settingsService.setTermsAccepted(false));
+        expect(resetDevicePinCalls, 1);
       });
 
       test('preserves softwareTermsAccepted in the final HomeState', () async {
@@ -471,6 +480,8 @@ void main() {
         // disclaimer, deleting the wallet must not force them to accept it
         // again.
         expect(bloc.state.softwareTermsAccepted, isTrue);
+        verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+        expect(resetDevicePinCalls, 1);
       });
 
       test('when another wallet remains, loads it and keeps terms and deeplink', () async {
@@ -498,6 +509,35 @@ void main() {
         expect(peekPendingPaymentDeeplink(), isNotNull);
         verify(() => balanceService.updateBalance(_primary)).called(1);
         verify(() => balanceService.startSync(_primary)).called(1);
+        verifyNever(() => bitboxService.stopConnectionStatusObserver());
+        expect(resetDevicePinCalls, 0);
+        await bloc.close();
+      });
+
+      test('stops the observer when the deleted wallet is a BitBox and another remains', () async {
+        final deleted = _MockBitboxWallet();
+        when(() => deleted.walletType).thenReturn(WalletType.bitbox);
+        when(() => deleted.id).thenReturn(1);
+        final remaining = SoftwareViewWallet(2, 'Software', _debugAddress);
+        when(() => walletService.hasWallet()).thenReturn(true);
+        when(() => walletService.getCurrentWallet()).thenAnswer((_) async => deleted);
+        when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async => 2);
+        when(() => walletService.getWalletById(2)).thenAnswer((_) async => remaining);
+        when(() => settingsService.isSoftwareTermsAccepted).thenReturn(true);
+        when(() => settingsService.isTermsAccepted).thenReturn(true);
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => s.hasWallet);
+        bloc.add(const LoadCurrentWalletEvent());
+        await bloc.stream.firstWhere((s) => s.openWallet == deleted);
+
+        bloc.add(const DeleteCurrentWalletEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.openWallet == remaining && s.hasWallet && !s.isLoadingWallet,
+        );
+
+        verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+        expect(resetDevicePinCalls, 0);
         await bloc.close();
       });
 
@@ -514,6 +554,8 @@ void main() {
         );
 
         expect(peekPendingPaymentDeeplink(), isNull);
+        verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+        expect(resetDevicePinCalls, 1);
       });
     });
 

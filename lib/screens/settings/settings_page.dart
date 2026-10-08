@@ -10,7 +10,6 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_eligibility_cubit.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_eligibility_resume.dart';
@@ -250,12 +249,9 @@ class SettingsPage extends StatelessWidget {
                       if (isLogout ?? false) {
                         await Future.delayed(const Duration(milliseconds: 300));
                         if (context.mounted) {
-                          await context.read<PinAuthCubit>().reset();
-                          if (context.mounted) {
-                            context.read<HomeBloc>().add(
-                              const DeleteCurrentWalletEvent(),
-                            );
-                          }
+                          context.read<HomeBloc>().add(
+                            const DeleteCurrentWalletEvent(),
+                          );
                         }
                       }
                     },

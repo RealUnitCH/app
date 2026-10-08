@@ -479,6 +479,23 @@ MAPPING=(
   "424-move-balance-failure=screens/hardware_wallet/goldens/macos/move_balance_page_failure.png"
   "425-pay-info-pay-unavailable=screens/pay/goldens/macos/pay_info_page_pay_unavailable.png"
   "425-hardware-wallet-paired=screens/hardware_wallet/goldens/macos/hardware_wallet_paired_page.png"
+  "426-move-balance-quote-fee=screens/hardware_wallet/goldens/macos/move_balance_quote_fee.png"
+  "427-move-balance-quote-eth=screens/hardware_wallet/goldens/macos/move_balance_quote_eth.png"
+  "428-move-balance-need-eth=screens/hardware_wallet/goldens/macos/move_balance_need_eth.png"
+  "429-move-balance-failure-retry=screens/hardware_wallet/goldens/macos/move_balance_failure_retry.png"
+  "430-move-balance-wallets-missing=screens/hardware_wallet/goldens/macos/move_balance_wallets_missing.png"
+  "431-move-balance-software-empty=screens/hardware_wallet/goldens/macos/move_balance_software_empty.png"
+  "432-move-balance-bitbox-empty=screens/hardware_wallet/goldens/macos/move_balance_bitbox_empty.png"
+  "433-move-balance-fee-exceeds=screens/hardware_wallet/goldens/macos/move_balance_fee_exceeds.png"
+  "434-move-balance-no-quote=screens/hardware_wallet/goldens/macos/move_balance_no_quote.png"
+  "435-move-balance-quote-mismatch=screens/hardware_wallet/goldens/macos/move_balance_quote_mismatch.png"
+  "436-move-balance-success=screens/hardware_wallet/goldens/macos/move_balance_success.png"
+  "437-move-balance-registration-required=screens/hardware_wallet/goldens/macos/move_balance_registration_required.png"
+  "438-move-balance-loading=screens/hardware_wallet/goldens/macos/move_balance_loading.png"
+  "439-move-balance-confirming=screens/hardware_wallet/goldens/macos/move_balance_confirming.png"
+  "440-settings-hardware-wallet=screens/settings/goldens/macos/settings_hardware_wallet_row.png"
+  "441-settings-move-balance=screens/settings/goldens/macos/settings_move_balance_row.png"
+  "442-dashboard-wallet-switcher=screens/dashboard/goldens/macos/dashboard_wallet_switcher.png"
 )
 
 missing=()

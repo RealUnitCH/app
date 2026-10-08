@@ -24,6 +24,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     this._settingsService,
     this._appStore,
     this._bitboxService,
+    this.resetDevicePin,
   ) : super(const HomeState()) {
     on<CheckWalletExistsEvent>(_onCheckWalletExists);
     on<LoadCurrentWalletEvent>(_onLoadCurrentWallet);
@@ -46,6 +47,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final SettingsService _settingsService;
   final AppStore _appStore;
   final BitboxService _bitboxService;
+  final Future<void> Function() resetDevicePin;
 
   void _onCheckWalletExists(CheckWalletExistsEvent event, Emitter<HomeState> emit) {
     final hasWallet = _walletService.hasWallet();
@@ -119,8 +121,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     emit(state.copyWith(isLoadingWallet: true));
 
-    _bitboxService.stopConnectionStatusObserver();
+    final deletedIsBitbox = state.openWallet?.walletType == WalletType.bitbox;
     await _appStore.sessionCache.clear();
+    if (deletedIsBitbox) {
+      _bitboxService.stopConnectionStatusObserver();
+    }
     if (_walletService.hasWallet()) {
       final remainingId = await _walletService.deleteCurrentWallet();
       if (remainingId != null) {
@@ -140,9 +145,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       }
       _settingsService.setTermsAccepted(false);
     }
+    if (!deletedIsBitbox) {
+      _bitboxService.stopConnectionStatusObserver();
+    }
+    await resetDevicePin();
     // Drop any stashed payment deeplink so it cannot replay into a re-onboarded
     // wallet. Covers every DeleteCurrentWalletEvent path (settings delete and
-    // BitBox recovery cancel), including those that never call PinAuthCubit.reset().
+    // BitBox recovery cancel).
     clearPendingPaymentDeeplink();
     // A pending referral code must not be credited to the next wallet either;
     // unlike the deeplink that binding cannot be undone.

@@ -40,13 +40,22 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  late final Future<List<AWallet>> _wallets = getIt<WalletService>().listWallets();
+  Future<List<AWallet>>? _wallets;
+  int? _walletsOpenWalletId;
+  var _hasWalletsFuture = false;
 
   @override
   Widget build(BuildContext context) {
     final networkMode = context.watch<SettingsBloc>().state.networkMode;
-    final address = context.watch<HomeBloc>().state.openWallet
-        ?.currentAccount.primaryAddress.address.hex;
+    final openWallet = context.watch<HomeBloc>().state.openWallet;
+    final address = openWallet?.currentAccount.primaryAddress.address.hex;
+    final openWalletId = openWallet?.id;
+    // Replace the list future when the open wallet id changes so a deleted row cannot stay cached.
+    if (!_hasWalletsFuture || _walletsOpenWalletId != openWalletId) {
+      _wallets = getIt<WalletService>().listWallets();
+      _walletsOpenWalletId = openWalletId;
+      _hasWalletsFuture = true;
+    }
 
     return FutureBuilder<List<AWallet>>(
       future: _wallets,
@@ -279,8 +288,7 @@ class _DashboardTitle extends StatelessWidget {
             : S.of(context).walletSwitcherBitbox;
         return Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           ),
         );

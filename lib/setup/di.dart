@@ -294,6 +294,7 @@ Future<void> setupBlocs() async {
       getIt<SettingsService>(),
       getIt<AppStore>(),
       getIt<BitboxService>(),
+      () => getIt<PinAuthCubit>().reset(),
     ),
     dispose: (bloc) => bloc.close(),
   );

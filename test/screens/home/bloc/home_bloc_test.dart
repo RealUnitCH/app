@@ -26,6 +26,8 @@ class _MockBitboxService extends Mock implements BitboxService {}
 
 class _MockSessionCache extends Mock implements SessionCache {}
 
+class _MockBitboxWallet extends Mock implements BitboxWallet {}
+
 class _FakeWallet extends Fake implements AWallet {}
 
 const _debugAddress = '0x0000000000000000000000000000000000000001';
@@ -39,6 +41,7 @@ void main() {
   late _MockAppStore appStore;
   late _MockBitboxService bitboxService;
   late _MockSessionCache sessionCache;
+  late int resetDevicePinCalls;
 
   setUpAll(() {
     registerFallbackValue(_FakeWallet());
@@ -53,6 +56,7 @@ void main() {
     appStore = _MockAppStore();
     bitboxService = _MockBitboxService();
     sessionCache = _MockSessionCache();
+    resetDevicePinCalls = 0;
 
     when(() => walletService.hasWallet()).thenReturn(true);
     when(() => walletService.currentWalletNeedsAddressRecovery()).thenAnswer((_) async => false);
@@ -75,6 +79,9 @@ void main() {
     settingsService,
     appStore,
     bitboxService,
+    () async {
+      resetDevicePinCalls++;
+    },
   );
 
   group('SwitchWalletEvent', () {
@@ -119,6 +126,84 @@ void main() {
       expect(bloc.state.openWallet, same(remaining));
       verifyNever(() => settingsService.setTermsAccepted(false));
       expect(peekPendingPaymentDeeplink(), isNotNull);
+      verifyNever(() => bitboxService.stopConnectionStatusObserver());
+      expect(resetDevicePinCalls, 0);
+      await bloc.close();
+    });
+
+    test('does not reset the device PIN when another wallet remains', () async {
+      final remaining = DebugWallet(2, 'BitBox', _debugAddress);
+      when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async => 2);
+      when(() => walletService.getWalletById(2)).thenAnswer((_) async => remaining);
+
+      final bloc = build();
+      await bloc.stream.firstWhere((s) => s.hasWallet);
+
+      bloc.add(const DeleteCurrentWalletEvent());
+      await bloc.stream.firstWhere(
+        (s) => s.openWallet == remaining && s.hasWallet && !s.isLoadingWallet,
+      );
+
+      expect(resetDevicePinCalls, 0);
+      verifyNever(() => bitboxService.stopConnectionStatusObserver());
+      await bloc.close();
+    });
+
+    test('stops the BitBox observer when the deleted wallet is a BitBox and another remains', () async {
+      final deleted = _MockBitboxWallet();
+      when(() => deleted.walletType).thenReturn(WalletType.bitbox);
+      when(() => deleted.id).thenReturn(1);
+      final remaining = SoftwareViewWallet(2, 'Software', _debugAddress);
+      when(() => walletService.getCurrentWallet()).thenAnswer((_) async => deleted);
+      when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async => 2);
+      when(() => walletService.getWalletById(2)).thenAnswer((_) async => remaining);
+
+      final bloc = build();
+      await bloc.stream.firstWhere((s) => s.hasWallet);
+      bloc.add(const LoadCurrentWalletEvent());
+      await bloc.stream.firstWhere((s) => s.openWallet == deleted);
+
+      bloc.add(const DeleteCurrentWalletEvent());
+      await bloc.stream.firstWhere(
+        (s) => s.openWallet == remaining && s.hasWallet && !s.isLoadingWallet,
+      );
+
+      verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+      expect(resetDevicePinCalls, 0);
+      await bloc.close();
+    });
+
+    test('resets the device PIN once when the last wallet is deleted', () async {
+      when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async => null);
+
+      final bloc = build();
+      await bloc.stream.firstWhere((s) => s.hasWallet);
+
+      bloc.add(const DeleteCurrentWalletEvent());
+      await bloc.stream.firstWhere(
+        (s) => s.isLoadingWallet == false && s.hasWallet == false,
+      );
+
+      expect(bloc.state.hasWallet, isFalse);
+      verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+      expect(resetDevicePinCalls, 1);
+      await bloc.close();
+    });
+
+    test('resets the device PIN once when no wallet is present', () async {
+      when(() => walletService.hasWallet()).thenReturn(false);
+
+      final bloc = build();
+      await bloc.stream.firstWhere((s) => s.hasWallet == false);
+
+      bloc.add(const DeleteCurrentWalletEvent());
+      await bloc.stream.firstWhere(
+        (s) => s.isLoadingWallet == false && s.hasWallet == false,
+      );
+
+      verifyNever(() => walletService.deleteCurrentWallet());
+      verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+      expect(resetDevicePinCalls, 1);
       await bloc.close();
     });
   });
