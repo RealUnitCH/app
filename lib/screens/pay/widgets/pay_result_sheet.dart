@@ -54,22 +54,14 @@ class PayResultSheet extends StatelessWidget {
                     const SizedBox(height: 28),
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        height: 30 / 26,
-                        letterSpacing: 26 * -0.02,
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       description,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: RealUnitColors.neutral500,
-                        fontSize: 14,
-                        height: 18 / 14,
-                        letterSpacing: 0.0,
                       ),
                     ),
                   ],
@@ -89,24 +81,42 @@ class PayResultSheet extends StatelessWidget {
                 else
                   Padding(
                     padding: const EdgeInsets.only(top: 28),
-                    child: Row(
-                      spacing: 12,
-                      children: [
-                        Expanded(
-                          child: AppFilledButton(
-                            variant: FilledButtonVariant.secondary,
-                            onPressed: onClose,
-                            label: closeLabel,
+                    // At text scale 3 a half-width button grows taller than the sheet.
+                    // The matrix test requires that button to stay fully inside it.
+                    child: MediaQuery.textScalerOf(context).scale(1) >= 3
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 12,
+                            children: [
+                              AppFilledButton(
+                                variant: FilledButtonVariant.secondary,
+                                onPressed: onClose,
+                                label: closeLabel,
+                              ),
+                              AppFilledButton(
+                                onPressed: onPrimary,
+                                label: primaryLabel!,
+                              ),
+                            ],
+                          )
+                        : Row(
+                            spacing: 12,
+                            children: [
+                              Expanded(
+                                child: AppFilledButton(
+                                  variant: FilledButtonVariant.secondary,
+                                  onPressed: onClose,
+                                  label: closeLabel,
+                                ),
+                              ),
+                              Expanded(
+                                child: AppFilledButton(
+                                  onPressed: onPrimary,
+                                  label: primaryLabel!,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        Expanded(
-                          child: AppFilledButton(
-                            onPressed: onPrimary,
-                            label: primaryLabel!,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
               ],
             ),
