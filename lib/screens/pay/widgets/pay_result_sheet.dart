@@ -62,6 +62,7 @@ class PayResultSheet extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: RealUnitColors.neutral500,
+                        letterSpacing: 0.0,
                       ),
                     ),
                   ],
