@@ -87,7 +87,8 @@ void main() {
                 name: AppRoutes.transactionDetail,
                 path: 'transactionDetail',
                 builder: (_, state) {
-                  final extra = state.extra as PendingTransactionDetailArgs;
+                  final extra = state.extra as PendingTransactionDetailArgs?;
+                  if (extra == null) fail('Pending transaction detail route requires arguments');
                   return PendingTransactionDetailPage(args: extra);
                 },
               ),

@@ -151,7 +151,7 @@ class TransactionHistoryService extends DFXAuthService {
       if (hashKey != null && !seenHashes.add(hashKey)) continue;
       var txId = hashKey ?? 'referral-payout-${payout.id}';
       final storedTxId = await _transactionRepository.findTxIdIgnoreCase(txId);
-      var exists = storedTxId != null;
+      final exists = storedTxId != null;
       if (storedTxId != null) txId = storedTxId;
       final synthetic = payout.id != 0 ? 'referral-payout-${payout.id}' : null;
       if (hashKey != null && synthetic != null && txId != synthetic) {

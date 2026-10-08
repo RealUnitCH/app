@@ -186,9 +186,10 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.buyPaymentDetails,
       path: '/buyPaymentDetails',
-      builder: (_, state) => BuyPaymentDetailsPage(
-        params: state.extra as BuyPaymentDetailsParams,
-      ),
+      builder: (_, state) {
+        final params = state.extra! as BuyPaymentDetailsParams;
+        return BuyPaymentDetailsPage(params: params);
+      },
     ),
 
     GoRoute(
@@ -206,9 +207,10 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.pay,
       path: '/pay',
-      builder: (_, state) => PayInfoPage(
-        initialPayload: state.extra is String ? state.extra as String : null,
-      ),
+      builder: (_, state) {
+        final extra = state.extra;
+        return PayInfoPage(initialPayload: extra is String ? extra : null);
+      },
     ),
 
     GoRoute(
@@ -332,7 +334,7 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.changePin,
           path: 'security/changePin',
           builder: (_, state) {
-            final params = state.extra as ChangePinParams;
+            final params = state.extra! as ChangePinParams;
             return SetupPinPage(
               promptBiometrics: false,
               onCompleted: params.onCompleted,

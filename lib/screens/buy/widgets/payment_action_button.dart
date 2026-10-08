@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -175,9 +177,11 @@ class PaymentActionButton extends StatelessWidget {
                       final paymentInfoCubit = context.read<BuyPaymentInfoCubit>();
                       final converterCubit = context.read<BuyConverterCubit>();
                       await showBitboxReconnectSheet(context);
-                      paymentInfoCubit.getPaymentInfo(
-                        amount: converterCubit.state.quoteAmountText,
-                        currency: converterCubit.state.currency,
+                      unawaited(
+                        paymentInfoCubit.getPaymentInfo(
+                          amount: converterCubit.state.quoteAmountText,
+                          currency: converterCubit.state.currency,
+                        ),
                       );
                     },
                     label: S.of(context).bitboxReconnect,

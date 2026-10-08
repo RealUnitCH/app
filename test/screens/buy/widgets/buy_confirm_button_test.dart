@@ -189,9 +189,11 @@ void main() {
             GoRoute(
               name: AppRoutes.buyPaymentDetails,
               path: '/buyPaymentDetails',
-              builder: (_, state) => BuyPaymentDetailsPage(
-                params: state.extra as BuyPaymentDetailsParams,
-              ),
+              builder: (_, state) {
+                final params = state.extra as BuyPaymentDetailsParams?;
+                if (params == null) fail('Buy payment details route requires parameters');
+                return BuyPaymentDetailsPage(params: params);
+              },
             ),
           ],
         );

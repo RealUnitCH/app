@@ -61,7 +61,7 @@ class TransactionRepository {
     } finally {
       mine.complete();
       if (identical(_insertTxLocks[key], mine.future)) {
-        _insertTxLocks.remove(key);
+        unawaited(_insertTxLocks.remove(key));
       }
     }
   }

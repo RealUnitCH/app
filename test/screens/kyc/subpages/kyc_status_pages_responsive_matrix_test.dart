@@ -5,6 +5,8 @@
 // This is the regression lock for the dead-CTA bug: long DE copy + high
 // textScale + Column(Spacer/copy/button/Spacer) with no scroll view overflowed
 // the Scaffold body so the button painted outside the hit-testable region.
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -166,7 +168,7 @@ void main() {
     );
     await tester.pump();
 
-    router.push('/completed');
+    unawaited(router.push('/completed'));
     await tester.pumpAndSettle();
 
     return router;

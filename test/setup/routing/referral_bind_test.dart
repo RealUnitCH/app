@@ -341,7 +341,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    router.push('/kyc');
+    unawaited(router.push('/kyc'));
     await tester.pumpAndSettle();
     await stashPendingReferralCode('AB12CD');
     router.pop();
@@ -369,7 +369,7 @@ void main() {
     );
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
-    router.push('/kyc');
+    unawaited(router.push('/kyc'));
     await tester.pumpAndSettle();
     await stashPendingReferralCode('AB12CD');
 
@@ -403,9 +403,9 @@ void main() {
     );
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
-    router.push('/kyc');
+    unawaited(router.push('/kyc'));
     await tester.pumpAndSettle();
-    router.push('/pay');
+    unawaited(router.push('/pay'));
     await tester.pumpAndSettle();
     await stashPendingReferralCode('AB12CD');
 
