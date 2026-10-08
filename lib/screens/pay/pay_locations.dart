@@ -61,10 +61,13 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
     }
 
     final name = place['name'];
+    if (name is! String || name.trim().isEmpty) {
+      continue;
+    }
     final category = place['category'];
     pins.add(
       PayLocationPin(
-        name: name is String ? name : '',
+        name: name.trim(),
         category: category is String ? category : null,
         lat: lat,
         lon: lon,

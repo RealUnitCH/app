@@ -94,7 +94,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   Future<void> _loadPlaces() async {
     final generation = ++_generation;
     try {
-      final response = await _get(Uri.parse(payLocationsPlacesUrl));
+      final response = await _get(
+        Uri.parse(payLocationsPlacesUrl),
+      ).timeout(const Duration(seconds: 20));
       if (response.statusCode != 200) {
         _showError(generation);
         return;
@@ -250,14 +252,17 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(flex: 3, child: _buildMapFrame(visible)),
-        const SizedBox(height: 12),
-        _searchField(context),
-        const SizedBox(height: 8),
-        Text(
-          _countLabel(context, visible.length),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        Padding(
+          padding: const .only(top: 12, bottom: 8),
+          child: _searchField(context),
         ),
-        const SizedBox(height: 4),
+        Padding(
+          padding: const .only(bottom: 4),
+          child: Text(
+            _countLabel(context, visible.length),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
         Expanded(flex: 2, child: _shopList(context, visible)),
       ],
     );

@@ -68,6 +68,21 @@ void main() {
     expect(pins, isEmpty);
   });
 
+  test('drops a place without a usable name', () {
+    final pins = keepPayLocationPins({
+      'places': [
+        {'lat': 47, 'lon': 8},
+        {'name': '', 'lat': 47.1, 'lon': 8.1},
+        {'name': '   ', 'lat': 47.2, 'lon': 8.2},
+        {'name': 12, 'lat': 47.3, 'lon': 8.3},
+        {'name': ' SPAR ', 'lat': 47.4, 'lon': 8.4},
+      ],
+    });
+
+    expect(pins, hasLength(1));
+    expect(pins.single.name, 'SPAR');
+  });
+
   test('keeps a published place that omits supports', () {
     final pins = keepPayLocationPins({
       'places': [
