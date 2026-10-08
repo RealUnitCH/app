@@ -32,8 +32,7 @@ class _MockBitboxService extends Mock implements BitboxService {}
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
-class _MockMoveBalanceCubit extends MockCubit<MoveBalanceState>
-    implements MoveBalanceCubit {}
+class _MockMoveBalanceCubit extends MockCubit<MoveBalanceState> implements MoveBalanceCubit {}
 
 const _softwareAddress = '0x0000000000000000000000000000000000000001';
 
@@ -325,6 +324,22 @@ void main() {
         });
       });
     }
+  });
+
+  testWidgets('software confirm retry does not offer BitBox registration', (tester) async {
+    await withTargetPlatform(TargetPlatform.android, () async {
+      stubMoveState(
+        const MoveBalanceFailure(
+          'relay failed',
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
+      );
+      await pumpScreen(tester, moveBalancePage(), kFullResponsiveMatrix.first);
+      expect(_stickyActions(), findsOneWidget);
+      expect(find.text('BitBox-Adresse registrieren'), findsNothing);
+      expect(find.text('Register BitBox address'), findsNothing);
+    });
   });
 
   group('MoveBalanceView failure register-only responsive matrix (full device × textScale)', () {

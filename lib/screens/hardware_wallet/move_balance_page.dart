@@ -95,11 +95,12 @@ class MoveBalanceView extends StatelessWidget {
     if (state is MoveBalanceFailure && state.canRetry) {
       return [
         AppFilledButton(label: s.retry, onPressed: cubit.confirm),
-        AppFilledButton(
-          label: s.hardwareWalletRegisterAddress,
-          variant: FilledButtonVariant.secondary,
-          onPressed: () => registerBitboxAddress(context),
-        ),
+        if (state.direction != MoveBalanceDirection.softwareToBitbox)
+          AppFilledButton(
+            label: s.hardwareWalletRegisterAddress,
+            variant: FilledButtonVariant.secondary,
+            onPressed: () => registerBitboxAddress(context),
+          ),
       ];
     }
     if (state is MoveBalanceFailure && state.reason == null) {

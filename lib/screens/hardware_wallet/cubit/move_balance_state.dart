@@ -102,13 +102,15 @@ class MoveBalanceFailure extends MoveBalanceState {
   final String message;
   final bool canRetry;
   final MoveBalanceFailureReason? reason;
+  final MoveBalanceDirection? direction;
 
   const MoveBalanceFailure(
     this.message, {
     this.canRetry = false,
     this.reason,
+    this.direction,
   });
 
   @override
-  List<Object?> get props => [message, canRetry, reason];
+  List<Object?> get props => [message, canRetry, reason, direction];
 }

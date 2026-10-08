@@ -230,6 +230,11 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       if (isClosed) {
         return;
       }
+      if (quote.amount != _bitboxBalance ||
+          quote.toAddress.toLowerCase() != _addressOf(software).toLowerCase()) {
+        _emitLocalFailure(MoveBalanceFailureReason.quoteMismatch);
+        return;
+      }
       _direction = MoveBalanceDirection.bitboxToSoftware;
       _hardwareQuote = quote;
       _softwareQuote = null;
@@ -288,7 +293,8 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   Future<void> _confirmSoftwareToBitbox() async {
     final quote = _softwareQuote;
     final bitbox = _bitbox;
-    if (quote == null || bitbox == null) {
+    final software = _software;
+    if (quote == null || bitbox == null || software == null) {
       emit(
         const MoveBalanceFailure(
           '',
@@ -300,6 +306,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     _confirmInFlight = true;
     try {
       emit(const MoveBalanceConfirming());
+      await _switchTo(software.id);
       _confirmSent = true;
       await _transferService.confirmTransfer(
         quote,
@@ -323,10 +330,20 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     } on RegistrationRequiredException catch (e) {
       _emitUnlessClosed(MoveBalanceRegistrationRequired(e.message));
     } on ApiException catch (e) {
-      _emitUnlessClosed(MoveBalanceFailure(e.message, canRetry: true));
+      _emitUnlessClosed(
+        MoveBalanceFailure(
+          e.message,
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
+      );
     } catch (e) {
       _emitUnlessClosed(
-        MoveBalanceFailure(ApiException.userFacingMessage(e), canRetry: true),
+        MoveBalanceFailure(
+          ApiException.userFacingMessage(e),
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
       );
     } finally {
       _confirmInFlight = false;

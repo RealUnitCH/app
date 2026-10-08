@@ -468,7 +468,15 @@ void main() {
       await cubit.load();
       await cubit.prepareSoftwareToBitbox();
       await cubit.confirm();
-      expect(cubit.state, const MoveBalanceFailure('relay failed', canRetry: true));
+      expect(
+        cubit.state,
+        const MoveBalanceFailure(
+          'relay failed',
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
+      );
+      verify(() => walletService.switchCurrentWallet(1)).called(2);
       await cubit.prepareSoftwareToBitbox();
       verify(() => transfer.prepareTransfer(any())).called(2);
       await cubit.confirm();
@@ -530,6 +538,59 @@ void main() {
       expect(state.amount, 5);
       expect(state.ethPaysGas, isTrue);
       expect(state.networkFeeRealu, 0);
+      await cubit.close();
+    });
+
+    test('a quote for a different amount is quoteMismatch and is not kept', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '02aabb',
+          toAddress: _softwareAddr,
+          amount: 4,
+        ),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      expect(
+        cubit.state,
+        const MoveBalanceFailure('', reason: MoveBalanceFailureReason.quoteMismatch),
+      );
+      await cubit.confirm();
+      verifyNever(() => hardware.broadcastTransfer(any()));
+      await cubit.close();
+    });
+
+    test('a quote for a different recipient is quoteMismatch', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '02aabb',
+          toAddress: _bitboxAddr,
+          amount: 5,
+        ),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      expect(
+        cubit.state,
+        const MoveBalanceFailure('', reason: MoveBalanceFailureReason.quoteMismatch),
+      );
+      await cubit.close();
+    });
+
+    test('a checksummed recipient still accepts the quote', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '02aabb',
+          toAddress: _softwareAddr.toUpperCase(),
+          amount: 5,
+        ),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      expect(cubit.state, isA<MoveBalanceQuoteReady>());
       await cubit.close();
     });
 
@@ -842,9 +903,23 @@ void main() {
       await cubit.load();
       await cubit.prepareSoftwareToBitbox();
       await cubit.confirm();
-      expect(cubit.state, const MoveBalanceFailure('relay failed', canRetry: true));
+      expect(
+        cubit.state,
+        const MoveBalanceFailure(
+          'relay failed',
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
+      );
       await cubit.prepareBitboxToSoftware();
-      expect(cubit.state, const MoveBalanceFailure('relay failed', canRetry: true));
+      expect(
+        cubit.state,
+        const MoveBalanceFailure(
+          'relay failed',
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
+      );
       verifyNever(() => hardware.prepareTransfer(any()));
       verifyNever(() => walletService.switchCurrentWallet(2));
       await cubit.confirm();
