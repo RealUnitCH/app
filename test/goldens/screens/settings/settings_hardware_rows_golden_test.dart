@@ -102,7 +102,7 @@ void main() {
 
   group('$SettingsPage hardware rows', () {
     goldenTest(
-      'hardware-wallet row when software balance is positive and no BitBox is paired',
+      'hardware-wallet row when no BitBox is paired',
       fileName: 'settings_hardware_wallet_row',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () {

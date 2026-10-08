@@ -189,32 +189,27 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       );
       return;
     }
-    if (_bitboxBalance < 1) {
-      // The 0 REALU button stays next to a software quote. Leave that quote.
-      if (_softwareQuote != null) {
+    try {
+      // The load() cache is not the decision. A later credit must still move,
+      // and a still-empty BitBox must not drop a software quote.
+      _bitboxBalance = await _sharesFor(bitbox);
+      if (isClosed) {
         return;
       }
-      emit(
-        const MoveBalanceFailure(
-          '',
-          reason: MoveBalanceFailureReason.bitboxEmpty,
-        ),
-      );
-      return;
-    }
-    // A failed prepare must not leave a software quote that Retry would confirm.
-    _dropPendingMove();
-    emit(const MoveBalanceLoading());
-    try {
+      if (_bitboxBalance < 1) {
+        if (_softwareQuote != null) {
+          return;
+        }
+        _emitLocalFailure(MoveBalanceFailureReason.bitboxEmpty);
+        return;
+      }
+      // A failed prepare must not leave a software quote that Retry would confirm.
+      _dropPendingMove();
+      emit(const MoveBalanceLoading());
       await _switchTo(bitbox.id);
       final credentials = _appStore.wallet.currentAccount.primaryAddress;
       if (credentials is! BitboxCredentials || !credentials.isConnected) {
         emit(const MoveBalanceDisconnected());
-        return;
-      }
-      _bitboxBalance = await _sharesFor(bitbox);
-      if (_bitboxBalance < 1) {
-        _emitLocalFailure(MoveBalanceFailureReason.bitboxEmpty);
         return;
       }
       final quote = await _hardwareTransferService.prepareTransfer(

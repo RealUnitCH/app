@@ -3,19 +3,9 @@ import 'package:realunit_wallet/screens/settings/settings_page.dart';
 
 void main() {
   group('showHardwareWalletRow', () {
-    test('true only when the software balance is positive and no BitBox is paired', () {
-      expect(
-        showHardwareWalletRow(softwareBalancePositive: true, bitboxPaired: false),
-        isTrue,
-      );
-      expect(
-        showHardwareWalletRow(softwareBalancePositive: false, bitboxPaired: false),
-        isFalse,
-      );
-      expect(
-        showHardwareWalletRow(softwareBalancePositive: true, bitboxPaired: true),
-        isFalse,
-      );
+    test('true while no BitBox is paired, regardless of balance', () {
+      expect(showHardwareWalletRow(bitboxPaired: false), isTrue);
+      expect(showHardwareWalletRow(bitboxPaired: true), isFalse);
     });
   });
 

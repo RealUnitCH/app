@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:web3dart/web3dart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
@@ -913,6 +913,74 @@ void main() {
           confirmedAmount: any(named: 'confirmedAmount'),
         ),
       ).called(1);
+      await cubit.close();
+    });
+
+    test('a BitBox that gains a balance after load is prepared once', () async {
+      var reads = 0;
+      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer((_) async {
+        reads += 1;
+        return _balance(_bitboxAddr, reads == 1 ? 0 : 4);
+      });
+      when(() => hardware.prepareTransfer(any())).thenAnswer((invocation) async {
+        final dto = invocation.positionalArguments.single as RealUnitHardwareTransferRequestDto;
+        return RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: dto.amount,
+        );
+      });
+      final cubit = build();
+      await cubit.load();
+      expect(
+        cubit.state,
+        const MoveBalanceInitial(softwareBalance: 10, bitboxBalance: 0),
+      );
+      await cubit.prepareBitboxToSoftware();
+      final ready = cubit.state as MoveBalanceQuoteReady;
+      expect(ready.direction, MoveBalanceDirection.bitboxToSoftware);
+      expect(ready.amount, 4);
+      verify(() => hardware.prepareTransfer(any())).called(1);
+      await cubit.close();
+    });
+
+    test('a later BitBox balance replaces a software quote', () async {
+      var reads = 0;
+      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer((_) async {
+        reads += 1;
+        return _balance(_bitboxAddr, reads == 1 ? 0 : 4);
+      });
+      when(() => transfer.prepareTransfer(any())).thenAnswer((invocation) async {
+        final dto = invocation.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(() => hardware.prepareTransfer(any())).thenAnswer((invocation) async {
+        final dto = invocation.positionalArguments.single as RealUnitHardwareTransferRequestDto;
+        return RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: dto.amount,
+        );
+      });
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      expect(
+        (cubit.state as MoveBalanceQuoteReady).direction,
+        MoveBalanceDirection.softwareToBitbox,
+      );
+      await cubit.prepareBitboxToSoftware();
+      final ready = cubit.state as MoveBalanceQuoteReady;
+      expect(ready.direction, MoveBalanceDirection.bitboxToSoftware);
+      expect(ready.amount, 4);
+      verify(() => hardware.prepareTransfer(any())).called(1);
+      verifyNever(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      );
       await cubit.close();
     });
 

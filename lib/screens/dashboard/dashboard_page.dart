@@ -242,26 +242,16 @@ class _DashboardTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontWeight: FontWeight.w400,
+      letterSpacing: -0.32,
+    );
     if (!showWalletSwitcher(wallets)) {
-      return Text(
-        S.of(context).realunitWallet,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          letterSpacing: -0.32,
-        ),
-      );
+      return Text(S.of(context).realunitWallet, style: titleStyle);
     }
     final openWallet = context.watch<HomeBloc>().state.openWallet;
     if (openWallet == null) {
-      return Text(
-        S.of(context).realunitWallet,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          letterSpacing: -0.32,
-        ),
-      );
+      return Text(S.of(context).realunitWallet, style: titleStyle);
     }
     return TabSelector<WalletType>(
       tabs: const [WalletType.software, WalletType.bitbox],
