@@ -30,13 +30,8 @@ class PayLocationsPage extends StatefulWidget {
 }
 
 class _PayLocationsPageState extends State<PayLocationsPage> {
-  List<String> _blockchains = const ['Ethereum'];
-  List<String> _assets = const ['ZCHF'];
-  String _blockchain = 'Ethereum';
-  String _asset = 'ZCHF';
   List<PayLocationPin> _pins = const [];
   PayLocationPin? _selectedPin;
-  bool _filtersOk = false;
   bool _loading = true;
   bool _error = false;
   int _generation = 0;
@@ -45,7 +40,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   void initState() {
     super.initState();
     if (widget.loadOnStart) {
-      _loadFilters();
+      _loadPlaces();
     }
   }
 
@@ -57,49 +52,10 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     return getIt<AppStore>().httpClient.get(url);
   }
 
-  Future<void> _loadFilters() async {
+  Future<void> _loadPlaces() async {
     final generation = ++_generation;
     try {
-      final response = await _get(Uri.parse(payLocationsFiltersUrl));
-      if (response.statusCode != 200) {
-        _showError(generation);
-        return;
-      }
-
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map) {
-        _showError(generation);
-        return;
-      }
-
-      final choices = parsePayLocationFilters(decoded);
-      if (!mounted || generation != _generation) {
-        return;
-      }
-
-      setState(() {
-        _blockchains = choices.blockchains;
-        _assets = choices.assets;
-        _filtersOk = true;
-      });
-      await _loadPlaces(generation);
-    } catch (_) {
-      _showError(generation);
-    }
-  }
-
-  Future<void> _loadPlaces(int generation) async {
-    final url = placesUrlAfterFilters(
-      filtersOk: _filtersOk,
-      blockchain: _blockchain,
-      asset: _asset,
-    );
-    if (url == null) {
-      _showError(generation);
-      return;
-    }
-    try {
-      final response = await _get(Uri.parse(url));
+      final response = await _get(Uri.parse(payLocationsPlacesUrl));
       if (response.statusCode != 200) {
         _showError(generation);
         return;
@@ -111,11 +67,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         return;
       }
 
-      final pins = keepPayLocationPins(
-        decoded,
-        _blockchain,
-        _asset,
-      );
+      final pins = keepPayLocationPins(decoded);
       if (!mounted || generation != _generation) {
         return;
       }
@@ -142,36 +94,6 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     });
   }
 
-  void _selectBlockchain(String? value) {
-    if (value == null || value == _blockchain) {
-      return;
-    }
-
-    final generation = ++_generation;
-    setState(() {
-      _blockchain = value;
-      _selectedPin = null;
-      _loading = true;
-      _error = false;
-    });
-    _loadPlaces(generation);
-  }
-
-  void _selectAsset(String? value) {
-    if (value == null || value == _asset) {
-      return;
-    }
-
-    final generation = ++_generation;
-    setState(() {
-      _asset = value;
-      _selectedPin = null;
-      _loading = true;
-      _error = false;
-    });
-    _loadPlaces(generation);
-  }
-
   @override
   void dispose() {
     _generation++;
@@ -189,62 +111,6 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 12,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 8,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        S.of(context).payLocationsBlockchain,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      DropdownButton<String>(
-                        isExpanded: true,
-                        value: _blockchain,
-                        items: _blockchains
-                            .map(
-                              (value) => DropdownMenuItem(
-                                value: value,
-                                child: Text(
-                                  value,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: _selectBlockchain,
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        S.of(context).payLocationsAsset,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      DropdownButton<String>(
-                        isExpanded: true,
-                        value: _asset,
-                        items: _assets
-                            .map(
-                              (value) => DropdownMenuItem(
-                                value: value,
-                                child: Text(
-                                  value,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: _selectAsset,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
               Expanded(child: _buildContent()),
               if (_selectedPin case final pin?)
                 Column(

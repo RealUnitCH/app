@@ -1,22 +1,8 @@
-const String payLocationsFiltersUrl = 'https://api.opencryptopay.io/map/filters';
+const String payLocationsBlockchain = 'Ethereum';
+const String payLocationsAsset = 'ZCHF';
 
-String payLocationsPlacesUrl(String blockchain, String asset) {
-  return 'https://api.opencryptopay.io/map/places?blockchain='
-      '${Uri.encodeQueryComponent(blockchain)}&asset='
-      '${Uri.encodeQueryComponent(asset)}';
-}
-
-String? placesUrlAfterFilters({
-  required bool filtersOk,
-  required String blockchain,
-  required String asset,
-}) {
-  if (!filtersOk) {
-    return null;
-  }
-
-  return payLocationsPlacesUrl(blockchain, asset);
-}
+const String payLocationsPlacesUrl =
+    'https://api.opencryptopay.io/map/places?blockchain=Ethereum&asset=ZCHF';
 
 class PayLocationPin {
   final String name;
@@ -36,11 +22,7 @@ bool payLocationsPlacesBodyIsList(Object? body) {
   return body is Map && body['places'] is List;
 }
 
-List<PayLocationPin> keepPayLocationPins(
-  Object? body,
-  String blockchain,
-  String asset,
-) {
+List<PayLocationPin> keepPayLocationPins(Object? body) {
   if (body is! Map) {
     return const [];
   }
@@ -66,7 +48,9 @@ List<PayLocationPin> keepPayLocationPins(
     if (supports is! List ||
         !supports.any(
           (support) =>
-              support is Map && support['blockchain'] == blockchain && support['asset'] == asset,
+              support is Map &&
+              support['blockchain'] == payLocationsBlockchain &&
+              support['asset'] == payLocationsAsset,
         )) {
       continue;
     }
@@ -84,42 +68,6 @@ List<PayLocationPin> keepPayLocationPins(
   }
 
   return pins;
-}
-
-class PayLocationChoices {
-  final List<String> blockchains;
-  final List<String> assets;
-
-  const PayLocationChoices({
-    required this.blockchains,
-    required this.assets,
-  });
-}
-
-PayLocationChoices parsePayLocationFilters(Object? body) {
-  final blockchains = <String>[];
-  final assets = <String>[];
-
-  if (body is Map) {
-    final rawBlockchains = body['blockchains'];
-    if (rawBlockchains is List) {
-      blockchains.addAll(rawBlockchains.whereType<String>());
-    }
-
-    final rawAssets = body['assets'];
-    if (rawAssets is List) {
-      assets.addAll(rawAssets.whereType<String>());
-    }
-  }
-
-  if (!blockchains.contains('Ethereum')) {
-    blockchains.insert(0, 'Ethereum');
-  }
-  if (!assets.contains('ZCHF')) {
-    assets.insert(0, 'ZCHF');
-  }
-
-  return PayLocationChoices(blockchains: blockchains, assets: assets);
 }
 
 double? _finiteDouble(Object? value) {

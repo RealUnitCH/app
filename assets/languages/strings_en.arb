@@ -193,8 +193,6 @@
   "payInfoBody": "With the pay function you pay in shops that accept OpenCryptoPay, currently especially at selected SPAR stores in German-speaking Switzerland.\n\nFor every payment you sell REALU; the merchant is paid from the proceeds. Because only whole shares are sold, the sale is rounded up to whole REALU. The round-up amount is not credited to you and weighs more heavily on small amounts.",
   "payInfoLocationsLink": "Show locations",
   "payInfoTitle": "Before you pay",
-  "payLocationsAsset": "Asset",
-  "payLocationsBlockchain": "Blockchain",
   "payLocationsEmpty": "No locations published yet.",
   "payLocationsError": "The place list could not be loaded.",
   "payLocationsTitle": "Locations",

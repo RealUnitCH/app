@@ -1,27 +1,25 @@
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:realunit_wallet/screens/pay/pay_locations.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 import '../../../helper/helper.dart';
-
-const _filtersBody = '{"blockchains":["Ethereum"],"assets":["ZCHF"]}';
 
 const _placesBody =
     '{"places":[{"name":"SPAR Zürich","category":"grocery","lat":47.37,"lon":8.54,'
     '"supports":[{"blockchain":"Ethereum","asset":"ZCHF"}]}]}';
 
 http.Client _client({
-  int filtersStatus = 200,
-  String filtersBody = _filtersBody,
+  int placesStatus = 200,
   String placesBody = '{"places":[]}',
 }) {
   return MockClient((request) async {
-    if (request.url.path.endsWith('/filters')) {
-      return http.Response(filtersBody, filtersStatus);
+    if (request.url.toString() != payLocationsPlacesUrl) {
+      return http.Response('unexpected', 500);
     }
-    return http.Response(placesBody, 200);
+    return http.Response(placesBody, placesStatus);
   });
 }
 
@@ -46,7 +44,7 @@ void main() {
     'locations error',
     fileName: 'pay_locations_page_error',
     constraints: phoneConstraints,
-    builder: () => wrapForGolden(_map(_client(filtersStatus: 500, filtersBody: ''))),
+    builder: () => wrapForGolden(_map(_client(placesStatus: 500, placesBody: ''))),
   );
 
   goldenTest(
