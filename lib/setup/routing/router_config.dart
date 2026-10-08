@@ -11,6 +11,11 @@ import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/pending_transaction_detail_page.dart';
 import 'package:realunit_wallet/screens/debug_auth/debug_auth_page.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bitbox_address_recovery_page.dart';
+import 'package:realunit_wallet/screens/hardware_wallet/hardware_wallet_buy_page.dart';
+import 'package:realunit_wallet/screens/hardware_wallet/hardware_wallet_intro_page.dart';
+import 'package:realunit_wallet/screens/hardware_wallet/hardware_wallet_paired_page.dart';
+import 'package:realunit_wallet/screens/hardware_wallet/hardware_wallet_setup_page.dart';
+import 'package:realunit_wallet/screens/hardware_wallet/move_balance_page.dart';
 import 'package:realunit_wallet/screens/home/home_page.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
@@ -392,6 +397,31 @@ final GoRouter routerConfig = GoRouter(
               builder: (_, _) => const ReferralCreatePage(),
             ),
           ],
+        ),
+        GoRoute(
+          name: SettingsRoutes.hardwareWalletIntro,
+          path: 'hardwareWallet',
+          builder: (_, _) => const HardwareWalletIntroPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.hardwareWalletBuy,
+          path: 'hardwareWallet/buy',
+          builder: (_, _) => const HardwareWalletBuyPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.hardwareWalletSetup,
+          path: 'hardwareWallet/setup',
+          builder: (_, _) => const HardwareWalletSetupPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.hardwareWalletPaired,
+          path: 'hardwareWallet/paired',
+          builder: (_, _) => const HardwareWalletPairedPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.moveBalance,
+          path: 'moveBalance',
+          builder: (_, _) => const MoveBalancePage(),
         ),
       ],
     ),

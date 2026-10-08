@@ -27,6 +27,8 @@ class WalletRepository {
   /// cost just to render the dashboard — the cached address is enough.
   Future<WalletInfo?> getWalletInfo(int id) => _appDatabase.getWalletById(id);
 
+  Future<List<WalletInfo>> listWalletInfos() => _appDatabase.listWalletInfos();
+
   /// Backfills the address column for legacy software-wallet rows that were
   /// created before address-caching landed. After this runs once, subsequent
   /// loads of the same row stay on the fast view-wallet path.
@@ -44,11 +46,25 @@ class WalletRepository {
 
   Future<void> deleteWallet(int id) => _appDatabase.deleteWallet(id);
 
-  /// Full purge for the user-facing delete: removes the encrypted-seed row AND
-  /// the AES-GCM mnemonic key, so no recoverable seed material remains on
-  /// device.
+  /// Full purge for the user-facing delete: removes the encrypted-seed row AND,
+  /// when no software-wallet row remains, the AES-GCM mnemonic key.
+  ///
+  /// Deleting a BitBox/debug row (empty seed) never removes that key while
+  /// another wallet row still exists — the software seed would become
+  /// unreadable. The only-row path still drops the key so a full reset matches
+  /// today's purge.
   Future<void> purgeWallet(int id) async {
+    final info = await _appDatabase.getWalletById(id);
     await _appDatabase.deleteWalletCompletely(id);
+    final remaining = await _appDatabase.listWalletInfos();
+    final softwareRemains = remaining.any((row) => row.seed.isNotEmpty);
+    if (softwareRemains) {
+      return;
+    }
+    final deletedHadEmptySeed = info == null || info.seed.isEmpty;
+    if (remaining.isNotEmpty && deletedHadEmptySeed) {
+      return;
+    }
     await _secureStorage.deleteMnemonicKey();
   }
 

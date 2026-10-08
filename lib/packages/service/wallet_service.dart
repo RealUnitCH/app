@@ -102,6 +102,42 @@ class WalletService {
     return BitboxWallet(walletId, name, address, _bitboxService);
   }
 
+  /// Pairs a BitBox beside the existing software wallet. Same address read and
+  /// validation as [createBitboxWallet], then a view row — does **not** call
+  /// [setCurrentWallet], so the software wallet stays current.
+  Future<BitboxWallet> addBitboxWallet(String name) async {
+    final address = await _bitboxService.getEthAddress();
+    if (!_isValidEthAddress(address)) {
+      throw const BitboxAddressUnavailableException();
+    }
+    final walletId = await _repository.createViewWallet(name, WalletType.bitbox, address);
+    return BitboxWallet(walletId, name, address, _bitboxService);
+  }
+
+  /// Every persisted row as an [AWallet], via the same switch as
+  /// [getWalletById] — software rows with an address become
+  /// [SoftwareViewWallet], never a decrypted seed.
+  Future<List<AWallet>> listWallets() async {
+    final infos = await _repository.listWalletInfos();
+    final wallets = <AWallet>[];
+    for (final info in infos) {
+      wallets.add(await getWalletById(info.id));
+    }
+    return wallets;
+  }
+
+  /// Makes [id] the current wallet. Locks an in-memory [SoftwareWallet] the
+  /// same way [lockCurrentWallet] does, then clears the session cache so the
+  /// next authenticated call signs as the new address.
+  Future<AWallet> switchCurrentWallet(int id) async {
+    if (_appStore.isWalletLoaded && _appStore.wallet is SoftwareWallet) {
+      await lockCurrentWallet();
+    }
+    await _appStore.sessionCache.clear();
+    await setCurrentWallet(id);
+    return getWalletById(id);
+  }
+
   /// True when [address] parses as a canonical 20-byte Ethereum address.
   ///
   /// Uses the same web3dart parser that every wallet credential class relies on
@@ -335,12 +371,23 @@ class WalletService {
     _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
   }
 
-  Future<void> deleteCurrentWallet() async {
+  /// Deletes the current wallet row. When another row remains, the mnemonic
+  /// key is kept if a software row still exists, [currentWalletId] points at
+  /// one remaining row, and that id is returned. When it was the only row,
+  /// today's purge runs (row, mnemonic key, [removeCurrentWalletId]) and this
+  /// returns null.
+  Future<int?> deleteCurrentWallet() async {
     final id = _settingsRepository.currentWalletId!;
-    // Full purge (seed row + mnemonic key), not an account-only delete — so no
-    // recoverable seed survives delete.
+    final infos = await _repository.listWalletInfos();
+    final remaining = [for (final info in infos) if (info.id != id) info];
     await _repository.purgeWallet(id);
-    await _settingsRepository.removeCurrentWalletId();
+    if (remaining.isEmpty) {
+      await _settingsRepository.removeCurrentWalletId();
+      return null;
+    }
+    final remainingId = remaining.first.id;
+    await _settingsRepository.saveCurrentWalletId(remainingId);
+    return remainingId;
   }
 
   bool hasWallet() => _settingsRepository.currentWalletId != null;

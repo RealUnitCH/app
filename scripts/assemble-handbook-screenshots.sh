@@ -472,7 +472,13 @@ MAPPING=(
   "418-transaction-detail-sale-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png"
   "419-transaction-detail-sent-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png"
   "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
+  "420-hardware-wallet-intro=screens/hardware_wallet/goldens/macos/hardware_wallet_intro_page.png"
+  "421-hardware-wallet-buy=screens/hardware_wallet/goldens/macos/hardware_wallet_buy_page.png"
+  "422-hardware-wallet-setup=screens/hardware_wallet/goldens/macos/hardware_wallet_setup_page.png"
+  "423-move-balance=screens/hardware_wallet/goldens/macos/move_balance_page.png"
+  "424-move-balance-failure=screens/hardware_wallet/goldens/macos/move_balance_page_failure.png"
   "425-pay-info-pay-unavailable=screens/pay/goldens/macos/pay_info_page_pay_unavailable.png"
+  "425-hardware-wallet-paired=screens/hardware_wallet/goldens/macos/hardware_wallet_paired_page.png"
 )
 
 missing=()

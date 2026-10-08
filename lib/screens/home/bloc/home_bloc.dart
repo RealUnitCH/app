@@ -30,6 +30,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<LoadWalletEvent>(_onLoadWallet);
     on<SyncWalletServicesEvent>(_onSyncWalletServices);
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
+    on<SwitchWalletEvent>(_onSwitchWallet);
     on<CompleteOnboardingEvent>(_onCompleteOnboarding);
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
     on<DebugAuthCompleteEvent>(_onDebugAuthComplete);
@@ -95,6 +96,23 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _syncHistory();
   }
 
+  Future<void> _onSwitchWallet(SwitchWalletEvent event, Emitter<HomeState> emit) async {
+    // Always reload, even when [openWallet] is already set — the caller is
+    // switching to a different persisted row.
+    final wallet = await _walletService.switchCurrentWallet(event.id);
+    _appStore.wallet = wallet;
+    emit(
+      state.copyWith(
+        openWallet: wallet,
+        hasWallet: true,
+        isLoadingWallet: false,
+      ),
+    );
+    _balanceService.updateBalance(_appStore.primaryAddress);
+    _balanceService.startSync(_appStore.primaryAddress);
+    _syncHistory();
+  }
+
   Future<void> _onDeleteCurrentWallet(
     DeleteCurrentWalletEvent event,
     Emitter<HomeState> emit,
@@ -104,7 +122,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _bitboxService.stopConnectionStatusObserver();
     await _appStore.sessionCache.clear();
     if (_walletService.hasWallet()) {
-      await _walletService.deleteCurrentWallet();
+      final remainingId = await _walletService.deleteCurrentWallet();
+      if (remainingId != null) {
+        final wallet = await _walletService.getWalletById(remainingId);
+        _appStore.wallet = wallet;
+        emit(
+          state.copyWith(
+            hasWallet: true,
+            openWallet: wallet,
+            isLoadingWallet: false,
+          ),
+        );
+        _balanceService.updateBalance(_appStore.primaryAddress);
+        _balanceService.startSync(_appStore.primaryAddress);
+        _syncHistory();
+        return;
+      }
       _settingsService.setTermsAccepted(false);
     }
     // Drop any stashed payment deeplink so it cannot replay into a re-onboarded

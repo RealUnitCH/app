@@ -162,6 +162,35 @@ void main() {
       verify(() => secureStorage.deleteMnemonicKey()).called(1); // AES key removed
     });
 
+    test('listWalletInfos returns every persisted row', () async {
+      final softwareId = await repo.createWallet(walletName, WalletType.software, seed, address);
+      final bitboxId = await repo.createViewWallet('BitBox', WalletType.bitbox, address);
+
+      final infos = await repo.listWalletInfos();
+      expect(infos.map((row) => row.id), containsAll([softwareId, bitboxId]));
+    });
+
+    test('purgeWallet keeps the mnemonic key when another software row remains', () async {
+      when(() => secureStorage.deleteMnemonicKey()).thenAnswer((_) async {});
+      final first = await repo.createWallet(walletName, WalletType.software, seed, address);
+      await repo.createWallet('Second', WalletType.software, seed, address);
+
+      await repo.purgeWallet(first);
+
+      verifyNever(() => secureStorage.deleteMnemonicKey());
+    });
+
+    test('purgeWallet never deletes the mnemonic key when deleting a BitBox row beside software',
+        () async {
+      when(() => secureStorage.deleteMnemonicKey()).thenAnswer((_) async {});
+      await repo.createWallet(walletName, WalletType.software, seed, address);
+      final bitboxId = await repo.createViewWallet('BitBox', WalletType.bitbox, address);
+
+      await repo.purgeWallet(bitboxId);
+
+      verifyNever(() => secureStorage.deleteMnemonicKey());
+    });
+
     test('deleteWallet (account-only) leaves the seed row and mnemonic key intact', () async {
       // Onboarding-regenerate contract: the account-only primitive must NOT
       // wipe the seed row or the AES key.

@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
+import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -20,6 +21,8 @@ class _MockSettingsRepository extends Mock implements SettingsRepository {}
 class _MockBitboxService extends Mock implements BitboxService {}
 
 class _MockAppStore extends Mock implements AppStore {}
+
+class _MockSessionCache extends Mock implements SessionCache {}
 
 const _testMnemonic = 'test test test test test test test test test test test junk';
 const _debugAddress = '0x0000000000000000000000000000000000000001';
@@ -543,14 +546,174 @@ void main() {
     group('deleteCurrentWallet', () {
       test('deletes the wallet and clears the current-id setting', () async {
         when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.listWalletInfos()).thenAnswer(
+          (_) async => [_info(id: 8, type: WalletType.software, address: _debugAddress)],
+        );
 
-        await service.deleteCurrentWallet();
+        final remaining = await service.deleteCurrentWallet();
 
         // User-facing delete must fully purge (seed row + mnemonic key), not
         // the account-only delete.
+        expect(remaining, isNull);
         verify(() => repo.purgeWallet(8)).called(1);
         verifyNever(() => repo.deleteWallet(any()));
         verify(() => settings.removeCurrentWalletId()).called(1);
+      });
+
+      test('when another row remains, points currentWalletId at it and returns that id', () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.listWalletInfos()).thenAnswer(
+          (_) async => [
+            _info(id: 8, type: WalletType.software, address: _debugAddress),
+            _info(id: 9, name: 'Hardware', type: WalletType.bitbox, address: _debugAddress),
+          ],
+        );
+
+        final remaining = await service.deleteCurrentWallet();
+
+        expect(remaining, 9);
+        verify(() => repo.purgeWallet(8)).called(1);
+        verify(() => settings.saveCurrentWalletId(9)).called(1);
+        verifyNever(() => settings.removeCurrentWalletId());
+      });
+    });
+
+    group('addBitboxWallet', () {
+      test('persists a view row and does not set it current', () async {
+        when(() => bitbox.getEthAddress()).thenAnswer((_) async => _debugAddress);
+        when(() => repo.createViewWallet(any(), any(), any())).thenAnswer((_) async => 11);
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+
+        final wallet = await service.addBitboxWallet('BitBox');
+
+        expect(wallet, isA<BitboxWallet>());
+        expect(wallet.id, 11);
+        expect(wallet.name, 'BitBox');
+        verify(() => bitbox.getEthAddress()).called(1);
+        verify(() => repo.createViewWallet('BitBox', WalletType.bitbox, _debugAddress)).called(1);
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      test('throws BitboxAddressUnavailableException on a malformed address', () async {
+        when(() => bitbox.getEthAddress()).thenAnswer((_) async => 'not-a-hex-address');
+
+        await expectLater(
+          () => service.addBitboxWallet('BitBox'),
+          throwsA(isA<BitboxAddressUnavailableException>()),
+        );
+        verifyNever(() => repo.createViewWallet(any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      test('propagates a device read failure without writing', () async {
+        when(() => bitbox.getEthAddress()).thenThrow(Exception('USB dropped'));
+
+        expect(
+          () => service.addBitboxWallet('BitBox'),
+          throwsA(isA<Exception>()),
+        );
+        verifyNever(() => repo.createViewWallet(any(), any(), any()));
+      });
+    });
+
+    group('listWallets', () {
+      test('returns every row via getWalletById — software stays a view wallet', () async {
+        when(() => repo.listWalletInfos()).thenAnswer(
+          (_) async => [
+            _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+            _info(id: 2, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+          ],
+        );
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+        );
+        when(() => repo.getWalletInfo(2)).thenAnswer(
+          (_) async =>
+              _info(id: 2, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+        );
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+
+        final wallets = await service.listWallets();
+
+        expect(wallets, hasLength(2));
+        expect(wallets[0], isA<SoftwareViewWallet>());
+        expect(wallets[1], isA<BitboxWallet>());
+        verifyNever(() => repo.getUnlockedWalletById(any()));
+      });
+
+      test('empty table returns an empty list', () async {
+        when(() => repo.listWalletInfos()).thenAnswer((_) async => []);
+
+        expect(await service.listWallets(), isEmpty);
+      });
+    });
+
+    group('switchCurrentWallet', () {
+      test('locks an unlocked SoftwareWallet, clears the session, and returns the new row',
+          () async {
+        final session = _MockSessionCache();
+        when(() => session.clear()).thenAnswer((_) async {});
+        when(() => appStore.sessionCache).thenReturn(session);
+        when(() => appStore.isWalletLoaded).thenReturn(true);
+        final unlocked = SoftwareWallet(9, 'Main', _testMnemonic);
+        AWallet? written;
+        when(() => appStore.wallet).thenReturn(unlocked);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          written = newWallet;
+          return newWallet;
+        });
+        when(() => repo.getWalletInfo(3)).thenAnswer(
+          (_) async =>
+              _info(id: 3, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+        );
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+
+        final switched = await service.switchCurrentWallet(3);
+
+        expect(written, isA<SoftwareViewWallet>());
+        verify(() => session.clear()).called(1);
+        verify(() => settings.saveCurrentWalletId(3)).called(1);
+        expect(switched, isA<BitboxWallet>());
+        expect(switched.id, 3);
+      });
+
+      test('does not lock a view wallet or BitBox, still clears the session', () async {
+        final session = _MockSessionCache();
+        when(() => session.clear()).thenAnswer((_) async {});
+        when(() => appStore.sessionCache).thenReturn(session);
+        when(() => appStore.isWalletLoaded).thenReturn(true);
+        when(() => appStore.wallet).thenReturn(
+          SoftwareViewWallet(9, 'Main', _debugAddress),
+        );
+        when(() => repo.getWalletInfo(3)).thenAnswer(
+          (_) async =>
+              _info(id: 3, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+        );
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+
+        await service.switchCurrentWallet(3);
+
+        verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
+        verify(() => session.clear()).called(1);
+        verify(() => settings.saveCurrentWalletId(3)).called(1);
+      });
+
+      test('skips lock when no wallet is loaded yet', () async {
+        final session = _MockSessionCache();
+        when(() => session.clear()).thenAnswer((_) async {});
+        when(() => appStore.sessionCache).thenReturn(session);
+        when(() => appStore.isWalletLoaded).thenReturn(false);
+        when(() => repo.getWalletInfo(3)).thenAnswer(
+          (_) async =>
+              _info(id: 3, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+        );
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+
+        await service.switchCurrentWallet(3);
+
+        verifyNever(() => appStore.wallet);
+        verify(() => session.clear()).called(1);
       });
     });
 

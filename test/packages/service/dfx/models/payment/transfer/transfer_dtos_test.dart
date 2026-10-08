@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_hardware_transfer_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_transfer_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_transfer_eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_transfer_payment_info_dto.dart';
@@ -118,6 +119,28 @@ void main() {
         'eip7702': _eip7702Json(),
       });
 
+      expect(dto.amount, 5);
+    });
+  });
+
+  group('RealUnitHardwareTransferRequestDto', () {
+    test('toJson carries toAddress + amount', () {
+      const dto = RealUnitHardwareTransferRequestDto(toAddress: '0xRecipient', amount: 5);
+
+      expect(dto.toJson(), {'toAddress': '0xRecipient', 'amount': 5});
+    });
+  });
+
+  group('RealUnitHardwareTransferPaymentInfoDto', () {
+    test('fromJson parses unsignedTx, toAddress and amount', () {
+      final dto = RealUnitHardwareTransferPaymentInfoDto.fromJson({
+        'unsignedTx': '0x02ab',
+        'toAddress': '0xRecipient',
+        'amount': 5.0,
+      });
+
+      expect(dto.unsignedTx, '0x02ab');
+      expect(dto.toAddress, '0xRecipient');
       expect(dto.amount, 5);
     });
   });

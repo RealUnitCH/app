@@ -3,9 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/config/network_mode.dart';
+import 'package:realunit_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -31,6 +36,15 @@ void main() {
     when(() => homeBloc.state).thenReturn(HomeState(openWallet: wallet));
     GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
     GetIt.instance.registerSingleton<RealUnitReferralService>(referral);
+    final walletService = MockWalletService();
+    when(() => walletService.listWallets()).thenAnswer((_) async => []);
+    GetIt.instance.registerSingleton<WalletService>(walletService);
+    GetIt.instance.registerSingleton<BalanceRepository>(MockBalanceRepository());
+    final appStore = MockAppStore();
+    when(() => appStore.apiConfig).thenReturn(
+      const ApiConfig(networkMode: NetworkMode.mainnet),
+    );
+    GetIt.instance.registerSingleton<AppStore>(appStore);
   });
 
   tearDown(() async {

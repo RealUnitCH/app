@@ -1159,6 +1159,9 @@
               <a href="#spec-referral"><span class="spec-num">R</span>Empfehlungen &amp; Promo-Code</a>
             </li>
             <li>
+              <a href="#spec-hw"><span class="spec-num">H</span>Hardware-Wallet neben der Software-Wallet</a>
+            </li>
+            <li>
               <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
             </li>
             <li>
@@ -13836,6 +13839,134 @@
             </div>
             <div class="desc">
               Dieselbe Meldung wie 388. Neben <b>Wiederholen</b> läuft eine Ladeanzeige, der Knopf ist nicht tippbar. <b>Schließen</b> ist ebenfalls nicht tippbar.
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-hw" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">H</span>Hardware-Wallet neben der Software-Wallet</h2>
+                <div class="file">lib/screens/hardware_wallet/</div>
+              </div>
+              <div class="rhs">
+                <b>6 Screens</b>
+                <div class="links">
+                  <a href="https://github.com/RealUnitCH/app/tree/develop/lib/screens/hardware_wallet"
+                    >Code ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Wer bereits REALU auf der Software-Wallet hat, kann eine BitBox daneben koppeln, die
+            aktive Wallet sehen und ganze Anteile in beide Richtungen verschieben. Die
+            Software-Wallet-Zeile bleibt. Der Welcome-Pfad für die erste Wallet bleibt unverändert.
+          </p>
+          <div class="tests cols-2">
+            <div class="test" id="420-hardware-wallet-intro">
+              <div class="head">
+                <a class="name permalink" href="#420-hardware-wallet-intro">420-hardware-wallet-intro</a>
+                <button class="copy-link" type="button" data-target="420-hardware-wallet-intro" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">hardware_wallet_intro_page.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/420-hardware-wallet-intro.png"
+                  alt="REALU auf der BitBox02"
+                />
+              </div>
+              <div class="desc">
+                Intro. Titel <b>REALU auf der BitBox02</b>. Button
+                <b>RealU auf die Hardware-Wallet verschieben</b> öffnet nur die nächste Seite.
+              </div>
+            </div>
+            <div class="test" id="421-hardware-wallet-buy">
+              <div class="head">
+                <a class="name permalink" href="#421-hardware-wallet-buy">421-hardware-wallet-buy</a>
+                <button class="copy-link" type="button" data-target="421-hardware-wallet-buy" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">hardware_wallet_buy_page.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/421-hardware-wallet-buy.png"
+                  alt="Passendes Gerät"
+                />
+              </div>
+              <div class="desc">
+                Kaufhinweise. Titel <b>Passendes Gerät</b>. Bestätigen bedeutet
+                <b>Ich habe ein passendes Gerät</b>.
+              </div>
+            </div>
+            <div class="test" id="422-hardware-wallet-setup">
+              <div class="head">
+                <a class="name permalink" href="#422-hardware-wallet-setup">422-hardware-wallet-setup</a>
+                <button class="copy-link" type="button" data-target="422-hardware-wallet-setup" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">hardware_wallet_setup_page.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/422-hardware-wallet-setup.png"
+                  alt="Wallet in der BitBox-App"
+                />
+              </div>
+              <div class="desc">
+                Einrichtung. Titel <b>Wallet in der BitBox-App</b>. Bestätigen
+                <b>BitBox ist eingerichtet</b>.
+              </div>
+            </div>
+            <div class="test" id="423-move-balance">
+              <div class="head">
+                <a class="name permalink" href="#423-move-balance">423-move-balance</a>
+                <button class="copy-link" type="button" data-target="423-move-balance" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">move_balance_page.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/423-move-balance.png"
+                  alt="Guthaben verschieben"
+                />
+              </div>
+              <div class="desc">
+                Beide Richtungen. Titel <b>Guthaben verschieben</b>.
+              </div>
+            </div>
+            <div class="test" id="424-move-balance-failure">
+              <div class="head">
+                <a class="name permalink" href="#424-move-balance-failure">424-move-balance-failure</a>
+                <button class="copy-link" type="button" data-target="424-move-balance-failure" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">move_balance_page_failure.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/424-move-balance-failure.png"
+                  alt="Guthaben verschieben, Fehler"
+                />
+              </div>
+              <div class="desc">
+                Ein Fehlerzustand der Verschieben-Seite. Titel <b>Guthaben verschieben</b>.
+              </div>
+            </div>
+            <div class="test" id="425-hardware-wallet-paired">
+              <div class="head">
+                <a class="name permalink" href="#425-hardware-wallet-paired">425-hardware-wallet-paired</a>
+                <button class="copy-link" type="button" data-target="425-hardware-wallet-paired" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">hardware_wallet_paired_page.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/425-hardware-wallet-paired.png"
+                  alt="BitBox gekoppelt"
+                />
+              </div>
+              <div class="desc">
+                Nach dem Koppeln. Titel <b>BitBox gekoppelt</b>.
+                <b>Beide Wallets sind vorhanden. Die Software-Wallet bleibt die aktuelle.</b>
+              </div>
             </div>
           </div>
         </details>
