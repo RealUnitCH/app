@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 418 handbook screenshots from the visual-regression Golden
+# Assemble one handbook screenshot per mapping row from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -20,6 +20,8 @@
 # extended to cover every Golden baseline. When a new
 # handbook page is added, append a row here AND add the corresponding
 # Golden test — never source a screenshot from anywhere else.
+# Do not edit a workflow file to record the new total; this script fails
+# unless the PNG count equals the number of mapping rows.
 
 set -euo pipefail
 
@@ -460,6 +462,12 @@ MAPPING=(
   "407-referral-create-impersonal-error=screens/referral/goldens/macos/referral_create_page_impersonal_error.png"
   "408-referral-overview-impersonal=screens/referral/goldens/macos/referral_overview_page_impersonal.png"
   "409-referral-overview-impersonal-one=screens/referral/goldens/macos/referral_overview_page_impersonal_one.png"
+  "410-pay-locations-loading=screens/pay/goldens/macos/pay_locations_page_loading.png"
+  "411-pay-locations-error=screens/pay/goldens/macos/pay_locations_page_error.png"
+  "412-pay-locations-empty=screens/pay/goldens/macos/pay_locations_page_empty.png"
+  "413-pay-locations-places=screens/pay/goldens/macos/pay_locations_page_places.png"
+  "414-pay-locations-no-match=screens/pay/goldens/macos/pay_locations_page_no_match.png"
+  "415-pay-locations-unpublished=screens/pay/goldens/macos/pay_locations_page_unpublished.png"
 )
 
 missing=()
@@ -484,4 +492,9 @@ if [ "${#missing[@]}" -gt 0 ]; then
 fi
 
 count=$(ls -1 "$OUT"/*.png | wc -l | tr -d ' ')
+expected=${#MAPPING[@]}
+if [ "$count" != "$expected" ]; then
+  echo "expected ${expected} screenshots, one per mapping row, got ${count}" >&2
+  exit 1
+fi
 echo "assembled $count handbook screenshots into $OUT"

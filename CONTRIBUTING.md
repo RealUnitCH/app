@@ -64,7 +64,7 @@ Three branches participate in the release lane:
 feature/* ──(PR)──> staging ──(auto-PR)──> develop ──(auto-PR)──> main
 ```
 
-The auto-opened promotion PRs are idempotent — only one is open per branch pair at any time. Each one waits for the same review + CI gates as the underlying branch. Tagged releases (`v*`) trigger after the relevant branch receives the commit; see the Release Versioning workflow table in the README for details.
+The auto-opened promotion PRs are idempotent — only one is open per branch pair at any time. Each one waits for the same review + CI gates as the underlying branch. They are not A38 pull requests. A38 applies to pull requests into `staging`. The guard does not comment on a promotion into `develop` or `main`. Tagged releases (`v*`) trigger after the relevant branch receives the commit; see the Release Versioning workflow table in the README for details.
 
 ## A38
 
@@ -99,6 +99,7 @@ access to `RealUnitCH/app` do not need a report.
 - If a feature needs on-chain data (e.g. native ETH balance, transaction status, token balance), add a new endpoint to [`DFXswiss/api`](https://github.com/DFXswiss/api) and let the app call that endpoint. The API is the single gateway.
 - All network calls must go through `AppStore.httpClient` with `buildUri(_host, …)` — `_host` resolves to the DFX API host via `ApiConfig`. Do not instantiate `http.Client`/`Dio`/`Web3Client` against other hosts.
 - **One scoped exception — crash reporting.** Builds that inject `--dart-define=SENTRY_DSN=...` deliver crash reports to the company-operated crash-reporting service ([`lib/setup/error_handling/crash_reporting.dart`](lib/setup/error_handling/crash_reporting.dart)). This is first-party infrastructure telemetry, not a third-party service: without an injected DSN (all local and test builds) the SDK never starts and produces no network traffic, and the delivered data is limited to error events — no PII, no screenshots, no performance tracing, no session telemetry (the exact pinned option surface lives in `crash_reporting.dart`). Widening what is sent (breadcrumbs with request URLs, user context, attachments) is a review-blocking change, not a config tweak.
+- **One scoped exception — OpenCryptoPay place list.** The pay-locations screen may GET exactly `https://api.opencryptopay.io/map/places?blockchain=Ethereum&asset=ZCHF`. RealUnit pays only with ZCHF on Ethereum, so that pair is fixed and the screen shows no chain or asset choice. It must not request the place list without that pair, and it must not call any other path or host. Production sends that GET through `AppStore.httpClient` as an absolute URI, not through `buildUri`. A failure of that request is an error and does not request an unfiltered list. A returned place with no supports field is shown. A returned place whose supports list does not contain Ethereum and ZCHF is not shown. The country outline, lakes, city names, and markers are local; the screen does not load a tile server. Overlapping shops are grouped, and the screen lists the shop names. Widget tests may pass an `http.Client` so they do not touch GetIt.
 
 ## API as Decision Authority — CRITICAL
 
@@ -277,10 +278,10 @@ The app supports three wallet modes (`software`, `bitbox`, `debug`) with differe
     ```
 - Every screen, every popup, and every error message needs its own baseline image, and that image is the handbook screenshot. The same rule covers every dialog, every bottom sheet, every banner, every snackbar, every empty state, and every loading state. Each distinct wording is its own picture. A different message, a different button, or a different error is a different surface. There is no exception for a rare path, a small copy change, a state that looks similar, or a screenshot that already exists nearby. Reusing one image for two surfaces is not coverage. An unmapped golden is not coverage.
   Adding or changing such a surface is incomplete unless the same change includes all three of the following:
-  1. A golden test under `test/goldens/` whose PNG shows that exact surface. Do not generate the PNG on a laptop; `golden-regenerate.yaml` commits it.
+  1. A golden test under `test/goldens/` whose PNG shows that exact surface. Do not generate the PNG on a laptop; `golden-regenerate.yaml` commits it. Fork authors without write access comment `/golden-regenerate` on the open pull request; see [`docs/visual-regression-tests.md`](docs/visual-regression-tests.md).
   2. A row in `scripts/assemble-handbook-screenshots.sh`.
   3. A block in `docs/handbook/de/index.html` that shows that PNG and quotes the visible title or the visible error text.
-  The in-app web view's page body is the external site. The app chrome around it still needs its own baseline, and the handbook text says the page body is not part of that picture. These baselines are the 418 screenshots served at `handbook.realunit.app`. The Handbook Build Check fails if a mapped PNG is missing. A pull request that leaves any of the three out is not ready for review.
+  The in-app web view's page body is the external site. The app chrome around it still needs its own baseline, and the handbook text says the page body is not part of that picture. These baselines are the screenshots served at `handbook.realunit.app`, one per mapping row. The Handbook Build Check fails if a mapped PNG is missing. A pull request that leaves any of the three out is not ready for review.
   - Why: a screen, a popup, or an error message that the handbook does not show is invisible until a person happens to open it. One baseline per surface is what makes the gap fail in review instead of in production.
   - See: [`docs/visual-regression-tests.md`](docs/visual-regression-tests.md) section "Handbook screenshots are sourced from Goldens".
 
