@@ -174,6 +174,19 @@ void main() {
     );
 
     goldenTest(
+      'software retry without register',
+      fileName: 'move_balance_failure_retry_software',
+      constraints: phoneConstraints,
+      builder: () => wrapView(
+        const MoveBalanceFailure(
+          'Broadcast failed',
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
+      ),
+    );
+
+    goldenTest(
       'wallets missing',
       fileName: 'move_balance_wallets_missing',
       constraints: phoneConstraints,

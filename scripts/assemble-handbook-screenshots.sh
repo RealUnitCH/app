@@ -496,6 +496,7 @@ MAPPING=(
   "440-settings-hardware-wallet=screens/settings/goldens/macos/settings_hardware_wallet_row.png"
   "441-settings-move-balance=screens/settings/goldens/macos/settings_move_balance_row.png"
   "442-dashboard-wallet-switcher=screens/dashboard/goldens/macos/dashboard_wallet_switcher.png"
+  "443-move-balance-failure-retry-software=screens/hardware_wallet/goldens/macos/move_balance_failure_retry_software.png"
 )
 
 missing=()
