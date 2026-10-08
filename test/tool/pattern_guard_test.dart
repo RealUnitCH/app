@@ -1,8 +1,9 @@
-// Unit test for the high-pattern guard (tool/lints/pattern_guard.dart).
-// Verifies each rule fires on a known-bad snippet, stays silent on a
-// known-good one, and that `// realunit-lint:ignore <rule>` suppresses a hit.
+// Unit tests for the high-pattern guard (tool/lints/pattern_guard.dart).
+// Verifies its fatal CI wiring, each rule's bad/good cases, and suppression.
 @TestOn('vm')
 library;
+
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,6 +13,30 @@ List<String> _rules(String path, String src) =>
     scanDartSource(path, src).map((f) => f.rule).toList();
 
 void main() {
+  test('Analyze job runs the fatal High-Pattern Guard after code generation', () {
+    final workflow = File('.github/workflows/pull-request.yaml').readAsStringSync();
+    final analyzeStart = workflow.indexOf('  analyze:\n');
+    final buildStart = workflow.indexOf('\n  build:\n', analyzeStart);
+
+    expect(analyzeStart, greaterThanOrEqualTo(0));
+    expect(buildStart, greaterThan(analyzeStart));
+
+    final analyzeJob = workflow.substring(analyzeStart, buildStart);
+    final codeGeneration = analyzeJob.indexOf(
+      '- run: flutter pub run build_runner build',
+    );
+    final guard = analyzeJob.indexOf('''- name: High-Pattern Guard
+        run: dart run tool/lints/pattern_guard.dart''');
+    final flutterAnalyze = analyzeJob.indexOf(
+      '- run: flutter analyze --fatal-warnings',
+    );
+
+    expect(codeGeneration, greaterThanOrEqualTo(0));
+    expect(guard, greaterThan(codeGeneration));
+    expect(flutterAnalyze, greaterThan(guard));
+    expect(analyzeJob, isNot(contains('continue-on-error: true')));
+  });
+
   group('hardcoded_swiss_tax_residence', () {
     test('fires on a boolean literal', () {
       final hits = _rules('lib/x.dart', '''

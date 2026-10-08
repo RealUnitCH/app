@@ -21,7 +21,11 @@ class ReferralPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ReferralCubit(getIt<RealUnitReferralService>())..load(),
+      create: (_) {
+        final cubit = ReferralCubit(getIt<RealUnitReferralService>());
+        unawaited(cubit.load());
+        return cubit;
+      },
       child: const ReferralGate(),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,7 +28,11 @@ class SettingsSecurityPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (_) => SettingsSecurityCubit(getIt<BiometricService>())..init(),
+    create: (_) {
+      final cubit = SettingsSecurityCubit(getIt<BiometricService>());
+      unawaited(cubit.init());
+      return cubit;
+    },
     child: const SettingsSecurityView(),
   );
 }

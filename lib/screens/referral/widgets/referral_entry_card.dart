@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -27,7 +29,11 @@ class ReferralEntryCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return BlocProvider(
-      create: (_) => ReferralEligibilityCubit(getIt<RealUnitReferralService>())..load(),
+      create: (_) {
+        final cubit = ReferralEligibilityCubit(getIt<RealUnitReferralService>());
+        unawaited(cubit.load());
+        return cubit;
+      },
       child: ReferralEligibilityResumeReloader(
         unavailablePollInterval: unavailablePollInterval,
         child: const _ReferralEntryCardView(),

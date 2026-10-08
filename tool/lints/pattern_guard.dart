@@ -8,8 +8,9 @@
 // so it stays fast and version-tolerant.
 //
 // Run:   dart run tool/lints/pattern_guard.dart
-// CI:    the `High-Pattern Guard` job in .github/workflows/pull-request.yaml
-//        fails the build on any non-allowlisted hit.
+// CI:    the `High-Pattern Guard` step in the `Analyze` job in
+//        .github/workflows/pull-request.yaml fails the build on any
+//        non-allowlisted hit.
 //
 // Suppressing a site (use sparingly, always with a reason on the same line or
 // the line directly above):
