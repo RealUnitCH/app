@@ -69,7 +69,7 @@ Column meaning:
 | Dashboard & trading | `SendRecipientPage` | — | — | `375` |
 | Dashboard & trading | `SendAmountPage` | — | — | `367`, `368`, `370`, `371`, `372` |
 | Dashboard & trading | `SendConfirmPage` | — | — | `369` |
-| Dashboard & trading | `SendProcessPage` | — | — | `374`, `404` |
+| Dashboard & trading | `SendProcessPage` | — | — | `374`, `404`, `420`, `421`, `422`, `423` |
 | Dashboard & trading | `PayScanPage` | — | — | `338` |
 | Dashboard & trading | `PayQuotePage` | — | — | `301`, `302`, `335`, `336`, `337` |
 | Dashboard & trading | `PayProcessPage` | — | — | `332`, `333`, `334` |
