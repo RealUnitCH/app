@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -13,7 +16,6 @@ import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/helper.dart';
 
@@ -41,7 +43,11 @@ void main() {
 
   setUp(() {
     homeBloc = _MockHomeBloc();
-    when(() => homeBloc.state).thenReturn(const HomeState());
+    whenListen(
+      homeBloc,
+      const Stream<HomeState>.empty(),
+      initialState: const HomeState(),
+    );
   });
 
   // Mirrors the production wiring in main.dart: the routed pages read their
@@ -192,6 +198,72 @@ void main() {
     expect(find.byType(PayInfoPage), findsOneWidget);
     expect(find.byType(PayScanPage), findsNothing);
     expect(find.text(S.current.payFailurePayUnavailable), findsOneWidget);
+    expect(getIt<SettingsRepository>().payIntroSeen, isTrue);
+
+    addTearDown(() => routerConfig.goNamed(AppRoutes.home));
+  });
+
+  testWidgets('a software wallet that loads after Pay still sees the intro once', (
+    tester,
+  ) async {
+    await installPayIntroPrefs(const {});
+    final states = StreamController<HomeState>();
+    addTearDown(states.close);
+    whenListen(homeBloc, states.stream, initialState: const HomeState());
+    await pumpRouter(tester);
+
+    routerConfig.goNamed(AppRoutes.pay);
+    await tester.pumpAndSettle();
+
+    expect(find.text(S.current.payFailurePayUnavailable), findsOneWidget);
+    expect(find.text(S.current.payInfoBody), findsNothing);
+    expect(getIt<SettingsRepository>().payIntroSeen, isFalse);
+
+    final loaded = HomeState(hasWallet: true, openWallet: _softwareWallet);
+    when(() => homeBloc.state).thenReturn(loaded);
+    states.add(loaded);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(S.current.payInfoBody), findsOneWidget);
+    expect(find.byType(PayScanPage), findsNothing);
+    expect(getIt<SettingsRepository>().payIntroSeen, isTrue);
+
+    states.add(loaded);
+    await tester.pump();
+
+    expect(find.text(S.current.payInfoBody), findsOneWidget);
+    expect(find.byType(PayScanPage), findsNothing);
+
+    addTearDown(() => routerConfig.goNamed(AppRoutes.home));
+  });
+
+  testWidgets('a scanner visit switches to the unavailable notice for BitBox', (
+    tester,
+  ) async {
+    await installPayIntroPrefs(const {'payIntroSeen': true});
+    final states = StreamController<HomeState>();
+    addTearDown(states.close);
+    final software = HomeState(hasWallet: true, openWallet: _softwareWallet);
+    whenListen(homeBloc, states.stream, initialState: software);
+    await pumpRouter(tester);
+
+    routerConfig.goNamed(AppRoutes.pay);
+    await tester.pump();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(PayScanPage), findsOneWidget);
+    expect(getIt<SettingsRepository>().payIntroSeen, isTrue);
+
+    final bitbox = HomeState(hasWallet: true, openWallet: _BitboxWallet());
+    when(() => homeBloc.state).thenReturn(bitbox);
+    states.add(bitbox);
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(S.current.payFailurePayUnavailable), findsOneWidget);
+    expect(find.byType(PayScanPage), findsNothing);
     expect(getIt<SettingsRepository>().payIntroSeen, isTrue);
 
     addTearDown(() => routerConfig.goNamed(AppRoutes.home));
