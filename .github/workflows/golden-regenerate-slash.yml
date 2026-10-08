@@ -17,10 +17,6 @@ permissions:
   pull-requests: write
   issues: write
 
-concurrency:
-  group: golden-regenerate-slash-${{ github.event.issue.number }}
-  cancel-in-progress: true
-
 jobs:
   authorize:
     if: >
@@ -106,16 +102,22 @@ jobs:
     if: needs.authorize.outputs.authorized == 'true'
     runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
     timeout-minutes: 15
+    concurrency:
+      group: golden-regenerate-slash-${{ github.event.issue.number }}
+      cancel-in-progress: true
     permissions:
       contents: read
     outputs:
       empty: ${{ steps.patch.outputs.empty }}
+      head: ${{ steps.head.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ needs.authorize.outputs.pr }}/head
           fetch-depth: 1
           persist-credentials: false
+      - id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
@@ -152,6 +154,9 @@ jobs:
     if: needs.authorize.outputs.authorized == 'true' && needs.regenerate.result == 'success' && needs.regenerate.outputs.empty != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: golden-regenerate-slash-${{ github.event.issue.number }}
+      cancel-in-progress: true
     permissions:
       contents: write
     outputs:
@@ -163,6 +168,16 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 1
           persist-credentials: true
+      - env:
+          EXPECTED_HEAD: ${{ needs.regenerate.outputs.head }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          if [ "$actual" != "$EXPECTED_HEAD" ]; then
+            echo "refused head: ${actual} != ${EXPECTED_HEAD}" >&2
+            exit 1
+          fi
       - uses: actions/download-artifact@v4
         with:
           name: golden-slash-${{ github.run_id }}
@@ -213,7 +228,7 @@ jobs:
           EMPTY: ${{ needs.regenerate.outputs.empty }}
           PUBLISH: ${{ needs.publish.result }}
           COMMIT: ${{ needs.publish.outputs.commit }}
-          SHA: ${{ needs.authorize.outputs.sha }}
+          SHA: ${{ needs.regenerate.outputs.head }}
           PR: ${{ needs.authorize.outputs.pr }}
           BRANCH: ${{ needs.authorize.outputs.branch }}
         with:
