@@ -41,8 +41,8 @@ void main() {
       );
       expect(handle.decoration, isA<BoxDecoration>());
       expect((handle.decoration! as BoxDecoration).color, RealUnitColors.neutral300);
-      expect(handle.height, 5);
-      expect(handle.width, 36);
+      expect(handle.constraints?.maxHeight, 5);
+      expect(handle.constraints?.maxWidth, 36);
 
       await tester.tap(find.text('Close'));
       expect(closed, isTrue);
