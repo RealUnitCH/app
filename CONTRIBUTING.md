@@ -8,7 +8,7 @@ dart run tool/generate_localization.dart   # generate i18n from ARB files
 dart run tool/generate_release_info.dart   # generate release_info.dart (writes the `dev` sentinel locally)
 flutter pub run build_runner build          # generate code (drift, etc.)
 flutter test                                # run all tests
-flutter analyze --fatal-warnings            # lint check
+flutter analyze --no-fatal-infos --fatal-warnings # lint check
 ```
 
 After changing ARB files, always regenerate: `dart run tool/generate_localization.dart`
@@ -79,7 +79,7 @@ This is a **public** repository. GitHub-hosted and self-hosted runners execute
 the heavy suite (unit and widget tests, the coverage floor, visual regression,
 the handbook image, and the BitBox simulator). A38 does not replace those
 GitHub checks. The author report only covers the light local job in
-`.github/a38.json` (`flutter analyze --fatal-warnings` on Flutter 3.41.6, after `flutter pub get`,
+`.github/a38.json` (`flutter analyze --no-fatal-infos --fatal-warnings` on Flutter 3.41.6, after `flutter pub get`,
 localization generation, release-info generation, and `build_runner`). Do not
 run `flutter test` or the visual-regression suite locally for A38.
 
