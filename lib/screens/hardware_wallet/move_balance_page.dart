@@ -126,6 +126,7 @@ class _MoveBalanceBody extends StatelessWidget {
     final cubit = context.read<MoveBalanceCubit>();
     final softwareBalance = _softwareBalance(state);
     final bitboxBalance = _bitboxBalance(state);
+    final current = state;
     return Column(
       crossAxisAlignment: .stretch,
       spacing: 16,
@@ -142,16 +143,16 @@ class _MoveBalanceBody extends StatelessWidget {
             onPressed: cubit.prepareBitboxToSoftware,
           ),
         ],
-        if (state is MoveBalanceQuoteReady) ...[
-          Text('${s.moveBalanceAmount}: ${state.amount} REALU'),
-          if (state.ethPaysGas)
+        if (current is MoveBalanceQuoteReady) ...[
+          Text('${s.moveBalanceAmount}: ${current.amount} REALU'),
+          if (current.ethPaysGas)
             Text(s.moveBalanceEthPaysGas)
           else
-            Text('${s.fee}: ${state.networkFeeRealu} REALU'),
+            Text('${s.fee}: ${current.networkFeeRealu} REALU'),
         ],
-        if (state is MoveBalanceFailure) Text(_failureText(state, s)),
-        if (state is MoveBalanceNeedEth) Text(state.message),
-        if (state is MoveBalanceRegistrationRequired) Text(state.message),
+        if (current is MoveBalanceFailure) Text(_failureText(current, s)),
+        if (current is MoveBalanceNeedEth) Text(current.message),
+        if (current is MoveBalanceRegistrationRequired) Text(current.message),
         if (state is MoveBalanceSuccess) Text(s.moveBalanceSuccess),
       ],
     );
