@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -25,7 +26,11 @@ http.Client _client({
     if (request.url.toString() != payLocationsPlacesUrl) {
       return http.Response('unexpected', 500);
     }
-    return http.Response(placesBody, placesStatus);
+    return http.Response.bytes(
+      utf8.encode(placesBody),
+      placesStatus,
+      headers: const {'content-type': 'application/json; charset=utf-8'},
+    );
   });
 }
 

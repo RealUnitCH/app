@@ -103,7 +103,13 @@ void main() {
     await tester.pumpWidget(
       wrapForGolden(
         PayLocationsPage(
-          httpClient: MockClient((request) async => http.Response('{"places":[]}', 200)),
+          httpClient: MockClient(
+            (request) async => http.Response.bytes(
+              utf8.encode('{"places":[]}'),
+              200,
+              headers: const {'content-type': 'application/json; charset=utf-8'},
+            ),
+          ),
           mapBuilder: (_) => const SizedBox.shrink(),
         ),
       ),

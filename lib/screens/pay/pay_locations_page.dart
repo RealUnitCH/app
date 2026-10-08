@@ -61,7 +61,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         return;
       }
 
-      final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       if (!payLocationsPlacesBodyIsList(decoded)) {
         _showError(generation);
         return;
