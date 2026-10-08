@@ -60,10 +60,14 @@ class _MockDfxKycService extends Mock implements DfxKycService {}
 class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 blocTest<KycCubit, KycState>(
-  'emits KycCompleted when level >= required and gates have passed',
+  'emits KycCompleted when API reports processStatus=Completed',
   setUp: () {
-    when(() => kycService.getKycStatus())
-        .thenAnswer((_) async => _kycStatus(level: KycLevel.level30));
+    when(() => kycService.getKycStatus()).thenAnswer(
+      (_) async => _kycStatus(
+        level: KycLevel.level50,
+        processStatus: KycProcessStatus.completed,
+      ),
+    );
     when(() => kycService.getUser()).thenAnswer((_) async => _user());
     when(() => legalService.getLegalInfo()).thenAnswer((_) async => _legalInfo());
     // The cubit re-fetches the server-side registration info after the
