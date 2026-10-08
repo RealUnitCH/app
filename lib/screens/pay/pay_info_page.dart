@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -14,26 +13,6 @@ class PayInfoPage extends StatelessWidget {
   final String? initialPayload;
 
   const PayInfoPage({super.key, this.initialPayload});
-
-  TextSpan _payLocationsLink(
-    BuildContext context, {
-    required String text,
-    TextStyle? style,
-  }) {
-    return TextSpan(
-      text: text,
-      style:
-          style ??
-          const TextStyle(
-            color: RealUnitColors.realUnitBlue,
-            decoration: TextDecoration.underline,
-          ),
-      recognizer: TapGestureRecognizer()
-        ..onTap = () {
-          GoRouter.of(context).pushNamed(AppRoutes.payLocations);
-        },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,16 +52,19 @@ class PayInfoPage extends StatelessWidget {
                   textAlign: .center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                Text.rich(
-                  _payLocationsLink(
-                    context,
-                    text: S.of(context).payInfoLocationsLink,
+                GestureDetector(
+                  onTap: () {
+                    if (!context.mounted) return;
+                    context.pushNamed(AppRoutes.payLocations);
+                  },
+                  child: Text(
+                    S.of(context).payInfoLocationsLink,
+                    textAlign: .center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: RealUnitColors.realUnitBlue,
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  textAlign: .center,
                 ),
               ],
             ),
