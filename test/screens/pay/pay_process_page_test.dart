@@ -151,8 +151,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Body label and the result sheet both use payFailureTitle.
-      expect(find.text(S.current.payFailureTitle), findsAtLeast(1));
+      // The failure sheet shows payFailureTitle once. The page behind it does not.
+      expect(find.text(S.current.payFailureTitle), findsOne);
       expect(find.text(S.current.close), findsOne);
       expect(find.byIcon(Icons.error_rounded), findsOne);
     });
@@ -207,26 +207,29 @@ void main() {
       );
     });
 
-    testWidgets('pay-retry label', (tester) async {
-      await expectLabel(
-        tester,
+    testWidgets('pay-retry hides spinner and outcome title', (tester) async {
+      when(() => processCubit.state).thenReturn(
         const PayProcessPayRetry(PayRetryReason.transient),
-        S.current.payRetryTitle,
       );
+      await tester.pumpApp(buildSubject());
+
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      expect(find.text(S.current.payRetryTitle), findsNothing);
     });
 
-    testWidgets('failure label', (tester) async {
-      await expectLabel(
-        tester,
+    testWidgets('failure hides spinner and outcome title', (tester) async {
+      when(() => processCubit.state).thenReturn(
         const PayProcessFailure(PayProcessFailureReason.generic),
-        S.current.payFailureTitle,
       );
+      await tester.pumpApp(buildSubject());
+
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      expect(find.text(S.current.payFailureTitle), findsNothing);
     });
   });
 
   // The result/retry sheets are modal bottom sheets shown from the listener.
-  // The PayProcessView keeps a CupertinoActivityIndicator animating behind the
-  // sheet, so pumpAndSettle never settles; pump fixed frames to open the sheet.
+  // Pump fixed frames to open the sheet.
   // A phone-sized surface keeps the taller retry sheet from overflowing the
   // default 800x600 test viewport (mirrors the logout-sheet test convention).
   Future<void> pumpWithState(WidgetTester tester, PayProcessState terminal) async {
@@ -404,6 +407,8 @@ void main() {
         const PayProcessFailure(PayProcessFailureReason.generic),
       );
 
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      expect(find.text(S.current.payFailureTitle), findsOne);
       expect(find.text(S.current.payFailureGeneric), findsOne);
     });
 
@@ -427,6 +432,8 @@ void main() {
     ) async {
       await pumpWithState(tester, const PayProcessPayRetry(PayRetryReason.transient));
 
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      expect(find.text(S.current.payRetryTitle), findsOne);
       expect(find.text(S.current.payRetryTransient), findsOne);
       expect(find.byIcon(Icons.replay_rounded), findsOne);
 

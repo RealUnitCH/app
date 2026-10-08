@@ -7,9 +7,9 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_process/pay_process_cubit.dart';
+import 'package:realunit_wallet/screens/pay/widgets/pay_result_sheet.dart';
 import 'package:realunit_wallet/screens/transaction_history/completed_transaction.dart';
 import 'package:realunit_wallet/setup/di.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/route_animation_gate.dart';
 
 class PayProcessPage extends StatelessWidget {
@@ -99,24 +99,29 @@ class PayProcessView extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final sheetOpen =
+            state is PayProcessFailure || state is PayProcessPayRetry;
+
         return PopScope(
           canPop: state is! PayProcessSuccess,
           child: Scaffold(
             appBar: AppBar(title: Text(S.of(context).pay)),
             body: SafeArea(
               child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 24,
-                  children: [
-                    const CupertinoActivityIndicator(radius: 16),
-                    Text(
-                      _progressLabel(context, state),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ],
-                ),
+                child: sheetOpen
+                    ? const SizedBox.shrink()
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 24,
+                        children: [
+                          const CupertinoActivityIndicator(radius: 16),
+                          Text(
+                            _progressLabel(context, state),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -175,30 +180,14 @@ class PayProcessView extends StatelessWidget {
 
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       isDismissible: false,
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 24,
-            children: [
-              Icon(icon, color: RealUnitColors.realUnitBlue, size: 64),
-              Text(title, style: Theme.of(context).textTheme.headlineMedium),
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: RealUnitColors.neutral500,
-                ),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(S.of(context).close),
-              ),
-            ],
-          ),
-        ),
+      builder: (sheetContext) => PayResultSheet(
+        icon: icon,
+        title: title,
+        description: description,
+        closeLabel: S.of(sheetContext).close,
+        onClose: () => Navigator.of(sheetContext).pop(),
       ),
     );
     if (context.mounted) Navigator.of(context).pop(swapCompleted);
@@ -222,41 +211,16 @@ class PayProcessView extends StatelessWidget {
     // when they close (leave the flow); a barrier dismissal yields null.
     final retry = await showModalBottomSheet<bool>(
       context: context,
+      isScrollControlled: true,
       isDismissible: false,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 24,
-            children: [
-              const Icon(
-                Icons.replay_rounded,
-                color: RealUnitColors.realUnitBlue,
-                size: 64,
-              ),
-              Text(
-                S.of(sheetContext).payRetryTitle,
-                style: Theme.of(sheetContext).textTheme.headlineMedium,
-              ),
-              Text(
-                _retryMessage(sheetContext, state),
-                textAlign: TextAlign.center,
-                style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
-                  color: RealUnitColors.neutral500,
-                ),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(sheetContext).pop(true),
-                child: Text(S.of(sheetContext).payRetryButton),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(sheetContext).pop(false),
-                child: Text(S.of(sheetContext).close),
-              ),
-            ],
-          ),
-        ),
+      builder: (sheetContext) => PayResultSheet(
+        icon: Icons.replay_rounded,
+        title: S.of(sheetContext).payRetryTitle,
+        description: _retryMessage(sheetContext, state),
+        closeLabel: S.of(sheetContext).close,
+        onClose: () => Navigator.of(sheetContext).pop(false),
+        primaryLabel: S.of(sheetContext).payRetryButton,
+        onPrimary: () => Navigator.of(sheetContext).pop(true),
       ),
     );
 

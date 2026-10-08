@@ -472,6 +472,7 @@ MAPPING=(
   "417-transaction-detail-sent-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_back_to_main.png"
   "418-transaction-detail-sale-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png"
   "419-transaction-detail-sent-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png"
+  "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
 )
 
 missing=()

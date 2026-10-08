@@ -33,7 +33,7 @@ Column meaning:
   `268` is `PhoneNumberField` under `test/goldens/widgets/form/`, and slot
   `393` is `ImageSourceSheet`. `WebViewPage` is slots `394` and `395` (the
   chrome; the page body is the website and is not part of the picture).
-  `PayScanPage` is `338`. `PayProcessPage` is `332`–`334`. `KycPageManager`
+  `PayScanPage` is `338`. `PayProcessPage` is `332`–`334`, `419`, `420`. `KycPageManager`
   (the orchestrator has no Golden of its own — its states are the
   individual KYC pages) carries `—`. Slot ↔ Golden mapping in
   `scripts/assemble-handbook-screenshots.sh`, slot ↔ HTML block in
@@ -72,7 +72,7 @@ Column meaning:
 | Dashboard & trading | `SendProcessPage` | — | — | `374`, `404` |
 | Dashboard & trading | `PayScanPage` | — | — | `338` |
 | Dashboard & trading | `PayQuotePage` | — | — | `301`, `302`, `335`, `336`, `337` |
-| Dashboard & trading | `PayProcessPage` | — | — | `332`, `333`, `334` |
+| Dashboard & trading | `PayProcessPage` | — | — | `332`, `333`, `334`, `419`, `420` |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | `394`, `395` |
