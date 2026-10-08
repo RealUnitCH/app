@@ -5,14 +5,30 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pay/pay_info_page.dart';
+import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/helper.dart';
 
 class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
+
+class _BitboxWallet extends Fake implements BitboxWallet {
+  @override
+  WalletType get walletType => WalletType.bitbox;
+}
+
+final _softwareWallet = SoftwareViewWallet(
+  1,
+  'Software',
+  '0x0000000000000000000000000000000000000001',
+);
 
 void main() {
   late _MockHomeBloc homeBloc;
@@ -108,4 +124,76 @@ void main() {
       addTearDown(() => routerConfig.goNamed(AppRoutes.home));
     },
   );
+
+  Future<void> installPayIntroPrefs(Map<String, Object> values) async {
+    SharedPreferences.setMockInitialValues(values);
+    final prefs = await SharedPreferences.getInstance();
+    if (getIt.isRegistered<SettingsRepository>()) {
+      await getIt.unregister<SettingsRepository>();
+    }
+    if (getIt.isRegistered<SharedPreferences>()) {
+      await getIt.unregister<SharedPreferences>();
+    }
+    getIt.registerSingleton<SharedPreferences>(prefs);
+    getIt.registerSingleton<SettingsRepository>(SettingsRepository(prefs));
+    addTearDown(() async {
+      if (getIt.isRegistered<SettingsRepository>()) {
+        await getIt.unregister<SettingsRepository>();
+      }
+      if (getIt.isRegistered<SharedPreferences>()) {
+        await getIt.unregister<SharedPreferences>();
+      }
+    });
+  }
+
+  testWidgets('a software wallet sees the pay intro once', (tester) async {
+    await installPayIntroPrefs(const {});
+    await pumpRouter(tester);
+    when(() => homeBloc.state).thenReturn(HomeState(hasWallet: true, openWallet: _softwareWallet));
+
+    routerConfig.goNamed(AppRoutes.pay);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PayInfoPage), findsOneWidget);
+    expect(find.text(S.current.payInfoTitle), findsOneWidget);
+    expect(getIt<SettingsRepository>().payIntroSeen, isTrue);
+
+    addTearDown(() => routerConfig.goNamed(AppRoutes.home));
+  });
+
+  testWidgets('the next pay tap opens the scanner and keeps the payload', (tester) async {
+    await installPayIntroPrefs(const {'payIntroSeen': true});
+    await pumpRouter(tester);
+    when(() => homeBloc.state).thenReturn(HomeState(hasWallet: true, openWallet: _softwareWallet));
+
+    routerConfig.pushNamed(AppRoutes.pay, extra: 'not-a-payment-link');
+    await tester.pump();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(PayInfoPage), findsNothing);
+    expect(
+      tester.widget<PayScanPage>(find.byType(PayScanPage)).initialPayload,
+      'not-a-payment-link',
+    );
+    expect(find.text(S.current.payInfoLocationsLink), findsOneWidget);
+
+    addTearDown(() => routerConfig.goNamed(AppRoutes.home));
+  });
+
+  testWidgets('a BitBox wallet is not counted as having seen the intro', (tester) async {
+    await installPayIntroPrefs(const {'payIntroSeen': true});
+    await pumpRouter(tester);
+    when(() => homeBloc.state).thenReturn(HomeState(hasWallet: true, openWallet: _BitboxWallet()));
+
+    routerConfig.goNamed(AppRoutes.pay);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PayInfoPage), findsOneWidget);
+    expect(find.byType(PayScanPage), findsNothing);
+    expect(find.text(S.current.payFailurePayUnavailable), findsOneWidget);
+    expect(getIt<SettingsRepository>().payIntroSeen, isTrue);
+
+    addTearDown(() => routerConfig.goNamed(AppRoutes.home));
+  });
 }
