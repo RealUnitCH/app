@@ -38,25 +38,30 @@ class PayResultSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  spacing: 28,
                   children: [
                     Icon(
                       icon,
                       color: RealUnitColors.realUnitBlue,
                       size: 64,
                     ),
-                    const SizedBox(height: 28),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      description,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: RealUnitColors.neutral500,
-                        letterSpacing: 0.0,
-                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 8,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        Text(
+                          description,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: RealUnitColors.neutral500,
+                            letterSpacing: 0.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
