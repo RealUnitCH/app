@@ -527,6 +527,7 @@
   "tinRequired": "TIN ist erforderlich",
   "to": "an",
   "transactionBuy": "Kauf",
+  "transactionDetailBackToMain": "Zurück zum Hauptscreen",
   "transactionDetailNote": "Notiz",
   "transactionHistory": "Transaktionshistorie",
   "transactionPending": "In Bearbeitung",
