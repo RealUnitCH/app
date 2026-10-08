@@ -49,6 +49,40 @@ gh workflow run golden-regenerate.yaml --ref <feature-branch>
 When the run finishes green, the new baselines are already on the
 branch — pull and continue. No download / rsync / manual commit step.
 
+### Fork pull requests
+
+`gh workflow run` requires write access to `RealUnitCH/app` and only
+accepts a branch in this repository.
+
+Fork authors comment `/golden-regenerate` alone on the open pull
+request. No arguments.
+
+Only the pull request author, or an owner or member of the
+organization, can run it.
+
+The run uses the workflow file from the default branch. It checks out
+the pull request head, regenerates on the same self-hosted runner, and
+force-pushes one commit onto `golden/pr-<number>` in this repository.
+That branch is replaced on every run and is not the pull request
+branch.
+
+The Actions token cannot push to the fork. After a green run, the
+author fast-forwards their fork branch onto the commit and pushes. Do
+not copy the PNGs by hand. The commit message stays
+`test(goldens): regenerate baselines on the self-hosted runner`.
+
+```bash
+git fetch https://github.com/RealUnitCH/app.git golden/pr-N
+git merge --ff-only FETCH_HEAD
+git push
+```
+
+If the fast-forward fails, comment `/golden-regenerate` again on the
+current head.
+
+The command does nothing until this workflow file is on the default
+branch `develop`.
+
 The workflow is `workflow_dispatch`-only, runs on the same
 `[self-hosted, macOS, ARM64, m3-ultra, realunit-app]` labels as
 `golden-tests`, and uses concurrency `golden-regenerate-<ref>` so two
@@ -100,7 +134,8 @@ git push
 3. Run `gh workflow run golden-regenerate.yaml --ref <branch>`. The
    workflow regenerates on the self-hosted runner and pushes the PNGs back to the
    branch as `github-actions[bot]`. Pull and verify `golden-tests`
-   goes green.
+   goes green. Fork authors without write access comment
+   `/golden-regenerate` instead of `gh workflow run`.
 
 ### Reacting to a CI drift
 
@@ -137,7 +172,7 @@ If the self-hosted runner is down (power, macOS update, service maintenance) and
 blocked on `golden-tests`:
 
 1. Switch `runs-on:` in `pull-request.yaml` for the `golden-tests` job —
-   and in `golden-regenerate.yaml` — from `[self-hosted, ..., realunit-app]`
+   and in `golden-regenerate.yaml` and `golden-regenerate-slash.yml` — from `[self-hosted, ..., realunit-app]`
    to `macos-15`.
 2. Dispatch the regenerate workflow on the branch to refresh all baselines
    on `macos-15`.
