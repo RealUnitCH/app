@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
+import 'package:realunit_wallet/screens/pay/pay_locations_lakes.dart';
+import 'package:realunit_wallet/screens/pay/pay_locations_outline.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations_page.dart';
 
 import '../../helper/pump_golden_app.dart';
@@ -130,5 +132,108 @@ void main() {
     expect(pins, hasLength(1));
     expect(pins.single.name, 'Shop');
     expect(pins.single.category, 'store');
+  });
+
+  test('groups nearby shops and keeps distant shops apart', () {
+    const near = PayLocationPin(name: 'A', category: null, lat: 47.37, lon: 8.54);
+    const close = PayLocationPin(name: 'B', category: null, lat: 47.4, lon: 8.56);
+    const far = PayLocationPin(name: 'C', category: null, lat: 46.2, lon: 6.14);
+    final clusters = clusterPayLocationPins(
+      const [near, close, far],
+      cellDegrees: 0.5,
+    );
+
+    expect(clusters, hasLength(2));
+    expect(clusters.map((cluster) => cluster.pins.length).toSet(), {2, 1});
+    expect(
+      payLocationClusterCellDegrees(8),
+      lessThan(payLocationClusterCellDegrees(6)),
+    );
+  });
+
+  test('filters and sorts shop names', () {
+    const zurich = PayLocationPin(name: 'SPAR Zürich', category: null, lat: 47, lon: 8);
+    const bern = PayLocationPin(name: 'SPAR Bern', category: null, lat: 46.9, lon: 7.4);
+    final filtered = filterPayLocationPins(const [zurich, bern], 'bern');
+
+    expect(filtered, [bern]);
+    expect(sortPayLocationPins(const [zurich, bern]).map((pin) => pin.name), [
+      'SPAR Bern',
+      'SPAR Zürich',
+    ]);
+    expect(samePayLocationPin(bern, bern), isTrue);
+    expect(samePayLocationPin(bern, zurich), isFalse);
+  });
+
+  test('splits a published address into place and street', () {
+    final label = payLocationLabel('SPAR Bahnhofstrasse 1, 9403 Goldach');
+
+    expect(label.place, '9403 Goldach');
+    expect(label.street, 'SPAR Bahnhofstrasse 1');
+    expect(label.town, 'Goldach');
+
+    final plain = payLocationLabel('SPAR Zürich');
+    expect(plain.place, 'SPAR Zürich');
+    expect(plain.street, isNull);
+    expect(plain.town, 'SPAR Zürich');
+
+    final dashed = payLocationLabel('SPAR Seestrasse 1–3, 8640 Rapperswil');
+    expect(dashed.street, 'SPAR Seestrasse 1–3');
+    expect(dashed.town, 'Rapperswil');
+  });
+
+  test('sorts published addresses by town', () {
+    const zurich = PayLocationPin(
+      name: 'SPAR Bahnhofstrasse 1, 8001 Zürich',
+      category: null,
+      lat: 47.37,
+      lon: 8.54,
+    );
+    const bern = PayLocationPin(
+      name: 'SPAR Marktgasse 1, 3011 Bern',
+      category: null,
+      lat: 46.95,
+      lon: 7.45,
+    );
+
+    expect(sortPayLocationPins(const [zurich, bern]).map((pin) => pin.name), [
+      bern.name,
+      zurich.name,
+    ]);
+  });
+
+  test('spreads the published shops across the country view', () {
+    final pins = keepPayLocationPins(
+      jsonDecode(
+        File(
+          'test/goldens/screens/pay/fixtures/dev_places_ethereum_zchf.json',
+        ).readAsStringSync(),
+      ),
+    );
+    final overview = clusterPayLocationPins(
+      pins,
+      cellDegrees: payLocationClusterCellDegrees(6.6),
+    );
+    final close = clusterPayLocationPins(
+      pins,
+      cellDegrees: payLocationClusterCellDegrees(14),
+    );
+
+    expect(overview.length, greaterThan(4));
+    expect(overview.length, lessThan(15));
+    expect(overview.every((cluster) => cluster.pins.length < pins.length), isTrue);
+    expect(close.every((cluster) => cluster.isSingle), isTrue);
+  });
+
+  test('keeps the country and lake outlines on the map', () {
+    expect(payLocationCountryRings, hasLength(2));
+    expect(payLocationLakeRings.length, greaterThan(8));
+    for (final ring in [...payLocationCountryRings, ...payLocationLakeRings]) {
+      expect(ring.length, greaterThan(3));
+      for (final point in ring) {
+        expect(point.latitude, inInclusiveRange(45.5, 48.2));
+        expect(point.longitude, inInclusiveRange(5.5, 10.8));
+      }
+    }
   });
 }

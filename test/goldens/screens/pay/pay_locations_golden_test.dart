@@ -71,6 +71,20 @@ void main() {
     'locations with one place',
     fileName: 'pay_locations_page_places',
     constraints: phoneConstraints,
-    builder: () => wrapForGolden(_map(_client(placesBody: _placesBody))),
+    builder: () => wrapForGolden(
+      PayLocationsPage(httpClient: _client(placesBody: _placesBody)),
+    ),
+  );
+
+  goldenTest(
+    'locations with no search match',
+    fileName: 'pay_locations_page_no_match',
+    constraints: phoneConstraints,
+    builder: () => wrapForGolden(
+      PayLocationsPage(
+        httpClient: _client(placesBody: _publishedPlacesBody),
+        initialQuery: 'zzzz',
+      ),
+    ),
   );
 }

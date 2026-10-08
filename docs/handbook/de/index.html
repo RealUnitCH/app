@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 422 Visual-Regression Goldens (422 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 423 Visual-Regression Goldens (423 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 422 App-Screenshots dieser Seite sind Goldens aus
+            Die 423 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 422 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 423 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -9309,7 +9309,7 @@
                 <div class="file">test/goldens/screens/pay/</div>
               </div>
               <div class="rhs">
-                <b>14 Screens</b>
+                <b>15 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
@@ -9555,9 +9555,10 @@
                 />
               </div>
               <div class="desc">
-                Standortkarte der veröffentlichten SPAR-Filialen, ohne
-                Blockchain- oder Asset-Auswahl und ohne Kartenkacheln. Die Marker
-                sind lokal.
+                Standortkarte der veröffentlichten SPAR-Filialen auf dem
+                Umriss der Schweiz und Liechtensteins, mit Seen, Ortsnamen,
+                gruppierten Markern und der Adressliste. Keine Blockchain- oder
+                Asset-Auswahl und keine Kartenkacheln.
                 Golden-Quelle: <code>pay_locations_page_empty.png</code>.
               </div>
             </div>
@@ -9574,9 +9575,29 @@
                 />
               </div>
               <div class="desc">
-                Standortkarte mit einem Geschäft für ZCHF auf Ethereum. Titel
-                <b>Standorte</b>. Die Kartenkacheln sind in der Aufnahme ein Platzhalter.
+                Standortkarte mit einem Geschäft für ZCHF auf Ethereum, auf dem
+                lokalen Landesumriss und mit der Geschäftsliste. Titel
+                <b>Standorte</b>.
                 Golden-Quelle: <code>pay_locations_page_places.png</code>.
+              </div>
+            </div>
+            <div class="test" id="414-pay-locations-no-match">
+              <div class="head">
+                <a class="name permalink" href="#414-pay-locations-no-match">414-pay-locations-no-match</a>
+                <button class="copy-link" type="button" data-target="414-pay-locations-no-match" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_no_match.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/414-pay-locations-no-match.png"
+                  alt="Kein Standort passt"
+                />
+              </div>
+              <div class="desc">
+                Standortsuche ohne Treffer. Sichtbarer Text:
+                <b>Kein Standort passt.</b>
+                Die Karte zeigt weiter den Landesumriss, ohne Marker.
+                Golden-Quelle: <code>pay_locations_page_no_match.png</code>.
               </div>
             </div>
           </div>
