@@ -106,7 +106,7 @@ class RealUnitTransferService extends DFXAuthService {
         throw TransferSignatureUnsupportedException(e.message ?? e.toString());
       }
 
-      return _sendConfirm(
+      return await _sendConfirm(
         info.id,
         Eip7702ConfirmDto(
           delegation: Eip7702DelegationDto(

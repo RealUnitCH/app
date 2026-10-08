@@ -110,7 +110,7 @@ void main() {
         build: build,
         seed: () => const VerifyPinUnverifiable(),
         act: (cubit) => cubit.addDigit(1),
-        expect: () => [],
+        expect: () => <VerifyPinState>[],
       );
 
       blocTest<VerifyPinCubit, VerifyPinState>(
@@ -118,7 +118,7 @@ void main() {
         build: build,
         seed: () => const VerifyPinUnverifiable(),
         act: (cubit) => cubit.deleteDigit(),
-        expect: () => [],
+        expect: () => <VerifyPinState>[],
       );
     });
 
@@ -339,7 +339,7 @@ void main() {
         // A late timer tick after a biometric unlock during the lockout window.
         seed: () => const VerifyPinSuccess(biometricStatus: BiometricStatus.available),
         act: (cubit) => cubit.onLockExpired(),
-        expect: () => [],
+        expect: () => <VerifyPinState>[],
         verify: (_) {
           verifyNever(() => biometricService.authenticate());
         },
@@ -666,7 +666,7 @@ void main() {
             .thenAnswer((_) async => BiometricAuthOutcome.failed),
         seed: () => const VerifyPinState(biometricStatus: BiometricStatus.available),
         act: (cubit) => cubit.promptBiometric(),
-        expect: () => [],
+        expect: () => <VerifyPinState>[],
       );
 
       const mapping = <BiometricAuthOutcome, BiometricStatus>{

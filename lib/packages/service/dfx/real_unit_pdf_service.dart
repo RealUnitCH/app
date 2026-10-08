@@ -88,7 +88,7 @@ class RealUnitPdfService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return PdfDto.fromJson(jsonDecode(response.body));
+    return PdfDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<PdfDto> getExchangeReceipt(String txId) async {

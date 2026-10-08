@@ -71,7 +71,7 @@ class KycLinkWalletView extends StatelessWidget {
             // retry registration once the device is linked. Mirror of
             // `KycRegistrationPage`.
             final userData = state.userData;
-            final result = await showModalBottomSheet(
+            final result = await showModalBottomSheet<bool>(
               context: context,
               isScrollControlled: true,
               builder: (_) => ConnectBitboxPage(

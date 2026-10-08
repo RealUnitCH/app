@@ -28,7 +28,7 @@ class RealUnitLegalService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return RealUnitLegalInfoDto.fromJson(jsonDecode(response.body));
+    return RealUnitLegalInfoDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   /// Durably records acceptance of [agreements] for the current wallet. The
@@ -49,6 +49,6 @@ class RealUnitLegalService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return RealUnitLegalInfoDto.fromJson(jsonDecode(response.body));
+    return RealUnitLegalInfoDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 }

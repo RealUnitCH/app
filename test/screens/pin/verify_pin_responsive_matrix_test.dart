@@ -51,7 +51,7 @@ void main() {
   setUpAll(() {
     pinAuthCubit = MockPinAuthCubit();
     when(() => pinAuthCubit.state).thenReturn(const PinAuthState());
-    when(() => pinAuthCubit.onPinVerified()).thenAnswer((_) => Future.value());
+    when(() => pinAuthCubit.onPinVerified()).thenAnswer((_) => Future<void>.value());
     setupDependencyInjection();
   });
 

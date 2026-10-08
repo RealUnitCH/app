@@ -42,7 +42,7 @@ class TransactionRepository {
     }
     try {
       if (await findTxIdIgnoreCase(transaction.txId) != null) {
-        return updateTransaction(transaction);
+        return await updateTransaction(transaction);
       }
       return await _appDatabase.insertTransactions(
         transaction.height,

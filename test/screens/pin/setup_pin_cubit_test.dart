@@ -230,7 +230,7 @@ void main() {
         isSubmitting: true,
       ),
       act: (cubit) => cubit.addDigit(3),
-      expect: () => [],
+      expect: () => <SetupPinState>[],
     );
 
     blocTest<SetupPinCubit, SetupPinState>(
@@ -242,7 +242,7 @@ void main() {
         isSubmitting: true,
       ),
       act: (cubit) => cubit.deleteDigit(),
-      expect: () => [],
+      expect: () => <SetupPinState>[],
     );
 
     blocTest<SetupPinCubit, SetupPinState>(

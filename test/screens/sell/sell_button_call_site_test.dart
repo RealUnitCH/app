@@ -180,7 +180,7 @@ void main() {
 
         expect(find.byType(SellConfirmSheet), findsOneWidget);
 
-        final modalRoutes = observer.pushed.whereType<ModalBottomSheetRoute>().toList();
+        final modalRoutes = observer.pushed.whereType<ModalBottomSheetRoute<dynamic>>().toList();
         expect(
           modalRoutes,
           hasLength(1),
@@ -207,7 +207,7 @@ void main() {
 
         final observer = await pumpSellButton(tester);
 
-        final confirmRoute = observer.pushed.whereType<ModalBottomSheetRoute>().single;
+        final confirmRoute = observer.pushed.whereType<ModalBottomSheetRoute<dynamic>>().single;
 
         // Resolve the confirm sheet's route with `true` directly on the Navigator that owns
         // it — equivalent to the user completing the real SellConfirmCubit flow
@@ -220,7 +220,7 @@ void main() {
 
         expect(find.byType(SellExecutedSheet), findsOneWidget);
 
-        final modalRoutes = observer.pushed.whereType<ModalBottomSheetRoute>().toList();
+        final modalRoutes = observer.pushed.whereType<ModalBottomSheetRoute<dynamic>>().toList();
         expect(
           modalRoutes,
           hasLength(2),
