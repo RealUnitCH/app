@@ -12,8 +12,9 @@
 //        .github/workflows/pull-request.yaml fails the build on any
 //        non-allowlisted hit.
 //
-// Suppressing a site (use sparingly, always with a reason on the same line or
-// the line directly above):
+// Suppressing a site (use sparingly): place this exact line comment on the
+// finding line or the line directly above it. Use the exact rule id, a literal
+// em dash (`—`), and a non-empty reason beginning on the marker line:
 //   // realunit-lint:ignore <rule-id> — <reason>
 //
 // Rule ids:
@@ -31,6 +32,7 @@ import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart' show CommentToken, Token;
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 
@@ -44,16 +46,45 @@ class Finding {
 
 const _buyMethods = {'getBuyPrice', 'getBuyShares'};
 const _sellMethods = {'getSellPrice', 'getSellShares'};
+final _suppressionPattern = RegExp(
+  r'^// realunit-lint:ignore ([a-z0-9_]+) — (\S.*)$',
+);
 
 /// Scans a single Dart source for the three high-pattern violations, honouring
-/// `// realunit-lint:ignore <rule-id>` markers. `path` drives the buy/sell flow
-/// heuristic (rule C). Exposed for the unit test in
+/// exact `// realunit-lint:ignore <rule-id> — <reason>` line comments. `path`
+/// drives the buy/sell flow heuristic (rule C). Exposed for the unit test in
 /// `test/tool/pattern_guard_test.dart`.
 List<Finding> scanDartSource(String path, String content) {
   final result = parseString(content: content, path: path, throwIfDiagnostics: false);
-  final visitor = _PatternVisitor(path, result.unit.lineInfo, content.split('\n'));
+  final visitor = _PatternVisitor(
+    path,
+    result.unit.lineInfo,
+    _collectSuppressions(result.unit.beginToken, result.unit.lineInfo),
+  );
   result.unit.accept(visitor);
   return visitor.findings;
+}
+
+Map<int, Set<String>> _collectSuppressions(Token firstToken, LineInfo lineInfo) {
+  final suppressions = <int, Set<String>>{};
+  var token = firstToken;
+
+  while (true) {
+    CommentToken? comment = token.precedingComments;
+    while (comment != null) {
+      final match = _suppressionPattern.firstMatch(comment.lexeme);
+      if (match != null) {
+        final line = lineInfo.getLocation(comment.offset).lineNumber;
+        (suppressions[line] ??= <String>{}).add(match.group(1)!);
+      }
+      final next = comment.next;
+      comment = next is CommentToken ? next : null;
+    }
+    if (token.isEof) break;
+    token = token.next!;
+  }
+
+  return suppressions;
 }
 
 void main() {
@@ -96,11 +127,11 @@ void main() {
 }
 
 class _PatternVisitor extends RecursiveAstVisitor<void> {
-  _PatternVisitor(this.path, this.lineInfo, this.lines);
+  _PatternVisitor(this.path, this.lineInfo, this.suppressions);
 
   final String path;
   final LineInfo lineInfo;
-  final List<String> lines;
+  final Map<int, Set<String>> suppressions;
   final List<Finding> findings = [];
 
   bool get _isSellFile => path.contains('/sell/') || path.contains('/sell_');
@@ -109,21 +140,9 @@ class _PatternVisitor extends RecursiveAstVisitor<void> {
 
   int _lineOf(int offset) => lineInfo.getLocation(offset).lineNumber;
 
-  // A hit is suppressed by a `// realunit-lint:ignore <rule-id> — <reason>`
-  // marker on the hit line itself or anywhere in the contiguous block of
-  // comment lines directly above it (multi-line reasons are fine).
-  bool _suppressed(int line, String rule) {
-    bool has(String s) =>
-        s.contains('realunit-lint:ignore') &&
-        (s.contains(rule) || s.contains('realunit-lint:ignore-all'));
-    if (line >= 1 && line <= lines.length && has(lines[line - 1])) return true;
-    var i = line - 1; // index of the line above the hit (0-based: line-2 + 1)
-    while (i >= 1 && lines[i - 1].trimLeft().startsWith('//')) {
-      if (has(lines[i - 1])) return true;
-      i--;
-    }
-    return false;
-  }
+  bool _suppressed(int line, String rule) =>
+      suppressions[line]?.contains(rule) == true ||
+      suppressions[line - 1]?.contains(rule) == true;
 
   void _report(String rule, int offset, String message) {
     final line = _lineOf(offset);

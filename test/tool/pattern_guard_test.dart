@@ -129,7 +129,7 @@ void f(bool resident) {
   });
 
   group('suppression', () {
-    test('// realunit-lint:ignore on the line above silences the hit', () {
+    test('valid marker on the line above silences the hit', () {
       final hits = _rules('lib/x.dart', '''
 void f() {
   // realunit-lint:ignore hardcoded_swiss_tax_residence — test
@@ -139,10 +139,68 @@ void f() {
       expect(hits, isEmpty);
     });
 
+    test('valid marker on the finding line silences the hit', () {
+      final hits = _rules('lib/x.dart', '''
+void f() {
+  register(swissTaxResidence: true); // realunit-lint:ignore hardcoded_swiss_tax_residence — test
+}
+''');
+      expect(hits, isEmpty);
+    });
+
     test('ignore for a different rule does not silence', () {
       final hits = _rules('lib/x.dart', '''
 void f() {
   // realunit-lint:ignore fixed_index_address_substring — wrong rule
+  register(swissTaxResidence: true);
+}
+''');
+      expect(hits, contains('hardcoded_swiss_tax_residence'));
+    });
+
+    test('partial rule id does not silence', () {
+      final hits = _rules('lib/x.dart', '''
+void f() {
+  // realunit-lint:ignore hardcoded_swiss_tax_residence_extra — wrong rule
+  register(swissTaxResidence: true);
+}
+''');
+      expect(hits, contains('hardcoded_swiss_tax_residence'));
+    });
+
+    test('marker without a reason does not silence', () {
+      final hits = _rules('lib/x.dart', '''
+void f() {
+  // realunit-lint:ignore hardcoded_swiss_tax_residence —
+  register(swissTaxResidence: true);
+}
+''');
+      expect(hits, contains('hardcoded_swiss_tax_residence'));
+    });
+
+    test('marker in a string literal does not silence', () {
+      final hits = _rules('lib/x.dart', '''
+void f() {
+  register(swissTaxResidence: true, note: '// realunit-lint:ignore hardcoded_swiss_tax_residence — not a comment');
+}
+''');
+      expect(hits, contains('hardcoded_swiss_tax_residence'));
+    });
+
+    test('ignore-all does not silence', () {
+      final hits = _rules('lib/x.dart', '''
+void f() {
+  // realunit-lint:ignore-all — test
+  register(swissTaxResidence: true);
+}
+''');
+      expect(hits, contains('hardcoded_swiss_tax_residence'));
+    });
+
+    test('ASCII hyphen delimiter does not silence', () {
+      final hits = _rules('lib/x.dart', '''
+void f() {
+  // realunit-lint:ignore hardcoded_swiss_tax_residence - test
   register(swissTaxResidence: true);
 }
 ''');
