@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -35,11 +37,13 @@ void openTransactionDetail(
   Transaction transaction,
   String walletAddress,
 ) {
-  context.pushNamed(
-    AppRoutes.transactionDetail,
-    extra: TransactionDetailArgs(
-      transaction: transaction,
-      walletAddress: walletAddress,
+  unawaited(
+    context.pushNamed(
+      AppRoutes.transactionDetail,
+      extra: TransactionDetailArgs(
+        transaction: transaction,
+        walletAddress: walletAddress,
+      ),
     ),
   );
 }
@@ -309,17 +313,21 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
   void _onRealunitPressed() {
     final settings = context.read<SettingsBloc>().state;
     setState(() => _pending = .realunit);
-    context.read<TransactionHistoryReceiptCubit>().generateReceipt(
-      widget.args.transaction.txId,
-      currency: settings.currency,
-      language: settings.language,
+    unawaited(
+      context.read<TransactionHistoryReceiptCubit>().generateReceipt(
+        widget.args.transaction.txId,
+        currency: settings.currency,
+        language: settings.language,
+      ),
     );
   }
 
   void _onExchangePressed() {
     setState(() => _pending = .exchange);
-    context.read<TransactionHistoryReceiptCubit>().generateExchangeReceipt(
-      widget.args.transaction.txId,
+    unawaited(
+      context.read<TransactionHistoryReceiptCubit>().generateExchangeReceipt(
+        widget.args.transaction.txId,
+      ),
     );
   }
 }

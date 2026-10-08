@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -41,13 +43,13 @@ class _VerifySeedViewState extends State<VerifySeedView> {
     // Seed words are entered/visible here — block screenshots and the
     // app-switcher snapshot. Released on dispose; screenshots re-enable only
     // when the last protected screen leaves (see ScreenshotGuard).
-    ScreenshotGuard.acquire();
+    unawaited(ScreenshotGuard.acquire());
     super.initState();
   }
 
   @override
   void dispose() {
-    ScreenshotGuard.release();
+    unawaited(ScreenshotGuard.release());
     super.dispose();
   }
 

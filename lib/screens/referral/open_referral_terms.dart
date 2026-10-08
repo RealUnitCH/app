@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
@@ -8,5 +10,5 @@ import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 void openReferralTerms(BuildContext context) {
   final router = GoRouter.maybeOf(context);
   if (router == null) return;
-  router.pushNamed(LegalRoutes.referralTerms);
+  unawaited(router.pushNamed(LegalRoutes.referralTerms));
 }

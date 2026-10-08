@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -31,7 +33,7 @@ class _RestoreWalletViewState extends State<RestoreWalletView> {
     // screenshots and the app-switcher snapshot. Released on dispose;
     // screenshots re-enable only when the last protected screen leaves
     // (see ScreenshotGuard).
-    ScreenshotGuard.acquire();
+    unawaited(ScreenshotGuard.acquire());
     super.initState();
   }
 
@@ -127,7 +129,7 @@ class _RestoreWalletViewState extends State<RestoreWalletView> {
 
   @override
   void dispose() {
-    ScreenshotGuard.release();
+    unawaited(ScreenshotGuard.release());
     for (final controller in _controllers) {
       controller.dispose();
     }

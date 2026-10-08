@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -49,16 +51,18 @@ class BuyConfirmButtonView extends StatelessWidget {
     return BlocConsumer<BuyConfirmCubit, BuyConfirmState>(
       listener: (context, state) {
         if (state is BuyConfirmSuccess) {
-          context.pushNamed(
-            AppRoutes.buyPaymentDetails,
-            extra: BuyPaymentDetailsParams(
-              buyPaymentInfo: buyPaymentInfo,
-              // The charged amount comes from the quote itself, never keystrokes.
-              amount: buyPaymentInfo.amount.toStringAsFixed(2),
-              // Backward compatible: prefer the API-designated purpose once it
-              // ships; until then `reference` (always returned) is the value.
-              purposeOfPayment: state.remittanceInfo ?? state.reference,
-              paymentRequest: state.paymentRequest,
+          unawaited(
+            context.pushNamed(
+              AppRoutes.buyPaymentDetails,
+              extra: BuyPaymentDetailsParams(
+                buyPaymentInfo: buyPaymentInfo,
+                // The charged amount comes from the quote itself, never keystrokes.
+                amount: buyPaymentInfo.amount.toStringAsFixed(2),
+                // Backward compatible: prefer the API-designated purpose once it
+                // ships; until then `reference` (always returned) is the value.
+                purposeOfPayment: state.remittanceInfo ?? state.reference,
+                paymentRequest: state.paymentRequest,
+              ),
             ),
           );
         }

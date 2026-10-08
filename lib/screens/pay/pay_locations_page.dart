@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -79,7 +80,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     _query = widget.initialQuery;
     _searchController = TextEditingController(text: widget.initialQuery);
     if (widget.loadOnStart) {
-      _loadPlaces();
+      unawaited(_loadPlaces());
     }
   }
 

@@ -25,9 +25,11 @@ class PaymentActionButton extends StatelessWidget {
   // back to the typed amount) — never with the raw text-field content.
   void _refetchQuote(BuildContext context) {
     final converterState = context.read<BuyConverterCubit>().state;
-    context.read<BuyPaymentInfoCubit>().getPaymentInfo(
-      amount: converterState.quoteAmountText,
-      currency: converterState.currency,
+    unawaited(
+      context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+        amount: converterState.quoteAmountText,
+        currency: converterState.currency,
+      ),
     );
   }
 

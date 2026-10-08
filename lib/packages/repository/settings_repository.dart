@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:realunit_wallet/packages/config/network_mode.dart';
@@ -97,10 +98,10 @@ class SettingsRepository {
         _sharedPreferences.containsKey('$base.mainnet') ||
         _sharedPreferences.containsKey('$base.testnet');
     if (!hasAnyScope && _sharedPreferences.containsKey(base)) {
-      _sharedPreferences.setBool(scoped, _sharedPreferences.getBool(base)!);
+      unawaited(_sharedPreferences.setBool(scoped, _sharedPreferences.getBool(base)!));
     }
     if (hasAnyScope || _sharedPreferences.containsKey(scoped)) {
-      _sharedPreferences.remove(base);
+      unawaited(_sharedPreferences.remove(base));
     }
   }
 
@@ -112,14 +113,14 @@ class SettingsRepository {
     final alreadyDone = _featureRecorded(featureKey);
     if (alreadyDone) {
       if (_sharedPreferences.containsKey(legacyKey)) {
-        _sharedPreferences.remove(legacyKey);
+        unawaited(_sharedPreferences.remove(legacyKey));
       }
       return;
     }
     final legacyOn = _sharedPreferences.getBool(legacyKey) == true;
     if (!legacyOn && !(includeUnlock && insiderFeaturesUnlocked)) return;
-    _sharedPreferences.setBool(featureKey, true);
-    _sharedPreferences.remove(legacyKey);
+    unawaited(_sharedPreferences.setBool(featureKey, true));
+    unawaited(_sharedPreferences.remove(legacyKey));
   }
 
   bool _featureRecorded(String featureKey) {
@@ -153,8 +154,8 @@ class SettingsRepository {
         _sharedPreferences.containsKey('$insiderKey.mainnet') ||
         _sharedPreferences.containsKey('$insiderKey.testnet');
     if (done) {
-      _sharedPreferences.remove(featureKey);
-      _sharedPreferences.remove(userOffKey);
+      unawaited(_sharedPreferences.remove(featureKey));
+      unawaited(_sharedPreferences.remove(userOffKey));
       return;
     }
     if (!_sharedPreferences.containsKey(featureKey) &&
@@ -163,9 +164,9 @@ class SettingsRepository {
     }
     final oldOn = _sharedPreferences.getBool(featureKey) == true;
     final userOff = _sharedPreferences.getBool(userOffKey) == true;
-    _sharedPreferences.setBool(insiderKey, oldOn && !userOff);
-    _sharedPreferences.remove(featureKey);
-    _sharedPreferences.remove(userOffKey);
+    unawaited(_sharedPreferences.setBool(insiderKey, oldOn && !userOff));
+    unawaited(_sharedPreferences.remove(featureKey));
+    unawaited(_sharedPreferences.remove(userOffKey));
   }
 
   Future<bool> saveCurrentWalletId(int walletId) =>
@@ -230,7 +231,7 @@ class SettingsRepository {
       (_sharedPreferences.getBool(_scoped('walletFeaturePayInsider')) ?? false);
   set walletFeaturePay(bool value) {
     if (value) {
-      _sharedPreferences.setBool(_scoped('walletFeaturePayCentral'), true);
+      unawaited(_sharedPreferences.setBool(_scoped('walletFeaturePayCentral'), true));
     }
   }
 
@@ -239,7 +240,7 @@ class SettingsRepository {
       (_sharedPreferences.getBool(_scoped('walletFeatureSendInsider')) ?? false);
   set walletFeatureSend(bool value) {
     if (value) {
-      _sharedPreferences.setBool(_scoped('walletFeatureSendCentral'), true);
+      unawaited(_sharedPreferences.setBool(_scoped('walletFeatureSendCentral'), true));
     }
   }
 
@@ -248,7 +249,7 @@ class SettingsRepository {
       (_sharedPreferences.getBool(_scoped('walletFeaturePromoCodeInsider')) ?? false);
   set walletFeaturePromoCode(bool value) {
     if (value) {
-      _sharedPreferences.setBool(_scoped('walletFeaturePromoCodeCentral'), true);
+      unawaited(_sharedPreferences.setBool(_scoped('walletFeaturePromoCodeCentral'), true));
     }
   }
 
@@ -257,7 +258,7 @@ class SettingsRepository {
       (_sharedPreferences.getBool(_scoped('walletFeatureReferralInsider')) ?? false);
   set walletFeatureReferral(bool value) {
     if (value) {
-      _sharedPreferences.setBool(_scoped('walletFeatureReferralCentral'), true);
+      unawaited(_sharedPreferences.setBool(_scoped('walletFeatureReferralCentral'), true));
     }
   }
 
@@ -272,22 +273,22 @@ class SettingsRepository {
 
   void setWalletFeaturePayFromUser(bool enabled) {
     if (walletFeaturePayCentral) return;
-    _sharedPreferences.setBool(_scoped('walletFeaturePayInsider'), enabled);
+    unawaited(_sharedPreferences.setBool(_scoped('walletFeaturePayInsider'), enabled));
   }
 
   void setWalletFeatureSendFromUser(bool enabled) {
     if (walletFeatureSendCentral) return;
-    _sharedPreferences.setBool(_scoped('walletFeatureSendInsider'), enabled);
+    unawaited(_sharedPreferences.setBool(_scoped('walletFeatureSendInsider'), enabled));
   }
 
   void setWalletFeaturePromoCodeFromUser(bool enabled) {
     if (walletFeaturePromoCodeCentral) return;
-    _sharedPreferences.setBool(_scoped('walletFeaturePromoCodeInsider'), enabled);
+    unawaited(_sharedPreferences.setBool(_scoped('walletFeaturePromoCodeInsider'), enabled));
   }
 
   void setWalletFeatureReferralFromUser(bool enabled) {
     if (walletFeatureReferralCentral) return;
-    _sharedPreferences.setBool(_scoped('walletFeatureReferralInsider'), enabled);
+    unawaited(_sharedPreferences.setBool(_scoped('walletFeatureReferralInsider'), enabled));
   }
 
   String? get dismissedClientPolicyLatest {
@@ -298,9 +299,9 @@ class SettingsRepository {
 
   set dismissedClientPolicyLatest(String? value) {
     if (value == null || value.isEmpty) {
-      _sharedPreferences.remove('dismissedClientPolicyLatest');
+      unawaited(_sharedPreferences.remove('dismissedClientPolicyLatest'));
     } else {
-      _sharedPreferences.setString('dismissedClientPolicyLatest', value);
+      unawaited(_sharedPreferences.setString('dismissedClientPolicyLatest', value));
     }
   }
 }

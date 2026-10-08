@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,7 +24,7 @@ class CreateWalletView extends StatefulWidget {
 class _CreateWalletViewState extends State<CreateWalletView> {
   @override
   void initState() {
-    ScreenshotGuard.acquire();
+    unawaited(ScreenshotGuard.acquire());
     super.initState();
   }
 
@@ -96,7 +98,7 @@ class _CreateWalletViewState extends State<CreateWalletView> {
 
   @override
   void dispose() {
-    ScreenshotGuard.release();
+    unawaited(ScreenshotGuard.release());
     super.dispose();
   }
 }

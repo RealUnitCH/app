@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -29,10 +30,12 @@ class _UpdateAvailableBannerState extends State<UpdateAvailableBanner> {
   @override
   void initState() {
     super.initState();
-    widget.installerPackage.readInstallerPackage().then((value) {
-      if (!mounted) return;
-      setState(() => _installer = value);
-    });
+    unawaited(
+      widget.installerPackage.readInstallerPackage().then((value) {
+        if (!mounted) return;
+        setState(() => _installer = value);
+      }),
+    );
   }
 
   @override

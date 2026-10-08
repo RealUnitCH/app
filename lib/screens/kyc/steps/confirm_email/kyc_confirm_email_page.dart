@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -51,7 +53,7 @@ class KycConfirmEmailView extends StatelessWidget {
           // the KYC flow, which re-fetches `getRegistrationInfo` and routes on
           // whatever the API now reports — see CONTRIBUTING.md "API as Decision
           // Authority".
-          context.read<KycCubit>().checkKyc();
+          unawaited(context.read<KycCubit>().checkKyc());
         }
       },
       child: Scaffold(

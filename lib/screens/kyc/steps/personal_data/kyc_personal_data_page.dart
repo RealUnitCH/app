@@ -132,17 +132,19 @@ class _KycPersonalDataViewState extends State<KycPersonalDataView> {
     // to its first prefix when unseeded and only accepts a seeded value it can decompose.
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    context.read<KycPersonalDataCubit>().submit(
-      url: widget.url,
-      accountType: widget.initialUserData.kycData.accountType,
-      firstName: firstNameCtrl.text,
-      lastName: lastNameCtrl.text,
-      phone: phoneCtrl.value!,
-      street: streetCtrl.text,
-      houseNumber: houseNumberCtrl.text,
-      zip: zipCtrl.text,
-      city: cityCtrl.text,
-      country: countryCtrl.value!,
+    unawaited(
+      context.read<KycPersonalDataCubit>().submit(
+        url: widget.url,
+        accountType: widget.initialUserData.kycData.accountType,
+        firstName: firstNameCtrl.text,
+        lastName: lastNameCtrl.text,
+        phone: phoneCtrl.value!,
+        street: streetCtrl.text,
+        houseNumber: houseNumberCtrl.text,
+        zip: zipCtrl.text,
+        city: cityCtrl.text,
+        country: countryCtrl.value!,
+      ),
     );
   }
 
@@ -154,7 +156,7 @@ class _KycPersonalDataViewState extends State<KycPersonalDataView> {
         listener: (context, state) {
           if (state is KycPersonalDataSuccess) {
             // The API decides what comes next; re-reading it is what moves the flow on.
-            context.read<KycCubit>().checkKyc();
+            unawaited(context.read<KycCubit>().checkKyc());
           }
           if (state is KycPersonalDataFailure) {
             ScaffoldMessenger.of(context).showSnackBar(

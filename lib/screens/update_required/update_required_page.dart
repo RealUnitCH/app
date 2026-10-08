@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -38,14 +39,16 @@ class _UpdateRequiredPageState extends State<UpdateRequiredPage> {
   @override
   void initState() {
     super.initState();
-    widget.installerPackage.readInstallerPackage().then((value) {
-      if (!mounted) return;
-      setState(() => _installer = value);
-    });
+    unawaited(
+      widget.installerPackage.readInstallerPackage().then((value) {
+        if (!mounted) return;
+        setState(() => _installer = value);
+      }),
+    );
   }
 
   void _open(String url) {
-    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    unawaited(launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication));
   }
 
   @override
