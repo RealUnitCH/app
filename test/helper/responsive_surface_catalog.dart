@@ -281,6 +281,12 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/sell/widgets/sell_executed_sheet.dart',
   ),
   ResponsiveSurface(
+    id: 'pay_result_sheet',
+    description: 'Pay success, failure, and retry bottom sheet (shrinkWrap mode)',
+    matrixTestPath: 'test/screens/pay/pay_result_sheet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pay/widgets/pay_result_sheet.dart',
+  ),
+  ResponsiveSurface(
     id: 'forgot_pin_bottom_sheet',
     description: 'Forgot-PIN bottom sheet (shrinkWrap mode)',
     matrixTestPath: 'test/screens/pin/pin_sheets_responsive_matrix_test.dart',
