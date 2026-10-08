@@ -23,7 +23,7 @@ void main() {
   });
 
   test('a places body must be a map whose places field is a list', () {
-    expect(payLocationsPlacesBodyIsList({'places': []}), isTrue);
+    expect(payLocationsPlacesBodyIsList({'places': <Object?>[]}), isTrue);
     expect(payLocationsPlacesBodyIsList({'places': <Object?>[{}]}), isTrue);
     expect(payLocationsPlacesBodyIsList([]), isFalse);
     expect(payLocationsPlacesBodyIsList(null), isFalse);
