@@ -68,6 +68,13 @@ void main() {
   );
 
   goldenTest(
+    'locations with nothing published',
+    fileName: 'pay_locations_page_unpublished',
+    constraints: phoneConstraints,
+    builder: () => wrapForGolden(PayLocationsPage(httpClient: _client())),
+  );
+
+  goldenTest(
     'locations with one place',
     fileName: 'pay_locations_page_places',
     constraints: phoneConstraints,

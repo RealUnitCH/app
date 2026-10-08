@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 423 Visual-Regression Goldens (423 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 424 Visual-Regression Goldens (424 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 423 App-Screenshots dieser Seite sind Goldens aus
+            Die 424 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 423 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 424 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -9309,7 +9309,7 @@
                 <div class="file">test/goldens/screens/pay/</div>
               </div>
               <div class="rhs">
-                <b>15 Screens</b>
+                <b>16 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
@@ -9598,6 +9598,26 @@
                 <b>Kein Standort passt.</b>
                 Die Karte zeigt weiter den Landesumriss, ohne Marker.
                 Golden-Quelle: <code>pay_locations_page_no_match.png</code>.
+              </div>
+            </div>
+            <div class="test" id="415-pay-locations-unpublished">
+              <div class="head">
+                <a class="name permalink" href="#415-pay-locations-unpublished">415-pay-locations-unpublished</a>
+                <button class="copy-link" type="button" data-target="415-pay-locations-unpublished" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_unpublished.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/415-pay-locations-unpublished.png"
+                  alt="Noch keine Standorte veröffentlicht"
+                />
+              </div>
+              <div class="desc">
+                Keine veröffentlichten Standorte. Die Hinweis-Karte sitzt auf dem
+                lokalen Landesumriss, ohne Geschäfts-Marker. Sichtbarer Text:
+                <b>Noch keine Standorte veröffentlicht.</b>
+                Titel <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_unpublished.png</code>.
               </div>
             </div>
           </div>

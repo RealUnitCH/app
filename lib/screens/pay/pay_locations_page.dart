@@ -264,7 +264,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   Widget _emptyCard(BuildContext context) {
-    final map = widget.mapBuilder?.call(const []) ?? const SizedBox.shrink();
+    final map = widget.mapBuilder?.call(const []) ?? _buildMap(const []);
     return Stack(
       children: [
         Positioned.fill(child: map),
