@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
@@ -21,6 +23,8 @@ class ReferralCubit extends Cubit<ReferralState> {
   /// failure may carry a different name, and reusing the key would let a
   /// conforming server answer with the previous name's invite.
   String? _createIdempotencyName;
+  ReferralCreatedInviteDto? _impersonalInvite;
+  Future<void>? _impersonalInviteInFlight;
 
   ReferralCubit(this._service) : super(const ReferralInitial());
 
@@ -170,6 +174,97 @@ class ReferralCubit extends Cubit<ReferralState> {
     }
   }
 
+  Future<void> createImpersonalInvite({bool retry = false}) async {
+    final current = state;
+    if (current is ReferralImpersonalLoading) return;
+    if (current is ReferralImpersonalReady) return;
+    if (current is ReferralImpersonalFailure && !retry) return;
+    if (_impersonalInvite != null && current is! ReferralImpersonalFailure) {
+      final cachedSummary = switch (current) {
+        ReferralCreateReady(:final summary) => summary,
+        ReferralOverviewLoaded(:final summary) => summary,
+        _ => null,
+      };
+      if (cachedSummary != null) {
+        _emitIfOpen(
+          ReferralImpersonalReady(
+            summary: cachedSummary,
+            invite: _impersonalInvite!,
+          ),
+        );
+      }
+      return;
+    }
+    final summary = switch (current) {
+      ReferralCreateReady(:final summary) => summary,
+      ReferralOverviewLoaded(:final summary) => summary,
+      ReferralImpersonalFailure(:final summary) => summary,
+      _ => null,
+    };
+    if (summary == null) return;
+
+    final run = Completer<void>();
+    final inFlight = run.future;
+    _impersonalInviteInFlight = inFlight;
+    unawaited(
+      inFlight.whenComplete(() {
+        // identical: this completion must not clear a newer in-flight POST.
+        if (identical(_impersonalInviteInFlight, inFlight)) {
+          _impersonalInviteInFlight = null;
+        }
+      }),
+    );
+    _emitIfOpen(ReferralImpersonalLoading(summary: summary));
+    try {
+      final created = await _service.createImpersonalInvite();
+      _impersonalInvite = created;
+      _emitIfOpen(ReferralImpersonalReady(summary: summary, invite: created));
+    } on ApiException catch (e) {
+      if (e.code == 'NOT_ELIGIBLE') {
+        _emitIfOpen(const ReferralNotEligible());
+        return;
+      }
+      if (e.code == 'NEEDS_TERMS') {
+        _emitIfOpen(ReferralNeedsTerms(summary: summary));
+        return;
+      }
+      _emitIfOpen(
+        ReferralImpersonalFailure(
+          summary: summary,
+          message: referralErrorMessage(e),
+        ),
+      );
+    } catch (e) {
+      _emitIfOpen(
+        ReferralImpersonalFailure(
+          summary: summary,
+          message: referralErrorMessage(e),
+        ),
+      );
+    } finally {
+      if (!run.isCompleted) run.complete();
+    }
+  }
+
+  Future<bool> impersonalInviteCreated() async {
+    final inFlight = _impersonalInviteInFlight;
+    if (inFlight != null) {
+      await inFlight;
+    }
+    return _impersonalInvite != null;
+  }
+
+  void showPersonalCreate() {
+    final summary = switch (state) {
+      ReferralImpersonalLoading(:final summary) => summary,
+      ReferralImpersonalReady(:final summary) => summary,
+      ReferralImpersonalFailure(:final summary) => summary,
+      _ => null,
+    };
+    if (summary == null) return;
+    _emitIfOpen(ReferralCreateReady(summary: summary));
+  }
+
   Future<void> refreshOverview() async {
     if (state is ReferralLoading || _refreshing) return;
     _refreshing = true;
@@ -210,6 +305,7 @@ class ReferralCubit extends Cubit<ReferralState> {
       if (generation != _invitesGeneration) return;
       final latest = state;
       if (latest is! ReferralOverviewLoaded) return;
+      _rememberOpenImpersonalInvite(invites);
       _emitIfOpen(ReferralOverviewLoaded(summary: latest.summary, invites: invites));
     } on ApiException catch (e) {
       if (generation != _invitesGeneration) return;
@@ -257,12 +353,34 @@ class ReferralCubit extends Cubit<ReferralState> {
     } catch (e) {
       invitesError = referralErrorMessage(e);
     }
+    _rememberOpenImpersonalInvite(invites);
     _emitIfOpen(
       ReferralOverviewLoaded(
         summary: summary,
         invites: invites,
         invitesError: invitesError,
       ),
+    );
+  }
+
+  void _rememberOpenImpersonalInvite(List<ReferralInviteDto> invites) {
+    ReferralInviteDto? invite;
+    for (final candidate in invites) {
+      if (!candidate.isImpersonal || !candidate.isOpen) continue;
+      if (invite == null || candidate.id < invite.id) {
+        invite = candidate;
+      }
+    }
+    if (invite == null) return;
+    _impersonalInvite = ReferralCreatedInviteDto(
+      code: invite.code,
+      url: invite.url,
+      guestName: invite.guestName,
+      kind: invite.kind,
+      copyText: invite.copyText,
+      copyTextEn: invite.copyTextEn,
+      inviterName: invite.inviterName,
+      prizeCount: invite.prizeCount,
     );
   }
 }
