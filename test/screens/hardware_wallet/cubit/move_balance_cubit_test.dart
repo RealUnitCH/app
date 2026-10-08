@@ -554,7 +554,7 @@ void main() {
 
     test('faucet failure is a failure state', () async {
       when(() => hardware.prepareTransfer(any())).thenThrow(
-        const ApiException(code: 'E', message: 'Insufficient ETH for gas: 0.01'),
+        const InsufficientEthForGasException(message: 'Insufficient ETH for gas: 0.01'),
       );
       when(() => faucet.requestFaucet()).thenThrow(
         const ApiException(code: 'F', message: 'faucet down'),
@@ -568,7 +568,7 @@ void main() {
 
     test('Insufficient ETH for gas: requests the faucet once', () async {
       when(() => hardware.prepareTransfer(any())).thenThrow(
-        const ApiException(code: 'E', message: 'Insufficient ETH for gas: 0.01'),
+        const InsufficientEthForGasException(message: 'Insufficient ETH for gas: 0.01'),
       );
       when(() => faucet.requestFaucet()).thenAnswer(
         (_) async => const FaucetResponseDto(txId: '0xfaucet', amount: 0.05),
@@ -600,7 +600,7 @@ void main() {
         return _softwareQuote(amount: dto.amount, fee: 0);
       });
       when(() => hardware.prepareTransfer(any())).thenThrow(
-        const ApiException(code: 'E', message: 'Insufficient ETH for gas: 0.01'),
+        const InsufficientEthForGasException(message: 'Insufficient ETH for gas: 0.01'),
       );
       when(() => faucet.requestFaucet()).thenAnswer(
         (_) async => const FaucetResponseDto(txId: '0xfaucet', amount: 0.05),
@@ -642,8 +642,9 @@ void main() {
       await cubit.confirm();
       expect(cubit.state, const MoveBalanceSuccess(MoveBalanceDirection.bitboxToSoftware));
       await cubit.confirm();
-      final signed = verify(() => hardware.broadcastTransfer(captureAny())).captured.single
-          as BroadcastTransactionRequestDto;
+      final signed =
+          verify(() => hardware.broadcastTransfer(captureAny())).captured.single
+              as BroadcastTransactionRequestDto;
       expect(signed.unsignedTx, '0x02aabb');
       expect(creds.signCallCount, 1);
       await cubit.close();
@@ -737,6 +738,123 @@ void main() {
         const MoveBalanceFailure('', reason: MoveBalanceFailureReason.bitboxEmpty),
       );
       verifyNever(() => hardware.prepareTransfer(any()));
+      await cubit.close();
+    });
+
+    test('zero BitBox balance keeps a prepared software quote confirmable', () async {
+      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer(
+        (_) async => _balance(_bitboxAddr, 0),
+      );
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).thenAnswer((_) async => '0xhash');
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      expect(cubit.state, isA<MoveBalanceQuoteReady>());
+      await cubit.prepareBitboxToSoftware();
+      expect(cubit.state, isA<MoveBalanceQuoteReady>());
+      verifyNever(() => hardware.prepareTransfer(any()));
+      verifyNever(() => walletService.switchCurrentWallet(2));
+      await cubit.confirm();
+      verify(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).called(1);
+      await cubit.close();
+    });
+
+    test('a BitBox prepare during a software confirm does not switch wallets', () async {
+      final gate = Completer<String>();
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).thenAnswer((_) => gate.future);
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      final confirming = cubit.confirm();
+      await cubit.prepareBitboxToSoftware();
+      verifyNever(() => hardware.prepareTransfer(any()));
+      verifyNever(() => walletService.switchCurrentWallet(2));
+      expect(cubit.state, isA<MoveBalanceConfirming>());
+      gate.complete('0xhash');
+      await confirming;
+      expect(cubit.state, isA<MoveBalanceSuccess>());
+      await cubit.close();
+    });
+
+    test('a software prepare during a BitBox confirm does not switch wallets', () async {
+      final gate = Completer<String>();
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: 5,
+        ),
+      );
+      when(() => hardware.broadcastTransfer(any())).thenAnswer((_) => gate.future);
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      final confirming = cubit.confirm();
+      await cubit.prepareSoftwareToBitbox();
+      verifyNever(() => transfer.prepareTransfer(any()));
+      verifyNever(() => walletService.switchCurrentWallet(1));
+      expect(cubit.state, isA<MoveBalanceConfirming>());
+      gate.complete('0xbb');
+      await confirming;
+      expect(cubit.state, isA<MoveBalanceSuccess>());
+      await cubit.close();
+    });
+
+    test('a BitBox prepare after a failed software confirm keeps that quote', () async {
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).thenThrow(const ApiException(code: 'X', message: 'relay failed'));
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      await cubit.confirm();
+      expect(cubit.state, const MoveBalanceFailure('relay failed', canRetry: true));
+      await cubit.prepareBitboxToSoftware();
+      expect(cubit.state, const MoveBalanceFailure('relay failed', canRetry: true));
+      verifyNever(() => hardware.prepareTransfer(any()));
+      verifyNever(() => walletService.switchCurrentWallet(2));
+      await cubit.confirm();
+      verify(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).called(2);
       await cubit.close();
     });
   });

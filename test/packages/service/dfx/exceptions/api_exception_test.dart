@@ -38,7 +38,9 @@ void main() {
 
       test('handles message as List', () {
         final exception = ApiException.fromJson(
-          {'message': ['error1', 'error2']},
+          {
+            'message': ['error1', 'error2'],
+          },
           httpStatusCode: 400,
         );
 
@@ -80,6 +82,23 @@ void main() {
         expect(exception, isA<KycLevelRequiredException>());
         final kyc = exception as KycLevelRequiredException;
         expect(kyc.context, 'RealunitBuy');
+      });
+
+      test('creates InsufficientEthForGasException from the API code', () {
+        final exception = ApiException.fromJson(
+          {
+            'code': 'INSUFFICIENT_ETH',
+            'message': 'Insufficient ETH for gas: need 0.01 ETH, have 0 ETH',
+          },
+          httpStatusCode: 400,
+        );
+
+        expect(exception, isA<InsufficientEthForGasException>());
+        expect(exception.statusCode, 400);
+        expect(
+          exception.message,
+          'Insufficient ETH for gas: need 0.01 ETH, have 0 ETH',
+        );
       });
 
       test('creates RegistrationRequiredException with httpStatusCode', () {

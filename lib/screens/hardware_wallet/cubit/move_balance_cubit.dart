@@ -25,8 +25,6 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 part 'move_balance_state.dart';
 
 class MoveBalanceCubit extends Cubit<MoveBalanceState> {
-  static const _insufficientEthPrefix = 'Insufficient ETH for gas:';
-
   final WalletService _walletService;
   final BalanceRepository _balanceRepository;
   final RealUnitTransferService _transferService;
@@ -111,7 +109,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   }
 
   Future<void> prepareSoftwareToBitbox() async {
-    if (_confirmSent && _softwareQuote != null) {
+    if (_blocksOtherPrepare()) {
       return;
     }
     final software = _software;
@@ -181,11 +179,9 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   }
 
   Future<void> prepareBitboxToSoftware() async {
-    if (_confirmSent && _hardwareQuote != null) {
+    if (_blocksOtherPrepare()) {
       return;
     }
-    // A failed prepare must not leave a software quote that Retry would confirm.
-    _dropPendingMove();
     final software = _software;
     final bitbox = _bitbox;
     if (software == null || bitbox == null) {
@@ -198,6 +194,10 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       return;
     }
     if (_bitboxBalance < 1) {
+      // The 0 REALU button stays next to a software quote. Leave that quote.
+      if (_softwareQuote != null) {
+        return;
+      }
       emit(
         const MoveBalanceFailure(
           '',
@@ -206,6 +206,8 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       );
       return;
     }
+    // A failed prepare must not leave a software quote that Retry would confirm.
+    _dropPendingMove();
     emit(const MoveBalanceLoading());
     try {
       await _switchTo(bitbox.id);
@@ -247,8 +249,10 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       _emitUnlessClosed(const MoveBalanceDisconnected());
     } on RegistrationRequiredException catch (e) {
       _emitUnlessClosed(MoveBalanceRegistrationRequired(e.message));
+    } on InsufficientEthForGasException catch (e) {
+      await _handleInsufficientEth(e);
     } on ApiException catch (e) {
-      await _handleHardwarePrepareApiException(e);
+      _emitUnlessClosed(MoveBalanceFailure(e.message));
     } catch (e) {
       _emitUnlessClosed(MoveBalanceFailure(ApiException.userFacingMessage(e)));
     }
@@ -375,6 +379,9 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     }
   }
 
+  bool _blocksOtherPrepare() =>
+      _confirmInFlight || (_confirmSent && (_softwareQuote != null || _hardwareQuote != null));
+
   void _dropPendingMove() {
     _direction = null;
     _softwareQuote = null;
@@ -382,22 +389,18 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     _signedHardwareTx = null;
   }
 
-  Future<void> _handleHardwarePrepareApiException(ApiException error) async {
-    if (error.message.startsWith(_insufficientEthPrefix)) {
-      if (_faucetRequested) {
-        _emitUnlessClosed(MoveBalanceFailure(error.message));
-        return;
-      }
-      try {
-        await _faucetService.requestFaucet();
-        _faucetRequested = true;
-        _emitUnlessClosed(MoveBalanceNeedEth(error.message));
-      } catch (e) {
-        _emitUnlessClosed(MoveBalanceFailure(ApiException.userFacingMessage(e)));
-      }
+  Future<void> _handleInsufficientEth(InsufficientEthForGasException error) async {
+    if (_faucetRequested) {
+      _emitUnlessClosed(MoveBalanceFailure(error.message));
       return;
     }
-    _emitUnlessClosed(MoveBalanceFailure(error.message));
+    try {
+      await _faucetService.requestFaucet();
+      _faucetRequested = true;
+      _emitUnlessClosed(MoveBalanceNeedEth(error.message));
+    } catch (e) {
+      _emitUnlessClosed(MoveBalanceFailure(ApiException.userFacingMessage(e)));
+    }
   }
 
   Future<void> _switchTo(int id) async {
@@ -422,8 +425,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     return stored.balance.toInt();
   }
 
-  String _addressOf(AWallet wallet) =>
-      wallet.currentAccount.primaryAddress.address.hex;
+  String _addressOf(AWallet wallet) => wallet.currentAccount.primaryAddress.address.hex;
 
   Future<BroadcastTransactionRequestDto> _signTransaction(
     String rawTransaction,

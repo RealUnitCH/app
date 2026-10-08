@@ -1,5 +1,25 @@
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 
+class InsufficientEthForGasException extends ApiException {
+  const InsufficientEthForGasException({
+    super.statusCode,
+    required super.message,
+  }) : super(code: 'INSUFFICIENT_ETH');
+
+  factory InsufficientEthForGasException.fromJson(
+    Map<String, dynamic> json, {
+    int? httpStatusCode,
+  }) {
+    return InsufficientEthForGasException(
+      statusCode: json['statusCode'] as int? ?? httpStatusCode,
+      message: json['message'] as String,
+    );
+  }
+
+  @override
+  String toString() => 'InsufficientEthForGasException: $message';
+}
+
 class RegistrationRequiredException extends ApiException {
   final String? context;
 

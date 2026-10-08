@@ -27,6 +27,8 @@ class ApiException implements Exception {
         return KycLevelRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       case 'REGISTRATION_REQUIRED':
         return RegistrationRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
+      case 'INSUFFICIENT_ETH':
+        return InsufficientEthForGasException.fromJson(json, httpStatusCode: httpStatusCode);
       default:
         final message = json['message'];
         return ApiException(

@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_hardware_transfer_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_hardware_transfer_service.dart';
@@ -29,8 +30,7 @@ class _MockCacheRepository extends Mock implements CacheRepository {}
 
 class _MockWalletService extends Mock implements WalletService {}
 
-const _testPrivateKeyHex =
-    'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
+const _testPrivateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
 
 final _privKey = EthPrivateKey.fromHex(_testPrivateKeyHex);
 
@@ -121,6 +121,32 @@ void main() {
           const RealUnitHardwareTransferRequestDto(toAddress: '0xRecipient', amount: 5),
         ),
         throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('INSUFFICIENT_ETH is a typed exception, not a plain message', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 400,
+            'code': 'INSUFFICIENT_ETH',
+            'message': 'Insufficient ETH for gas: need 0.01 ETH, have 0 ETH',
+          }),
+          400,
+        ),
+      );
+
+      expect(
+        () => build(client).prepareTransfer(
+          const RealUnitHardwareTransferRequestDto(toAddress: '0xRecipient', amount: 5),
+        ),
+        throwsA(
+          isA<InsufficientEthForGasException>().having(
+            (error) => error.message,
+            'message',
+            'Insufficient ETH for gas: need 0.01 ETH, have 0 ETH',
+          ),
+        ),
       );
     });
   });
