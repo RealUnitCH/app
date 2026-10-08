@@ -44,14 +44,17 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
       continue;
     }
 
+    // The published list omits supports. Keep those places. A present
+    // supports list must include ZCHF on Ethereum.
     final supports = place['supports'];
-    if (supports is! List ||
-        !supports.any(
-          (support) =>
-              support is Map &&
-              support['blockchain'] == payLocationsBlockchain &&
-              support['asset'] == payLocationsAsset,
-        )) {
+    if (supports != null &&
+        (supports is! List ||
+            !supports.any(
+              (support) =>
+                  support is Map &&
+                  support['blockchain'] == payLocationsBlockchain &&
+                  support['asset'] == payLocationsAsset,
+            ))) {
       continue;
     }
 

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -10,6 +12,10 @@ import '../../../helper/helper.dart';
 const _placesBody =
     '{"places":[{"name":"SPAR Zürich","category":"grocery","lat":47.37,"lon":8.54,'
     '"supports":[{"blockchain":"Ethereum","asset":"ZCHF"}]}]}';
+
+final String _publishedPlacesBody = File(
+  'test/goldens/screens/pay/fixtures/dev_places_ethereum_zchf.json',
+).readAsStringSync();
 
 http.Client _client({
   int placesStatus = 200,
@@ -48,10 +54,12 @@ void main() {
   );
 
   goldenTest(
-    'locations empty',
+    'published locations',
     fileName: 'pay_locations_page_empty',
     constraints: phoneConstraints,
-    builder: () => wrapForGolden(_map(_client())),
+    builder: () => wrapForGolden(
+      PayLocationsPage(httpClient: _client(placesBody: _publishedPlacesBody)),
+    ),
   );
 
   goldenTest(
