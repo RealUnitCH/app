@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:web3dart/web3dart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
@@ -50,6 +52,26 @@ class _MockBitboxWallet extends Mock implements BitboxWallet {}
 class _MockAccount extends Mock implements BitboxWalletAccount {}
 
 class _FakeWallet extends Fake implements AWallet {}
+
+/// Connected at the pre-sign check, then the ceremony itself drops the link.
+class _DropsOnSign extends FakeBitboxCredentials {
+  _DropsOnSign() : super(address: _bitboxAddr, signDelay: Duration.zero);
+
+  @override
+  bool get isConnected => true;
+
+  @override
+  Future<MsgSignature> signToSignature(
+    Uint8List payload, {
+    int? chainId,
+    bool isEIP1559 = false,
+  }) async {
+    if (payload.isEmpty && chainId == null && !isEIP1559) {
+      throw const BitboxNotConnectedException();
+    }
+    throw const BitboxNotConnectedException();
+  }
+}
 
 const _softwareAddr = '0x0000000000000000000000000000000000000001';
 const _bitboxAddr = '0x0000000000000000000000000000000000000002';
@@ -519,6 +541,64 @@ void main() {
       ).called(1);
       await cubit.close();
     });
+
+    test('a transport error on prepare is the thrown text', () async {
+      when(() => transfer.prepareTransfer(any())).thenThrow(Exception('transport'));
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      expect(cubit.state, const MoveBalanceFailure('Exception: transport'));
+      await cubit.close();
+    });
+
+    test('RegistrationRequired on confirm opens registration, not a retry', () async {
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).thenThrow(
+        const RegistrationRequiredException(code: 'R', message: 'register'),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      await cubit.confirm();
+      expect(cubit.state, const MoveBalanceRegistrationRequired('register'));
+      await cubit.close();
+    });
+
+    test('a transport error on confirm stays retryable on the software wallet', () async {
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).thenThrow(Exception('socket'));
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      await cubit.confirm();
+      expect(
+        cubit.state,
+        const MoveBalanceFailure(
+          'Exception: socket',
+          canRetry: true,
+          direction: MoveBalanceDirection.softwareToBitbox,
+        ),
+      );
+      await cubit.close();
+    });
   });
 
   group('BitBox to software', () {
@@ -932,6 +1012,107 @@ void main() {
       ).called(2);
       await cubit.close();
     });
+
+    test('retryPrepareBitboxToSoftware prepares the BitBox quote', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '02aabb',
+          toAddress: _softwareAddr,
+          amount: 5,
+        ),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.retryPrepareBitboxToSoftware();
+      expect(
+        (cubit.state as MoveBalanceQuoteReady).direction,
+        MoveBalanceDirection.bitboxToSoftware,
+      );
+      await cubit.close();
+    });
+
+    test('a refresh that finds an empty BitBox does not prepare', () async {
+      var reads = 0;
+      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer((_) async {
+        reads += 1;
+        return _balance(_bitboxAddr, reads == 1 ? 5 : 0);
+      });
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      expect(
+        cubit.state,
+        const MoveBalanceFailure('', reason: MoveBalanceFailureReason.bitboxEmpty),
+      );
+      verifyNever(() => hardware.prepareTransfer(any()));
+      await cubit.close();
+    });
+
+    test('a transport error on prepare is the thrown text', () async {
+      when(() => hardware.prepareTransfer(any())).thenThrow(Exception('transport'));
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      expect(cubit.state, const MoveBalanceFailure('Exception: transport'));
+      await cubit.close();
+    });
+
+    test('a drop during the sign ceremony emits disconnected', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: 5,
+        ),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      when(() => bitboxAccount.primaryAddress).thenReturn(_DropsOnSign());
+      await cubit.confirm();
+      expect(cubit.state, const MoveBalanceDisconnected());
+      verifyNever(() => hardware.broadcastTransfer(any()));
+      await cubit.close();
+    });
+
+    test('RegistrationRequired on broadcast opens registration', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: 5,
+        ),
+      );
+      when(() => hardware.broadcastTransfer(any())).thenThrow(
+        const RegistrationRequiredException(code: 'R', message: 'kyc'),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      await cubit.confirm();
+      expect(cubit.state, const MoveBalanceRegistrationRequired('kyc'));
+      await cubit.close();
+    });
+
+    test('a transport error on broadcast stays retryable', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: 5,
+        ),
+      );
+      when(() => hardware.broadcastTransfer(any())).thenThrow(Exception('socket'));
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      await cubit.confirm();
+      expect(
+        cubit.state,
+        const MoveBalanceFailure('Exception: socket', canRetry: true),
+      );
+      await cubit.close();
+    });
   });
 
   group('receipt timeout', () {
@@ -959,6 +1140,35 @@ void main() {
       await cubit.confirm();
       expect(cubit.state, isA<MoveBalanceSuccess>());
       await cubit.close();
+    });
+  });
+
+  group('state equality', () {
+    test('empty, quote, success and need-eth compare by value', () {
+      expect(const MoveBalanceLoading().props, isEmpty);
+      expect(
+        const MoveBalanceQuoteReady(
+          direction: MoveBalanceDirection.softwareToBitbox,
+          amount: 1,
+          networkFeeRealu: 1,
+          ethPaysGas: false,
+          softwareBalance: 2,
+          bitboxBalance: 3,
+        ).props,
+        [
+          MoveBalanceDirection.softwareToBitbox,
+          1,
+          1,
+          false,
+          2,
+          3,
+        ],
+      );
+      expect(
+        const MoveBalanceSuccess(MoveBalanceDirection.bitboxToSoftware).props,
+        [MoveBalanceDirection.bitboxToSoftware],
+      );
+      expect(const MoveBalanceNeedEth('need').props, ['need']);
     });
   });
 }

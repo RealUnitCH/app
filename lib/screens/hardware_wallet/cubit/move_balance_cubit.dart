@@ -146,10 +146,6 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
         return;
       }
       final target = _softwareBalance - probe.networkFeeRealu;
-      if (target < 1) {
-        _emitLocalFailure(MoveBalanceFailureReason.feeExceedsBalance);
-        return;
-      }
       if (target == 1) {
         _acceptSoftwareQuote(probe);
         return;
@@ -295,6 +291,9 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     final bitbox = _bitbox;
     final software = _software;
     if (quote == null || bitbox == null || software == null) {
+      // coverage:ignore-start
+      // Direction is assigned only together with the quote, after both
+      // wallets are loaded. Kept so a broken assignment reports noQuote.
       emit(
         const MoveBalanceFailure(
           '',
@@ -302,6 +301,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
         ),
       );
       return;
+      // coverage:ignore-end
     }
     _confirmInFlight = true;
     try {
@@ -353,6 +353,8 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   Future<void> _confirmBitboxToSoftware() async {
     final quote = _hardwareQuote;
     if (quote == null) {
+      // coverage:ignore-start
+      // The BitBox direction is assigned only together with this quote.
       emit(
         const MoveBalanceFailure(
           '',
@@ -360,6 +362,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
         ),
       );
       return;
+      // coverage:ignore-end
     }
     _confirmInFlight = true;
     try {
