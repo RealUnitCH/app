@@ -303,6 +303,8 @@ void main() {
       'loading shows only the activity indicator',
       fileName: 'move_balance_loading',
       constraints: phoneConstraints,
+      // The indicator never settles, so pumpAndSettle times out.
+      pumpBeforeTest: pumpOnce,
       builder: () => wrapView(const MoveBalanceLoading()),
     );
 
@@ -310,6 +312,7 @@ void main() {
       'confirming shows only the activity indicator',
       fileName: 'move_balance_confirming',
       constraints: phoneConstraints,
+      pumpBeforeTest: pumpOnce,
       builder: () => wrapView(const MoveBalanceConfirming()),
     );
   });
