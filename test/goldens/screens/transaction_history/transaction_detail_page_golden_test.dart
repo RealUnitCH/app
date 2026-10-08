@@ -353,5 +353,40 @@ void main() {
         ),
       ),
     );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'sent transfer detail page with back-to-main button',
+      fileName: 'transaction_detail_sent_back_to_main',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Gesendet'), findsOneWidget);
+        expect(find.text('- 10 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('Beleg'), findsOneWidget);
+        expect(find.text('Zurück zum Hauptscreen'), findsOneWidget);
+        expect(find.text('RealUnit-Verkauf'), findsNothing);
+        expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+        expect(find.text('Verkauf'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: sent,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+              returnToDashboard: true,
+            ),
+          ),
+        ),
+      ),
+    );
   });
 }
