@@ -445,8 +445,22 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
               ),
           ],
         ),
-        if (_zoom <= 9) MarkerLayer(markers: [for (final city in _cities) _cityMarker(city)]),
-        MarkerLayer(markers: [for (final cluster in clusters) _clusterMarker(cluster)]),
+        if (_zoom <= 9)
+          MarkerLayer(
+            markers: [
+              for (final city in _cities)
+                if (!payLocationCityCovered(
+                  cityName: city.name,
+                  cityLat: city.lat,
+                  cityLon: city.lon,
+                  zoom: _zoom,
+                  clusters: clusters,
+                  selected: selected,
+                ))
+                  _cityMarker(city),
+            ],
+          ),
+        MarkerLayer(markers: [for (final cluster in clusters) ..._clusterMarkers(cluster)]),
         if (selected != null && visible.any((pin) => samePayLocationPin(pin, selected)))
           MarkerLayer(markers: _selectedMarkers(selected)),
       ],
@@ -500,22 +514,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
           ),
         ),
       ),
-      if (town.isNotEmpty)
-        Marker(
-          point: LatLng(pin.lat, pin.lon),
-          width: 168,
-          height: 36,
-          alignment: Alignment.bottomCenter,
-          child: IgnorePointer(
-            child: Padding(
-              padding: const .only(bottom: 14),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: _townPlate(town),
-              ),
-            ),
-          ),
-        ),
+      if (town.isNotEmpty) _townMarker(pin, town),
     ];
   }
 
@@ -539,65 +538,92 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     );
   }
 
-  Marker _clusterMarker(PayLocationCluster cluster) {
+  List<Marker> _clusterMarkers(PayLocationCluster cluster) {
     if (cluster.isSingle) {
       final pin = cluster.pins.single;
       final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
       final size = selected ? 22.0 : 16.0;
-      return Marker(
-        point: LatLng(pin.lat, pin.lon),
-        width: size,
-        height: size,
-        child: Semantics(
-          button: true,
-          selected: selected,
-          label: pin.name,
-          child: GestureDetector(
-            onTap: () => _selectPin(pin),
-            child: Container(
-              decoration: BoxDecoration(
-                color: RealUnitColors.status.red600,
-                shape: BoxShape.circle,
-                border: Border.all(color: RealUnitColors.basic.white, width: selected ? 3 : 2),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final count = cluster.pins.length;
-    return Marker(
-      point: LatLng(cluster.lat, cluster.lon),
-      width: 34,
-      height: 34,
-      child: Semantics(
-        button: true,
-        label: _countLabel(context, count),
-        child: GestureDetector(
-          onTap: () => _openCluster(cluster),
-          child: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: RealUnitColors.darkBlue,
-              shape: BoxShape.circle,
-              border: Border.all(color: RealUnitColors.basic.white, width: 2),
-            ),
-            child: Padding(
-              padding: const .all(4),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  '$count',
-                  softWrap: false,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+      final town = payLocationLabel(pin.name).town;
+      return [
+        Marker(
+          point: LatLng(pin.lat, pin.lon),
+          width: size,
+          height: size,
+          child: Semantics(
+            button: true,
+            selected: selected,
+            label: pin.name,
+            child: GestureDetector(
+              onTap: () => _selectPin(pin),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: RealUnitColors.status.red600,
+                  shape: BoxShape.circle,
+                  border: Border.all(
                     color: RealUnitColors.basic.white,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
+                    width: selected ? 3 : 2,
                   ),
                 ),
               ),
             ),
+          ),
+        ),
+        if (_zoom <= 7.5 && town.isNotEmpty) _townMarker(pin, town),
+      ];
+    }
+
+    final count = cluster.pins.length;
+    return [
+      Marker(
+        point: LatLng(cluster.lat, cluster.lon),
+        width: 34,
+        height: 34,
+        child: Semantics(
+          button: true,
+          label: _countLabel(context, count),
+          child: GestureDetector(
+            onTap: () => _openCluster(cluster),
+            child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: RealUnitColors.darkBlue,
+                shape: BoxShape.circle,
+                border: Border.all(color: RealUnitColors.basic.white, width: 2),
+              ),
+              child: Padding(
+                padding: const .all(4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$count',
+                    softWrap: false,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: RealUnitColors.basic.white,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Marker _townMarker(PayLocationPin pin, String town) {
+    return Marker(
+      point: LatLng(pin.lat, pin.lon),
+      width: 168,
+      height: 36,
+      alignment: Alignment.bottomCenter,
+      child: IgnorePointer(
+        child: Padding(
+          padding: const .only(bottom: 14),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: _townPlate(town),
           ),
         ),
       ),

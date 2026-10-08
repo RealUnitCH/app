@@ -225,6 +225,41 @@ void main() {
     expect(close.every((cluster) => cluster.isSingle), isTrue);
   });
 
+  test('hides a city label that sits on a shop group', () {
+    final pins = keepPayLocationPins(
+      jsonDecode(
+        File(
+          'test/goldens/screens/pay/fixtures/dev_places_ethereum_zchf.json',
+        ).readAsStringSync(),
+      ),
+    );
+    final clusters = clusterPayLocationPins(
+      pins,
+      cellDegrees: payLocationClusterCellDegrees(6.6),
+    );
+
+    expect(
+      payLocationCityCovered(
+        cityName: 'Zürich',
+        cityLat: 47.3769,
+        cityLon: 8.5417,
+        zoom: 6.6,
+        clusters: clusters,
+      ),
+      isTrue,
+    );
+    expect(
+      payLocationCityCovered(
+        cityName: 'Genf',
+        cityLat: 46.2044,
+        cityLon: 6.1432,
+        zoom: 6.6,
+        clusters: clusters,
+      ),
+      isFalse,
+    );
+  });
+
   test('keeps the country and lake outlines on the map', () {
     expect(payLocationCountryRings, hasLength(2));
     expect(payLocationLakeRings.length, greaterThan(8));

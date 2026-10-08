@@ -183,6 +183,40 @@ bool samePayLocationPin(PayLocationPin a, PayLocationPin b) {
   return a.name == b.name && a.lat == b.lat && a.lon == b.lon;
 }
 
+/// True when a city label would run under a shop marker at [zoom].
+bool payLocationCityCovered({
+  required String cityName,
+  required double cityLat,
+  required double cityLon,
+  required double zoom,
+  required List<PayLocationCluster> clusters,
+  PayLocationPin? selected,
+}) {
+  final cell = payLocationClusterCellDegrees(zoom);
+  if (cell <= 0) {
+    return false;
+  }
+
+  final cosLat = math.cos(cityLat * math.pi / 180);
+  final textPx = math.max(28.0, cityName.length * 7.2);
+  bool hits(double lat, double lon, double markerPx) {
+    final dx = (cityLon - lon) / cell * 64;
+    final dy = cosLat == 0 ? 0.0 : (cityLat - lat) / cell * 64 / cosLat;
+    final gap = math.sqrt(dx * dx + dy * dy) - (textPx / 2 + markerPx / 2);
+    return gap < 4;
+  }
+
+  for (final cluster in clusters) {
+    if (hits(cluster.lat, cluster.lon, cluster.isSingle ? 18 : 34)) {
+      return true;
+    }
+  }
+  if (selected != null && hits(selected.lat, selected.lon, 168)) {
+    return true;
+  }
+  return false;
+}
+
 double? _finiteDouble(Object? value) {
   if (value is! num) {
     return null;
