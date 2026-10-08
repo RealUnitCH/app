@@ -257,5 +257,133 @@ void main() {
         );
       },
     );
+
+    goldenTest(
+      'gas too high failure sheet',
+      fileName: 'send_process_transfer_gas_too_high',
+      constraints: phoneConstraints,
+      // The page behind the sheet keeps a CupertinoActivityIndicator spinning,
+      // so pumpAndSettle never returns. Fixed pumps open the modal the same
+      // way the responsive matrix test does.
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      },
+      builder: () {
+        whenListen(
+          processCubit,
+          Stream<SendProcessState>.value(
+            const SendProcessFailure(
+              SendProcessFailureReason.transferGasTooHigh,
+            ),
+          ),
+          initialState: const SendProcessSigning(),
+        );
+        return wrapForGolden(
+          BlocProvider<SendProcessCubit>.value(
+            value: processCubit,
+            child: const SendProcessView(),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'monthly cap failure sheet',
+      fileName: 'send_process_transfer_monthly_cap',
+      constraints: phoneConstraints,
+      // The page behind the sheet keeps a CupertinoActivityIndicator spinning,
+      // so pumpAndSettle never returns. Fixed pumps open the modal the same
+      // way the responsive matrix test does.
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      },
+      builder: () {
+        whenListen(
+          processCubit,
+          Stream<SendProcessState>.value(
+            const SendProcessFailure(
+              SendProcessFailureReason.transferMonthlyCap,
+            ),
+          ),
+          initialState: const SendProcessSigning(),
+        );
+        return wrapForGolden(
+          BlocProvider<SendProcessCubit>.value(
+            value: processCubit,
+            child: const SendProcessView(),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'cost not configured failure sheet',
+      fileName: 'send_process_transfer_cost_not_configured',
+      constraints: phoneConstraints,
+      // The page behind the sheet keeps a CupertinoActivityIndicator spinning,
+      // so pumpAndSettle never returns. Fixed pumps open the modal the same
+      // way the responsive matrix test does.
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      },
+      builder: () {
+        whenListen(
+          processCubit,
+          Stream<SendProcessState>.value(
+            const SendProcessFailure(
+              SendProcessFailureReason.transferCostNotConfigured,
+            ),
+          ),
+          initialState: const SendProcessSigning(),
+        );
+        return wrapForGolden(
+          BlocProvider<SendProcessCubit>.value(
+            value: processCubit,
+            child: const SendProcessView(),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'cost price unavailable failure sheet',
+      fileName: 'send_process_transfer_cost_price_unavailable',
+      constraints: phoneConstraints,
+      // The page behind the sheet keeps a CupertinoActivityIndicator spinning,
+      // so pumpAndSettle never returns. Fixed pumps open the modal the same
+      // way the responsive matrix test does.
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      },
+      builder: () {
+        whenListen(
+          processCubit,
+          Stream<SendProcessState>.value(
+            const SendProcessFailure(
+              SendProcessFailureReason.transferCostPriceUnavailable,
+            ),
+          ),
+          initialState: const SendProcessSigning(),
+        );
+        return wrapForGolden(
+          BlocProvider<SendProcessCubit>.value(
+            value: processCubit,
+            child: const SendProcessView(),
+          ),
+        );
+      },
+    );
   });
 }

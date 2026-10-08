@@ -366,6 +366,97 @@ void main() {
     await cubit.close();
   });
 
+  test(
+    'API 400 TRANSFER_GAS_TOO_HIGH → transferGasTooHigh (drops API message)',
+    () async {
+      when(() => service.prepareTransfer(any())).thenThrow(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_GAS_TOO_HIGH',
+          message: 'Gas cost exceeds the current transfer budget',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(state.reason, SendProcessFailureReason.transferGasTooHigh);
+      expect(state.message, isNull);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'API 400 TRANSFER_MONTHLY_COST_EXCEEDED → transferMonthlyCap (drops API message)',
+    () async {
+      when(() => service.prepareTransfer(any())).thenThrow(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_MONTHLY_COST_EXCEEDED',
+          message: 'Monthly transfer cost limit exceeded',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(state.reason, SendProcessFailureReason.transferMonthlyCap);
+      expect(state.message, isNull);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'API 400 TRANSFER_COST_LIMIT_NOT_CONFIGURED → transferCostNotConfigured (drops API message)',
+    () async {
+      when(() => service.prepareTransfer(any())).thenThrow(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_COST_LIMIT_NOT_CONFIGURED',
+          message: 'Transfer cost limit is not configured',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(state.reason, SendProcessFailureReason.transferCostNotConfigured);
+      expect(state.message, isNull);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'API 400 TRANSFER_COST_PRICE_UNAVAILABLE → transferCostPriceUnavailable (drops API message)',
+    () async {
+      when(() => service.prepareTransfer(any())).thenThrow(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_COST_PRICE_UNAVAILABLE',
+          message: 'Transfer cost price is currently unavailable',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(
+        state.reason,
+        SendProcessFailureReason.transferCostPriceUnavailable,
+      );
+      expect(state.message, isNull);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
   test('API 404 → invalidRequest', () async {
     when(() => service.prepareTransfer(any())).thenThrow(
       const ApiException(statusCode: 404, code: 'X', message: 'not found'),
@@ -1026,6 +1117,109 @@ void main() {
 
       final state = cubit.state as SendProcessFailure;
       expect(state.reason, SendProcessFailureReason.recipientNotRegistered);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'confirm-phase API 400 TRANSFER_GAS_TOO_HIGH → transferGasTooHigh (drops API message, non-retryable)',
+    () async {
+      when(
+        () => service.prepareTransfer(any()),
+      ).thenAnswer((_) async => _info());
+      stubConfirm(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_GAS_TOO_HIGH',
+          message: 'Gas cost exceeds the current transfer budget',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(state.reason, SendProcessFailureReason.transferGasTooHigh);
+      expect(state.message, isNull);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'confirm-phase API 400 TRANSFER_MONTHLY_COST_EXCEEDED → transferMonthlyCap (drops API message, non-retryable)',
+    () async {
+      when(
+        () => service.prepareTransfer(any()),
+      ).thenAnswer((_) async => _info());
+      stubConfirm(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_MONTHLY_COST_EXCEEDED',
+          message: 'Monthly transfer cost limit exceeded',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(state.reason, SendProcessFailureReason.transferMonthlyCap);
+      expect(state.message, isNull);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'confirm-phase API 400 TRANSFER_COST_LIMIT_NOT_CONFIGURED → transferCostNotConfigured (drops API message, non-retryable)',
+    () async {
+      when(
+        () => service.prepareTransfer(any()),
+      ).thenAnswer((_) async => _info());
+      stubConfirm(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_COST_LIMIT_NOT_CONFIGURED',
+          message: 'Transfer cost limit is not configured',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(state.reason, SendProcessFailureReason.transferCostNotConfigured);
+      expect(state.message, isNull);
+      expect(state.canRetry, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'confirm-phase API 400 TRANSFER_COST_PRICE_UNAVAILABLE → transferCostPriceUnavailable (drops API message, non-retryable)',
+    () async {
+      when(
+        () => service.prepareTransfer(any()),
+      ).thenAnswer((_) async => _info());
+      stubConfirm(
+        const ApiException(
+          statusCode: 400,
+          code: 'TRANSFER_COST_PRICE_UNAVAILABLE',
+          message: 'Transfer cost price is currently unavailable',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.start();
+
+      final state = cubit.state as SendProcessFailure;
+      expect(
+        state.reason,
+        SendProcessFailureReason.transferCostPriceUnavailable,
+      );
+      expect(state.message, isNull);
       expect(state.canRetry, isFalse);
       await cubit.close();
     },

@@ -148,13 +148,26 @@ class SendProcessView extends StatelessWidget {
       SendProcessFailureReason.confirmMismatch =>
         S.of(context).sendFailureConfirmMismatch,
       SendProcessFailureReason.generic => S.of(context).sendFailureGeneric,
+      SendProcessFailureReason.transferGasTooHigh =>
+        S.of(context).sendFailureTransferGasTooHigh,
+      SendProcessFailureReason.transferMonthlyCap =>
+        S.of(context).sendFailureTransferMonthlyCap,
+      SendProcessFailureReason.transferCostNotConfigured =>
+        S.of(context).sendFailureTransferCostNotConfigured,
+      SendProcessFailureReason.transferCostPriceUnavailable =>
+        S.of(context).sendFailureTransferCostPriceUnavailable,
     };
 
     // Generic failures always use localized copy — never raw API/exception text
     // (e.g. viem receipt-timeout strings stored as e.toString()). An
-    // unregistered recipient shows RealUnit's approved copy.
+    // unregistered recipient and the transfer-cost rejections show RealUnit's
+    // approved copy, not the API's English message.
     if (state.reason == SendProcessFailureReason.generic ||
-        state.reason == SendProcessFailureReason.recipientNotRegistered) {
+        state.reason == SendProcessFailureReason.recipientNotRegistered ||
+        state.reason == SendProcessFailureReason.transferGasTooHigh ||
+        state.reason == SendProcessFailureReason.transferMonthlyCap ||
+        state.reason == SendProcessFailureReason.transferCostNotConfigured ||
+        state.reason == SendProcessFailureReason.transferCostPriceUnavailable) {
       return localized;
     }
 

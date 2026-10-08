@@ -36,6 +36,26 @@ enum SendProcessFailureReason {
 
   /// Any other unexpected error.
   generic,
+
+  /// DFX rejected the transfer because current gas fees exceed the allowed
+  /// cost (API 400 `TRANSFER_GAS_TOO_HIGH`). Rendered with localized copy,
+  /// not the API's English message.
+  transferGasTooHigh,
+
+  /// The monthly transfer-cost cap is reached (API 400
+  /// `TRANSFER_MONTHLY_COST_EXCEEDED`). Rendered with localized copy, not
+  /// the API's English message.
+  transferMonthlyCap,
+
+  /// Transfer cost limits are not configured (API 400
+  /// `TRANSFER_COST_LIMIT_NOT_CONFIGURED`). Rendered with localized copy,
+  /// not the API's English message.
+  transferCostNotConfigured,
+
+  /// Transfer cost cannot be priced right now (API 400
+  /// `TRANSFER_COST_PRICE_UNAVAILABLE`). Rendered with localized copy, not
+  /// the API's English message.
+  transferCostPriceUnavailable,
 }
 
 sealed class SendProcessState extends Equatable {
