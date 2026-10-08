@@ -50,7 +50,10 @@ class MoveBalanceView extends StatelessWidget {
         child: BlocConsumer<MoveBalanceCubit, MoveBalanceState>(
           listener: (context, state) async {
             if (state is MoveBalanceDisconnected) {
-              final reconnected = await showBitboxReconnectSheet(context);
+              final reconnected = await showBitboxReconnectSheet(
+                context,
+                acquireWallet: context.read<MoveBalanceCubit>().reattachBitbox,
+              );
               if (reconnected && context.mounted) {
                 await context.read<MoveBalanceCubit>().retryAfterConnection();
               }

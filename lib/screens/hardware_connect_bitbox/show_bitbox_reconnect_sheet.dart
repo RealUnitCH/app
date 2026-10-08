@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 
@@ -10,13 +11,20 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 ///
 /// Emits `SyncWalletServicesEvent` instead of `LoadWalletEvent` because the
 /// wallet itself is unchanged — only the underlying transport needs to be
-/// re-attached. Returns `true` if the user completed the re-pair.
-Future<bool> showBitboxReconnectSheet(BuildContext context) async {
+/// re-attached. [acquireWallet] defaults to a new view wallet. A BitBox that
+/// already sits beside the software wallet passes the existing row, so
+/// reconnect does not create a second one or make it current. Returns `true`
+/// if the user completed the re-pair.
+Future<bool> showBitboxReconnectSheet(
+  BuildContext context, {
+  Future<BitboxWallet> Function()? acquireWallet,
+}) async {
   final homeBloc = context.read<HomeBloc>();
   final result = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     builder: (sheetContext) => ConnectBitboxPage(
+      acquireWallet: acquireWallet,
       onFinish: (wallet) {
         homeBloc.add(SyncWalletServicesEvent(wallet));
         Navigator.of(sheetContext).pop(true);

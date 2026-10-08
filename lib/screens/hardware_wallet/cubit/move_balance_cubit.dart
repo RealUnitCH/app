@@ -43,6 +43,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   RealUnitHardwareTransferPaymentInfoDto? _hardwareQuote;
   BroadcastTransactionRequestDto? _signedHardwareTx;
   MoveBalanceDirection? _direction;
+  bool _prepareInFlight = false;
 
   bool _confirmInFlight = false;
   bool _confirmSent = false;
@@ -123,6 +124,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       );
       return;
     }
+    _prepareInFlight = true;
     emit(const MoveBalanceLoading());
     try {
       await _switchTo(software.id);
@@ -171,6 +173,8 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       _emitUnlessClosed(MoveBalanceFailure(e.message));
     } catch (e) {
       _emitUnlessClosed(MoveBalanceFailure(ApiException.userFacingMessage(e)));
+    } finally {
+      _prepareInFlight = false;
     }
   }
 
@@ -189,6 +193,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       );
       return;
     }
+    _prepareInFlight = true;
     try {
       // The load() cache is not the decision. A later credit must still move,
       // and a still-empty BitBox must not drop a software quote.
@@ -251,7 +256,20 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       _emitUnlessClosed(MoveBalanceFailure(e.message));
     } catch (e) {
       _emitUnlessClosed(MoveBalanceFailure(ApiException.userFacingMessage(e)));
+    } finally {
+      _prepareInFlight = false;
     }
+  }
+
+  /// The device dropped. Pairing again must reuse this row: a new view wallet
+  /// would sit beside it and [WalletService.createBitboxWallet] would make
+  /// that new row current.
+  Future<BitboxWallet> reattachBitbox() async {
+    final bitbox = _bitbox;
+    if (bitbox is! BitboxWallet) {
+      throw StateError('No paired BitBox');
+    }
+    return bitbox;
   }
 
   Future<void> confirm() async {
@@ -395,7 +413,9 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   }
 
   bool _blocksOtherPrepare() =>
-      _confirmInFlight || (_confirmSent && (_softwareQuote != null || _hardwareQuote != null));
+      _prepareInFlight ||
+      _confirmInFlight ||
+      (_confirmSent && (_softwareQuote != null || _hardwareQuote != null));
 
   void _dropPendingMove() {
     _direction = null;
