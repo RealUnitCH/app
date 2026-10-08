@@ -30,7 +30,7 @@ Column meaning:
   slots whose Golden renders that widget — a screen usually has several (its
   default plus its state variants), so most cells now carry a range rather
   than a single anchor. Shared-widget goldens rather than screens: slots
-  `268`, `419` and `420` are `PhoneNumberField` under
+  `268`, `420` and `421` are `PhoneNumberField` under
   `test/goldens/widgets/form/`. Slot `393` is `ImageSourceSheet`.
   `WebViewPage` is slots `394` and `395` (the
   chrome; the page body is the website and is not part of the picture).
@@ -140,14 +140,14 @@ Column meaning:
 | KYC | `KycManualReviewPage` | — | — | `208`, `323` |
 | KYC | `KycAccountMergePage` | — | — | `209` |
 | KYC | `KycMergeProcessingPage` | — | — | `210` |
-| Shared widgets | `PhoneNumberField` | — | — | `268`, `419`, `420` |
+| Shared widgets | `PhoneNumberField` | — | — | `268`, `420`, `421` |
 | Shared widgets | `ImageSourceSheet` | — | — | `393` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282`, `356`, `357` |
 
 95 screens — 51 routed (`GoRoute`) + 44 non-routed. The table also carries
 three shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`, `ImageSourceSheet`),
 which are not screens; the three Golden baselines under
-`test/goldens/widgets/form/` are handbook slots `268`, `419` and `420`.
+`test/goldens/widgets/form/` are handbook slots `268`, `420` and `421`.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook
 documents the programme in `#spec-referral`. Overlay slots `291` and `292`
 are listed on `DashboardPage` (the host screen), not as a second shared-widget
