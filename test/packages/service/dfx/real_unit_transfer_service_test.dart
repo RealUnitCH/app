@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -286,13 +287,25 @@ void main() {
       },
     );
 
-    test('locks the wallet after signing (key never left resident)', () async {
-      final client = MockClient(
-        (_) async => http.Response(jsonEncode({'txHash': '0x1'}), 200),
-      );
+    test('locks the wallet before waiting for the confirm response', () async {
+      final response = Completer<http.Response>();
+      final requestStarted = Completer<void>();
+      final walletLocked = Completer<void>();
+      when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {
+        walletLocked.complete();
+      });
+      final client = MockClient((_) {
+        requestStarted.complete();
+        return response.future;
+      });
 
-      await _confirm(build(client), _info());
+      final confirmFuture = _confirm(build(client), _info());
+      await requestStarted.future;
+      final wasLockedBeforeResponse = walletLocked.isCompleted;
+      response.complete(http.Response(jsonEncode({'txHash': '0x1'}), 200));
 
+      expect(await confirmFuture, '0x1');
+      expect(wasLockedBeforeResponse, isTrue);
       verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
       verify(() => walletService.lockCurrentWallet()).called(1);
     });

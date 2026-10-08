@@ -92,7 +92,7 @@ jobs:
       #   - The flutter_tools parent process holds ~3 stdio PIPE fds per spawned
       #     per-suite helper (`flutter_tester` + `dart development-service`) and
       #     does not release them, so its FD use scales with the number of test
-      #     files (currently 353). Under 256 it dies ~suite 80 with
+      #     files (several hundred). Under 256 it dies ~suite 80 with
       #     `ProcessException: Too many open files`
       #     (stack: `package:flutter_tools/src/base/async_guard.dart`).
       #   - The `flutter_tester` children and app/test code stay flat (~20 fds,

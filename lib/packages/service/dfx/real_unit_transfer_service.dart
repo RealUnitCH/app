@@ -83,6 +83,7 @@ class RealUnitTransferService extends DFXAuthService {
     // EIP-712 + EIP-7702 typed-data signing needs the private key; promote the
     // view-wallet to a fully unlocked SoftwareWallet before reading credentials.
     await walletService.ensureCurrentWalletUnlocked();
+    late final Eip7702ConfirmDto confirmDto;
     try {
       final credentials = appStore.wallet.currentAccount.primaryAddress;
       final transferData = info.eip7702;
@@ -106,24 +107,21 @@ class RealUnitTransferService extends DFXAuthService {
         throw TransferSignatureUnsupportedException(e.message ?? e.toString());
       }
 
-      return await _sendConfirm(
-        info.id,
-        Eip7702ConfirmDto(
-          delegation: Eip7702DelegationDto(
-            delegate: transferData.relayerAddress,
-            delegator: transferData.message.delegator,
-            authority: transferData.message.authority,
-            salt: '${transferData.message.salt}',
-            signature: delegationSignature,
-          ),
-          authorization: Eip7702AuthorizationDto(
-            chainId: transferData.domain.chainId,
-            address: transferData.delegatorAddress,
-            nonce: transferData.userNonce,
-            r: '0x${authorizationSignature.r.toRadixString(16).padLeft(64, '0')}',
-            s: '0x${authorizationSignature.s.toRadixString(16).padLeft(64, '0')}',
-            yParity: authorizationSignature.yParity,
-          ),
+      confirmDto = Eip7702ConfirmDto(
+        delegation: Eip7702DelegationDto(
+          delegate: transferData.relayerAddress,
+          delegator: transferData.message.delegator,
+          authority: transferData.message.authority,
+          salt: '${transferData.message.salt}',
+          signature: delegationSignature,
+        ),
+        authorization: Eip7702AuthorizationDto(
+          chainId: transferData.domain.chainId,
+          address: transferData.delegatorAddress,
+          nonce: transferData.userNonce,
+          r: '0x${authorizationSignature.r.toRadixString(16).padLeft(64, '0')}',
+          s: '0x${authorizationSignature.s.toRadixString(16).padLeft(64, '0')}',
+          yParity: authorizationSignature.yParity,
         ),
       );
     } finally {
@@ -132,6 +130,8 @@ class RealUnitTransferService extends DFXAuthService {
       // the key resident. Mirrors [RealUnitSellPaymentInfoService.confirmPayment].
       await walletService.lockCurrentWallet();
     }
+
+    return _sendConfirm(info.id, confirmDto);
   }
 
   /// Fail-closed blind-sign guard: the prepare response must echo the recipient
