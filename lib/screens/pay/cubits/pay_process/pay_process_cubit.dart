@@ -19,8 +19,7 @@ part 'pay_process_state.dart';
 ///
 /// BitBox and the debug wallet have no Pay option. A confirm that never left
 /// the device leaves the quote reusable. A confirm that may already have been
-/// relayed can be sent again: this payment does not leave CHF in the wallet,
-/// and REALU is sold only when the first attempt did not arrive.
+/// relayed ends as a failure, and this payment is not sent again.
 class PayProcessCubit extends Cubit<PayProcessState> {
   final RealUnitPayService _payService;
   final AppStore _appStore;
@@ -84,14 +83,6 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     await _relay();
   }
 
-  /// Retries a confirm that may already have been relayed. Never starts a
-  /// second sale from a quote whose confirm has not left the device — that
-  /// path re-enables Pay on the quote instead.
-  Future<void> retryPay() async {
-    if (state is! PayProcessPayRetry) return;
-    await _relay();
-  }
-
   Future<void> _relay() async {
     emit(const PayProcessPaying());
     try {
@@ -113,7 +104,10 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       if (isClosed) return;
       if (_confirmSent) {
         emit(
-          PayProcessPayRetry(PayRetryReason.transient, message: e.apiMessage),
+          PayProcessFailure(
+            PayProcessFailureReason.generic,
+            message: e.apiMessage,
+          ),
         );
         return;
       }
@@ -127,8 +121,8 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       if (isClosed) return;
       _confirmSent = true;
       emit(
-        PayProcessPayRetry(
-          PayRetryReason.transient,
+        PayProcessFailure(
+          PayProcessFailureReason.generic,
           message: e is ApiException ? e.message : null,
         ),
       );
@@ -150,7 +144,7 @@ class PayProcessCubit extends Cubit<PayProcessState> {
         if (!status.status.isTerminal) {
           if (_statusPollAttempts >= _statusPollMaxAttempts) {
             _statusPollingTimer?.cancel();
-            emit(const PayProcessPayRetry(PayRetryReason.transient));
+            emit(const PayProcessFailure(PayProcessFailureReason.generic));
             return;
           }
           _statusPollInFlight = false;
@@ -169,14 +163,14 @@ class PayProcessCubit extends Cubit<PayProcessState> {
             ),
           );
         } else {
-          emit(const PayProcessPayRetry(PayRetryReason.transient));
+          emit(const PayProcessFailure(PayProcessFailureReason.generic));
         }
       } catch (_) {
         if (isClosed || generation != _statusPollGeneration) return;
         _statusPollAttempts++;
         if (_statusPollAttempts >= _statusPollMaxAttempts) {
           _statusPollingTimer?.cancel();
-          emit(const PayProcessPayRetry(PayRetryReason.transient));
+          emit(const PayProcessFailure(PayProcessFailureReason.generic));
           return;
         }
         _statusPollInFlight = false;

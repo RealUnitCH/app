@@ -72,20 +72,5 @@ void main() {
         [PayProcessFailureReason.generic, 'boom'],
       );
     });
-
-    test('PayProcessPayRetry is keyed on reason + message', () {
-      expect(
-        const PayProcessPayRetry(PayRetryReason.transient),
-        const PayProcessPayRetry(PayRetryReason.transient),
-      );
-      expect(
-        const PayProcessPayRetry(PayRetryReason.transient),
-        isNot(equals(const PayProcessPayRetry(PayRetryReason.transient, message: 'short'))),
-      );
-      expect(
-        const PayProcessPayRetry(PayRetryReason.transient, message: 'short').props,
-        [PayRetryReason.transient, 'short'],
-      );
-    });
   });
 }

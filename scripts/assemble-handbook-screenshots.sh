@@ -385,7 +385,6 @@ MAPPING=(
   "330-kyc-registration-referral-step-unavailable=screens/kyc/goldens/macos/kyc_registration_referral_step_unavailable.png"
   "331-kyc-unsupported-step-page-default=screens/kyc/goldens/macos/kyc_unsupported_step_page_default.png"
   "332-pay-process-page-awaiting-settlement=screens/pay/goldens/macos/pay_process_page_awaiting_settlement.png"
-  "333-pay-process-page-pay-retry=screens/pay/goldens/macos/pay_process_page_pay_retry.png"
   "334-pay-process-page-swapping=screens/pay/goldens/macos/pay_process_page_swapping.png"
   "335-pay-quote-page-expired=screens/pay/goldens/macos/pay_quote_page_expired.png"
   "336-pay-quote-page-loading=screens/pay/goldens/macos/pay_quote_page_loading.png"

@@ -12,20 +12,13 @@ class PayResultSheet extends StatelessWidget {
     required this.description,
     required this.closeLabel,
     required this.onClose,
-    this.primaryLabel,
-    this.onPrimary,
-  }) : assert(
-         (primaryLabel == null) == (onPrimary == null),
-         'primaryLabel and onPrimary must both be null or both non-null',
-       );
+  });
 
   final IconData icon;
   final String title;
   final String description;
   final String closeLabel;
   final VoidCallback onClose;
-  final String? primaryLabel;
-  final VoidCallback? onPrimary;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -69,56 +62,15 @@ class PayResultSheet extends StatelessWidget {
                 ),
               ),
               actions: [
-                if (onPrimary == null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: AppFilledButton(
-                      variant: FilledButtonVariant.secondary,
-                      fullWidth: false,
-                      onPressed: onClose,
-                      label: closeLabel,
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.only(top: 28),
-                    // At text scale 3 a half-width button grows taller than the sheet.
-                    // The matrix test requires that button to stay fully inside it.
-                    child: MediaQuery.textScalerOf(context).scale(1) >= 3
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 12,
-                            children: [
-                              AppFilledButton(
-                                variant: FilledButtonVariant.secondary,
-                                onPressed: onClose,
-                                label: closeLabel,
-                              ),
-                              AppFilledButton(
-                                onPressed: onPrimary,
-                                label: primaryLabel!,
-                              ),
-                            ],
-                          )
-                        : Row(
-                            spacing: 12,
-                            children: [
-                              Expanded(
-                                child: AppFilledButton(
-                                  variant: FilledButtonVariant.secondary,
-                                  onPressed: onClose,
-                                  label: closeLabel,
-                                ),
-                              ),
-                              Expanded(
-                                child: AppFilledButton(
-                                  onPressed: onPrimary,
-                                  label: primaryLabel!,
-                                ),
-                              ),
-                            ],
-                          ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: AppFilledButton(
+                    variant: FilledButtonVariant.secondary,
+                    fullWidth: false,
+                    onPressed: onClose,
+                    label: closeLabel,
                   ),
+                ),
               ],
             ),
           ),

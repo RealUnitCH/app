@@ -47,37 +47,5 @@ void main() {
       await tester.tap(find.text('Close'));
       expect(closed, isTrue);
     });
-
-    testWidgets('renders retry primary action without calling onClose', (tester) async {
-      var closed = false;
-      var retried = false;
-      await tester.pumpApp(
-        PayResultSheet(
-          icon: Icons.check_circle_rounded,
-          title: 'Try again',
-          description: 'Something went wrong.',
-          closeLabel: 'Close',
-          onClose: () => closed = true,
-          primaryLabel: 'Retry',
-          onPrimary: () => retried = true,
-        ),
-      );
-
-      expect(find.byType(AppFilledButton), findsNWidgets(2));
-
-      final closeButton = tester.widget<AppFilledButton>(
-        find.widgetWithText(AppFilledButton, 'Close'),
-      );
-      expect(closeButton.variant, FilledButtonVariant.secondary);
-
-      final retryButton = tester.widget<AppFilledButton>(
-        find.widgetWithText(AppFilledButton, 'Retry'),
-      );
-      expect(retryButton.variant, FilledButtonVariant.primary);
-
-      await tester.tap(find.text('Retry'));
-      expect(retried, isTrue);
-      expect(closed, isFalse);
-    });
   });
 }

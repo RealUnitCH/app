@@ -24,26 +24,4 @@ void main() {
       ),
     ),
   );
-
-  goldenTest(
-    'retry sheet with close and retry',
-    fileName: 'pay_process_page_pay_retry',
-    constraints: phoneConstraints,
-    builder: () => wrapForGolden(
-      Builder(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black54,
-          bottomSheet: PayResultSheet(
-            icon: Icons.replay_rounded,
-            title: S.of(context).payRetryTitle,
-            description: S.of(context).payRetryTransient,
-            closeLabel: S.of(context).close,
-            onClose: () {},
-            primaryLabel: S.of(context).payRetryButton,
-            onPrimary: () {},
-          ),
-        ),
-      ),
-    ),
-  );
 }

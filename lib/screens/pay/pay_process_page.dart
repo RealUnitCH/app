@@ -63,9 +63,7 @@ class PayProcessView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<PayProcessCubit, PayProcessState>(
       listenWhen: (previous, current) =>
-          current is PayProcessSuccess ||
-          current is PayProcessFailure ||
-          current is PayProcessPayRetry,
+          current is PayProcessSuccess || current is PayProcessFailure,
       listener: (context, state) async {
         if (state is PayProcessSuccess) {
           final completed = await resolveCompleted(
@@ -84,10 +82,6 @@ class PayProcessView extends StatelessWidget {
               ),
             );
           }
-        } else if (state is PayProcessPayRetry) {
-          // The confirm may already have been sent. This payment leaves no CHF.
-          // Retry sends the same delegation again.
-          await _showRetrySheet(context, state);
         } else if (state is PayProcessFailure) {
           await _showResultSheet(
             context,
@@ -99,8 +93,7 @@ class PayProcessView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        final sheetOpen =
-            state is PayProcessFailure || state is PayProcessPayRetry;
+        final sheetOpen = state is PayProcessFailure;
 
         return PopScope(
           canPop: state is! PayProcessSuccess,
@@ -138,7 +131,6 @@ class PayProcessView extends StatelessWidget {
     PayProcessPaying() => S.of(context).payPaying,
     PayProcessAwaitingSettlement() => S.of(context).payAwaitingSettlement,
     PayProcessSuccess() => S.of(context).paySuccess,
-    PayProcessPayRetry() => S.of(context).payRetryTitle,
     PayProcessFailure() => S.of(context).payFailureTitle,
   };
 
@@ -153,16 +145,6 @@ class PayProcessView extends StatelessWidget {
       PayProcessFailureReason.payUnavailable => S.of(context).payFailurePayUnavailable,
       PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,
       PayProcessFailureReason.generic => S.of(context).payFailureGeneric,
-    };
-  }
-
-  String _retryMessage(BuildContext context, PayProcessPayRetry state) {
-    final apiText = state.message;
-    if (apiText != null && apiText.isNotEmpty) {
-      return apiText;
-    }
-    return switch (state.reason) {
-      PayRetryReason.transient => S.of(context).payRetryTransient,
     };
   }
 
@@ -191,47 +173,5 @@ class PayProcessView extends StatelessWidget {
       ),
     );
     if (context.mounted) Navigator.of(context).pop(swapCompleted);
-  }
-
-  /// Recovery sheet when a pay confirm did not finish. This payment leaves no
-  /// CHF in the wallet. The primary action ([PayProcessCubit.retryPay]) sends
-  /// the same delegation again and can sell REALU if the first confirm did not
-  /// arrive.
-  Future<void> _showRetrySheet(
-    BuildContext context,
-    PayProcessPayRetry state,
-  ) async {
-    await waitForIncomingRouteAnimation(context);
-    if (!context.mounted) {
-      return;
-    }
-
-    final cubit = context.read<PayProcessCubit>();
-    // The sheet returns true when the user retries (keep the page) and false
-    // when they close (leave the flow); a barrier dismissal yields null.
-    final retry = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      builder: (sheetContext) => PayResultSheet(
-        icon: Icons.replay_rounded,
-        title: S.of(sheetContext).payRetryTitle,
-        description: _retryMessage(sheetContext, state),
-        closeLabel: S.of(sheetContext).close,
-        onClose: () => Navigator.of(sheetContext).pop(false),
-        primaryLabel: S.of(sheetContext).payRetryButton,
-        onPrimary: () => Navigator.of(sheetContext).pop(true),
-      ),
-    );
-
-    if (retry == true) {
-      // Send the same delegation again. Keep the page so the next attempt
-      // surfaces its own result.
-      await cubit.retryPay();
-    } else if (context.mounted) {
-      // Closed: leave the flow. This payment did not leave CHF in the wallet.
-      // true tells the quote page not to offer Pay again on the same quote.
-      Navigator.of(context).pop(true);
-    }
   }
 }

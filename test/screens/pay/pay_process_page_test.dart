@@ -80,7 +80,6 @@ void main() {
   setUp(() {
     processCubit = _MockPayProcessCubit();
     when(() => processCubit.state).thenReturn(const PayProcessInitial());
-    when(() => processCubit.retryPay()).thenAnswer((_) async {});
     when(() => processCubit.swapCompleted).thenReturn(false);
   });
 
@@ -207,16 +206,6 @@ void main() {
       );
     });
 
-    testWidgets('pay-retry hides spinner and outcome title', (tester) async {
-      when(() => processCubit.state).thenReturn(
-        const PayProcessPayRetry(PayRetryReason.transient),
-      );
-      await tester.pumpApp(buildSubject());
-
-      expect(find.byType(CupertinoActivityIndicator), findsNothing);
-      expect(find.text(S.current.payRetryTitle), findsNothing);
-    });
-
     testWidgets('failure hides spinner and outcome title', (tester) async {
       when(() => processCubit.state).thenReturn(
         const PayProcessFailure(PayProcessFailureReason.generic),
@@ -228,10 +217,10 @@ void main() {
     });
   });
 
-  // The result/retry sheets are modal bottom sheets shown from the listener.
+  // The result sheets are modal bottom sheets shown from the listener.
   // Pump fixed frames to open the sheet.
-  // A phone-sized surface keeps the taller retry sheet from overflowing the
-  // default 800x600 test viewport (mirrors the logout-sheet test convention).
+  // A phone-sized surface keeps the sheet inside the test viewport
+  // (mirrors the logout-sheet test convention).
   Future<void> pumpWithState(WidgetTester tester, PayProcessState terminal) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
@@ -423,50 +412,6 @@ void main() {
 
       expect(find.text('Price source is temporarily unavailable'), findsOne);
       expect(find.text(S.current.payFailureGeneric), findsNothing);
-    });
-  });
-
-  group('$PayProcessView retry sheet', () {
-    testWidgets('pay-retry emits a retry sheet whose primary action calls retryPay', (
-      tester,
-    ) async {
-      await pumpWithState(tester, const PayProcessPayRetry(PayRetryReason.transient));
-
-      expect(find.byType(CupertinoActivityIndicator), findsNothing);
-      expect(find.text(S.current.payRetryTitle), findsOne);
-      expect(find.text(S.current.payRetryTransient), findsOne);
-      expect(find.byIcon(Icons.replay_rounded), findsOne);
-
-      await tester.tap(find.text(S.current.payRetryButton));
-      await tester.pump();
-
-      verify(() => processCubit.retryPay()).called(1);
-    });
-
-    testWidgets('retry sheet close action dismisses without retrying', (tester) async {
-      await pumpWithState(tester, const PayProcessPayRetry(PayRetryReason.transient));
-
-      expect(find.text(S.current.payRetryTransient), findsOne);
-
-      await tester.tap(find.text(S.current.close));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      verifyNever(() => processCubit.retryPay());
-      expect(find.text(S.current.payRetryTransient), findsNothing);
-    });
-
-    testWidgets('transient retry with API message shows the API text 1:1', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessPayRetry(
-          PayRetryReason.transient,
-          message: 'Quote is no longer valid',
-        ),
-      );
-
-      expect(find.text('Quote is no longer valid'), findsOne);
-      expect(find.text(S.current.payRetryTransient), findsNothing);
     });
   });
 

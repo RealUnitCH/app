@@ -19,15 +19,6 @@ enum PayProcessFailureReason {
   generic,
 }
 
-/// Why a pay confirm is offered again. This payment does not leave CHF in the
-/// wallet. Retry sends the same delegation again and can sell REALU when the
-/// first confirm did not arrive. Each reason maps to a localized message.
-enum PayRetryReason {
-  /// The confirm or the settlement status did not finish. No CHF from this
-  /// payment is in the wallet. Retry sends the same delegation again.
-  transient,
-}
-
 sealed class PayProcessState extends Equatable {
   const PayProcessState();
 
@@ -76,22 +67,6 @@ class PayProcessSuccess extends PayProcessState {
 
   @override
   List<Object?> get props => [txHash, shareAmount];
-}
-
-/// A pay confirm did not finish. This payment leaves no CHF in the wallet.
-/// [PayProcessCubit.retryPay] sends the same delegation again and can sell
-/// REALU when the first confirm did not arrive.
-class PayProcessPayRetry extends PayProcessState {
-  final PayRetryReason reason;
-
-  /// API `message` when the failure came from the DFX API; otherwise null so
-  /// the view can fall back to local copy for process-local reasons.
-  final String? message;
-
-  const PayProcessPayRetry(this.reason, {this.message});
-
-  @override
-  List<Object?> get props => [reason, message];
 }
 
 class PayProcessFailure extends PayProcessState {
