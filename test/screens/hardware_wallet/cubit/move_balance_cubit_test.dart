@@ -210,6 +210,8 @@ void main() {
         cubit.state,
         const MoveBalanceInitial(softwareBalance: 10, bitboxBalance: 0),
       );
+      verify(() => balanceService.updateBalance(_softwareAddr)).called(1);
+      verify(() => balanceService.updateBalance(_bitboxAddr)).called(1);
       await cubit.close();
     });
 
@@ -426,7 +428,8 @@ void main() {
       await cubit.prepareSoftwareToBitbox();
       await cubit.confirm();
       expect(cubit.state, const MoveBalanceSuccess(MoveBalanceDirection.softwareToBitbox));
-      verify(() => balanceService.updateBalance(_softwareAddr)).called(1);
+      verify(() => balanceService.updateBalance(_softwareAddr)).called(3);
+      verify(() => balanceService.updateBalance(_bitboxAddr)).called(2);
       verify(() => balanceService.startSync(_softwareAddr)).called(1);
       await cubit.close();
     });

@@ -90,8 +90,8 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
         );
         return;
       }
-      _softwareBalance = await _sharesFor(software);
-      _bitboxBalance = await _sharesFor(bitbox);
+      _softwareBalance = await _freshShares(software);
+      _bitboxBalance = await _freshShares(bitbox);
       if (isClosed) {
         return;
       }
@@ -128,7 +128,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     emit(const MoveBalanceLoading());
     try {
       await _switchTo(software.id);
-      _softwareBalance = await _sharesFor(software);
+      _softwareBalance = await _freshShares(software);
       if (_softwareBalance < 1) {
         _emitLocalFailure(MoveBalanceFailureReason.softwareEmpty);
         return;
@@ -197,7 +197,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     try {
       // The load() cache is not the decision. A later credit must still move,
       // and a still-empty BitBox must not drop a software quote.
-      _bitboxBalance = await _sharesFor(bitbox);
+      _bitboxBalance = await _freshShares(bitbox);
       if (isClosed) {
         return;
       }
@@ -445,8 +445,20 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   }
 
   void _restartBalanceSync() {
-    _balanceService.updateBalance(_appStore.primaryAddress);
+    final software = _software;
+    final bitbox = _bitbox;
+    if (software != null) {
+      _balanceService.updateBalance(_addressOf(software));
+    }
+    if (bitbox != null) {
+      _balanceService.updateBalance(_addressOf(bitbox));
+    }
     _balanceService.startSync(_appStore.primaryAddress);
+  }
+
+  Future<int> _freshShares(AWallet wallet) async {
+    await _balanceService.updateBalance(_addressOf(wallet));
+    return _sharesFor(wallet);
   }
 
   Future<int> _sharesFor(AWallet wallet) async {

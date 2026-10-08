@@ -114,6 +114,19 @@ class WalletService {
     return BitboxWallet(walletId, name, address, _bitboxService);
   }
 
+  /// The BitBox already paired beside the software wallet.
+  /// Does not create a row and does not change the current wallet.
+  /// Throws [StateError] with message `No paired BitBox` when none exists.
+  Future<BitboxWallet> existingBitboxWallet() async {
+    final wallets = await listWallets();
+    for (final wallet in wallets) {
+      if (wallet is BitboxWallet) {
+        return wallet;
+      }
+    }
+    throw StateError('No paired BitBox');
+  }
+
   /// Every persisted row as an [AWallet], via the same switch as
   /// [getWalletById] — software rows with an address become
   /// [SoftwareViewWallet], never a decrypted seed.

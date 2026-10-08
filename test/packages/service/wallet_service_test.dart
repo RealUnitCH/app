@@ -616,6 +616,50 @@ void main() {
       });
     });
 
+    group('existingBitboxWallet', () {
+      test('returns the paired BitBox and does not create a row or make it current', () async {
+        when(() => repo.listWalletInfos()).thenAnswer(
+          (_) async => [
+            _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+            _info(id: 2, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+          ],
+        );
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+        );
+        when(() => repo.getWalletInfo(2)).thenAnswer(
+          (_) async =>
+              _info(id: 2, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+        );
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+
+        final wallet = await service.existingBitboxWallet();
+
+        expect(wallet, isA<BitboxWallet>());
+        expect(wallet.id, 2);
+        verifyNever(() => repo.createViewWallet(any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      test('throws when no BitBox row exists', () async {
+        when(() => repo.listWalletInfos()).thenAnswer(
+          (_) async => [
+            _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+          ],
+        );
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+        );
+
+        expect(
+          () => service.existingBitboxWallet(),
+          throwsA(isA<StateError>()),
+        );
+        verifyNever(() => repo.createViewWallet(any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+    });
+
     group('listWallets', () {
       test('returns every row via getWalletById — software stays a view wallet', () async {
         when(() => repo.listWalletInfos()).thenAnswer(
