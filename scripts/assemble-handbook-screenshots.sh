@@ -462,6 +462,8 @@ MAPPING=(
   "407-referral-create-impersonal-error=screens/referral/goldens/macos/referral_create_page_impersonal_error.png"
   "408-referral-overview-impersonal=screens/referral/goldens/macos/referral_overview_page_impersonal.png"
   "409-referral-overview-impersonal-one=screens/referral/goldens/macos/referral_overview_page_impersonal_one.png"
+  "419-pay-result-sheet-success=screens/pay/goldens/macos/pay_result_sheet_success.png"
+  "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
 )
 
 missing=()
