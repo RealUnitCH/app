@@ -184,6 +184,8 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     if (_confirmSent && _hardwareQuote != null) {
       return;
     }
+    // A failed prepare must not leave a software quote that Retry would confirm.
+    _dropPendingMove();
     final software = _software;
     final bitbox = _bitbox;
     if (software == null || bitbox == null) {
@@ -373,10 +375,17 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     }
   }
 
+  void _dropPendingMove() {
+    _direction = null;
+    _softwareQuote = null;
+    _hardwareQuote = null;
+    _signedHardwareTx = null;
+  }
+
   Future<void> _handleHardwarePrepareApiException(ApiException error) async {
     if (error.message.startsWith(_insufficientEthPrefix)) {
       if (_faucetRequested) {
-        _emitUnlessClosed(MoveBalanceFailure(error.message, canRetry: true));
+        _emitUnlessClosed(MoveBalanceFailure(error.message));
         return;
       }
       try {

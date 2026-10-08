@@ -579,7 +579,51 @@ void main() {
       expect(cubit.state, isA<MoveBalanceNeedEth>());
       await cubit.prepareBitboxToSoftware();
       verify(() => faucet.requestFaucet()).called(1);
-      expect(cubit.state, isA<MoveBalanceFailure>());
+      expect(
+        cubit.state,
+        const MoveBalanceFailure('Insufficient ETH for gas: 0.01'),
+      );
+      await cubit.confirm();
+      verifyNever(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      );
+      await cubit.close();
+    });
+
+    test('a second Insufficient ETH failure does not confirm a software quote', () async {
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(() => hardware.prepareTransfer(any())).thenThrow(
+        const ApiException(code: 'E', message: 'Insufficient ETH for gas: 0.01'),
+      );
+      when(() => faucet.requestFaucet()).thenAnswer(
+        (_) async => const FaucetResponseDto(txId: '0xfaucet', amount: 0.05),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      expect(cubit.state, isA<MoveBalanceQuoteReady>());
+      await cubit.prepareBitboxToSoftware();
+      expect(cubit.state, isA<MoveBalanceNeedEth>());
+      await cubit.prepareBitboxToSoftware();
+      expect(
+        cubit.state,
+        const MoveBalanceFailure('Insufficient ETH for gas: 0.01'),
+      );
+      await cubit.confirm();
+      verifyNever(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      );
       await cubit.close();
     });
 
