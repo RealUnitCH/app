@@ -18,6 +18,7 @@
             ["dart", "run", "tool/generate_localization.dart"],
             ["dart", "run", "tool/generate_release_info.dart"],
             ["flutter", "pub", "run", "build_runner", "build"],
+            ["dart", "run", "tool/lints/pattern_guard.dart"],
             ["flutter", "analyze", "--fatal-warnings"]
           ]
         }

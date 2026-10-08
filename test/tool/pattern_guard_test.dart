@@ -1,8 +1,9 @@
 // Unit tests for the high-pattern guard (tool/lints/pattern_guard.dart).
-// Verifies its fatal CI wiring, each rule's bad/good cases, and suppression.
+// Verifies its CI/A38 wiring, each rule's bad/good cases, and suppression.
 @TestOn('vm')
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -35,6 +36,33 @@ void main() {
     expect(guard, greaterThan(codeGeneration));
     expect(flutterAnalyze, greaterThan(guard));
     expect(analyzeJob, isNot(contains('continue-on-error: true')));
+  });
+
+  test('A38 Analyze job runs the High-Pattern Guard before flutter analyze', () {
+    final config = jsonDecode(File('.github/a38.json').readAsStringSync())
+        as Map<String, dynamic>;
+    final jobs = config['jobs'] as List<dynamic>;
+    final analyzeJob = jobs.cast<Map<String, dynamic>>().singleWhere(
+      (job) => job['id'] == 'analyze',
+    );
+    final executor = analyzeJob['executor'] as Map<String, dynamic>;
+    final executorConfig = executor['config'] as Map<String, dynamic>;
+    final steps = (executorConfig['steps'] as List<dynamic>)
+        .map((step) => (step as List<dynamic>).cast<String>())
+        .toList();
+    final commands = steps.map((step) => step.join(' ')).toList();
+
+    final codeGeneration = commands.indexOf(
+      'flutter pub run build_runner build',
+    );
+    final guard = commands.indexOf('dart run tool/lints/pattern_guard.dart');
+    final flutterAnalyze = commands.indexOf(
+      'flutter analyze --fatal-warnings',
+    );
+
+    expect(codeGeneration, greaterThanOrEqualTo(0));
+    expect(guard, greaterThan(codeGeneration));
+    expect(flutterAnalyze, greaterThan(guard));
   });
 
   group('hardcoded_swiss_tax_residence', () {
