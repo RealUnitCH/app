@@ -468,6 +468,7 @@ MAPPING=(
   "413-pay-locations-places=screens/pay/goldens/macos/pay_locations_page_places.png"
   "414-pay-locations-no-match=screens/pay/goldens/macos/pay_locations_page_no_match.png"
   "415-pay-locations-unpublished=screens/pay/goldens/macos/pay_locations_page_unpublished.png"
+  "416-transaction-detail-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_back_to_main.png"
 )
 
 missing=()

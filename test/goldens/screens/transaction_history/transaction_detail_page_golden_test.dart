@@ -323,5 +323,35 @@ void main() {
         ),
       ),
     );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'sale detail page with back-to-main button',
+      fileName: 'transaction_detail_back_to_main',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Verkauf'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('Zurück zum Hauptscreen'), findsOneWidget);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: sale,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+              returnToDashboard: true,
+            ),
+          ),
+        ),
+      ),
+    );
   });
 }

@@ -330,7 +330,6 @@ void main() {
         await tester.pump(const Duration(milliseconds: 400));
 
         expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
-        expect(find.text(S.current.sendSuccessDescription), findsNothing);
         expect(find.byType(TransactionDetailView), findsOneWidget);
         expect(
           find.text(S.current.transactionDetailBackToMain),

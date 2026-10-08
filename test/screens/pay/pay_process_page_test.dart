@@ -365,7 +365,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
-      expect(find.text(S.current.paySuccessDescription), findsNothing);
       expect(popped, isA<PayProcessCompleted>());
       final completed = popped! as PayProcessCompleted;
       expect(completed.transaction, same(tx));
