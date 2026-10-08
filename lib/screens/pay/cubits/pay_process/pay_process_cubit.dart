@@ -102,15 +102,6 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       _startStatusPolling();
     } on PayConfirmNotSubmittedException catch (e) {
       if (isClosed) return;
-      if (_confirmSent) {
-        emit(
-          PayProcessFailure(
-            PayProcessFailureReason.generic,
-            message: e.apiMessage,
-          ),
-        );
-        return;
-      }
       emit(
         PayProcessFailure(
           PayProcessFailureReason.generic,
