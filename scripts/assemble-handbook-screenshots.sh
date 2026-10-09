@@ -472,13 +472,11 @@ MAPPING=(
   "418-transaction-detail-sale-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png"
   "419-transaction-detail-sent-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png"
   "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
-  "420-hardware-wallet-intro=screens/hardware_wallet/goldens/macos/hardware_wallet_intro_page.png"
   "421-hardware-wallet-buy=screens/hardware_wallet/goldens/macos/hardware_wallet_buy_page.png"
   "422-hardware-wallet-setup=screens/hardware_wallet/goldens/macos/hardware_wallet_setup_page.png"
   "423-move-balance=screens/hardware_wallet/goldens/macos/move_balance_page.png"
   "424-move-balance-failure=screens/hardware_wallet/goldens/macos/move_balance_page_failure.png"
   "425-pay-info-pay-unavailable=screens/pay/goldens/macos/pay_info_page_pay_unavailable.png"
-  "425-hardware-wallet-paired=screens/hardware_wallet/goldens/macos/hardware_wallet_paired_page.png"
   "426-move-balance-quote-fee=screens/hardware_wallet/goldens/macos/move_balance_quote_fee.png"
   "427-move-balance-quote-eth=screens/hardware_wallet/goldens/macos/move_balance_quote_eth.png"
   "428-move-balance-need-eth=screens/hardware_wallet/goldens/macos/move_balance_need_eth.png"
@@ -497,6 +495,8 @@ MAPPING=(
   "441-settings-move-balance=screens/settings/goldens/macos/settings_move_balance_row.png"
   "442-dashboard-wallet-switcher=screens/dashboard/goldens/macos/dashboard_wallet_switcher.png"
   "443-move-balance-failure-retry-software=screens/hardware_wallet/goldens/macos/move_balance_failure_retry_software.png"
+  "444-hardware-wallet-intro=screens/hardware_wallet/goldens/macos/hardware_wallet_intro_page.png"
+  "445-hardware-wallet-paired=screens/hardware_wallet/goldens/macos/hardware_wallet_paired_page.png"
 )
 
 missing=()
