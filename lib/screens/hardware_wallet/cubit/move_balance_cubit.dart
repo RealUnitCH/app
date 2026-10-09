@@ -304,6 +304,15 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
 
   Future<void> retryPrepareBitboxToSoftware() => prepareBitboxToSoftware();
 
+  /// After KYC returns, drop the pending move and show both directions again.
+  Future<void> continueAfterRegistration() async {
+    _dropPendingMove();
+    _confirmSent = false;
+    _prepareInFlight = false;
+    _confirmInFlight = false;
+    await load();
+  }
+
   Future<void> _confirmSoftwareToBitbox() async {
     final quote = _softwareQuote;
     final bitbox = _bitbox;
@@ -431,7 +440,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
 
   Future<void> _handleInsufficientEth(InsufficientEthForGasException error) async {
     if (_faucetRequested) {
-      _emitUnlessClosed(MoveBalanceFailure(error.message));
+      _emitUnlessClosed(MoveBalanceNeedEth(error.message));
       return;
     }
     try {
@@ -439,7 +448,7 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
       _faucetRequested = true;
       _emitUnlessClosed(MoveBalanceNeedEth(error.message));
     } catch (e) {
-      _emitUnlessClosed(MoveBalanceFailure(ApiException.userFacingMessage(e)));
+      _emitUnlessClosed(MoveBalanceNeedEth(ApiException.userFacingMessage(e)));
     }
   }
 

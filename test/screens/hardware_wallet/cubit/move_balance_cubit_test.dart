@@ -567,6 +567,38 @@ void main() {
       await cubit.close();
     });
 
+    test('continueAfterRegistration after confirm drops the pending move', () async {
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).thenThrow(
+        const RegistrationRequiredException(code: 'R', message: 'register'),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      await cubit.confirm();
+      await cubit.continueAfterRegistration();
+      expect(cubit.state, isA<MoveBalanceInitial>());
+      await cubit.confirm();
+      verify(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      ).called(1);
+      verifyNever(() => hardware.broadcastTransfer(any()));
+      await cubit.close();
+    });
+
     test('a transport error on confirm stays retryable on the software wallet', () async {
       when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
         final dto = inv.positionalArguments.single as RealUnitTransferDto;
@@ -687,7 +719,7 @@ void main() {
       await cubit.close();
     });
 
-    test('faucet failure is a failure state', () async {
+    test('faucet failure asks to retry the BitBox prepare', () async {
       when(() => hardware.prepareTransfer(any())).thenThrow(
         const InsufficientEthForGasException(message: 'Insufficient ETH for gas: 0.01'),
       );
@@ -697,7 +729,10 @@ void main() {
       final cubit = build();
       await cubit.load();
       await cubit.prepareBitboxToSoftware();
-      expect(cubit.state, const MoveBalanceFailure('faucet down'));
+      expect(cubit.state, const MoveBalanceNeedEth('faucet down'));
+      await cubit.prepareBitboxToSoftware();
+      expect(cubit.state, const MoveBalanceNeedEth('faucet down'));
+      verify(() => faucet.requestFaucet()).called(2);
       await cubit.close();
     });
 
@@ -716,7 +751,7 @@ void main() {
       verify(() => faucet.requestFaucet()).called(1);
       expect(
         cubit.state,
-        const MoveBalanceFailure('Insufficient ETH for gas: 0.01'),
+        const MoveBalanceNeedEth('Insufficient ETH for gas: 0.01'),
       );
       await cubit.confirm();
       verifyNever(
@@ -749,7 +784,7 @@ void main() {
       await cubit.prepareBitboxToSoftware();
       expect(
         cubit.state,
-        const MoveBalanceFailure('Insufficient ETH for gas: 0.01'),
+        const MoveBalanceNeedEth('Insufficient ETH for gas: 0.01'),
       );
       await cubit.confirm();
       verifyNever(
@@ -1160,6 +1195,35 @@ void main() {
       await cubit.prepareBitboxToSoftware();
       await cubit.confirm();
       expect(cubit.state, const MoveBalanceRegistrationRequired('kyc'));
+      await cubit.close();
+    });
+
+    test('continueAfterRegistration after broadcast drops the pending move', () async {
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: 5,
+        ),
+      );
+      when(() => hardware.broadcastTransfer(any())).thenThrow(
+        const RegistrationRequiredException(code: 'R', message: 'kyc'),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareBitboxToSoftware();
+      await cubit.confirm();
+      await cubit.continueAfterRegistration();
+      expect(cubit.state, isA<MoveBalanceInitial>());
+      await cubit.confirm();
+      verify(() => hardware.broadcastTransfer(any())).called(1);
+      verifyNever(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      );
       await cubit.close();
     });
 

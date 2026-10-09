@@ -58,7 +58,10 @@ class MoveBalanceView extends StatelessWidget {
               return;
             }
             if (state is MoveBalanceRegistrationRequired) {
-              context.pushNamed(AppRoutes.kyc);
+              await context.pushNamed(AppRoutes.kyc);
+              if (context.mounted) {
+                await context.read<MoveBalanceCubit>().continueAfterRegistration();
+              }
             }
           },
           builder: (context, state) {
