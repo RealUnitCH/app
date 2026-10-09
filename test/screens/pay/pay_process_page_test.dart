@@ -14,6 +14,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -40,6 +41,32 @@ class _MockApiConfig extends Mock implements ApiConfig {}
 
 class _MockWallet extends Mock implements SoftwareWallet {}
 
+// The paying step is reached only when the quote carries a delegation.
+// These tests never sign it; the confirm stub never returns.
+const _delegation = Eip7702Data(
+  relayerAddress: '0x1',
+  delegationManagerAddress: '0x2',
+  delegatorAddress: '0x3',
+  userNonce: 0,
+  domain: Eip7702Domain(
+    name: 'DelegationManager',
+    version: '1',
+    chainId: 1,
+    verifyingContract: '0x4',
+  ),
+  types: Eip7702Types(delegation: [], caveat: []),
+  message: Eip7702Message(
+    delegate: '0x5',
+    delegator: '0x6',
+    authority: '0x7',
+    caveats: [],
+    salt: 0,
+  ),
+  tokenAddress: '0x8',
+  amountWei: '1',
+  depositAddress: '',
+);
+
 const _swap = SwapPaymentInfo(
   id: 99,
   amount: 1,
@@ -50,6 +77,7 @@ const _swap = SwapPaymentInfo(
   isValid: true,
   ethereumTransactionFeeChf: 0.05,
   ethereumTransactionFeeRealu: 0.01234567,
+  eip7702: _delegation,
 );
 
 void main() {
