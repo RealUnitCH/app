@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
@@ -118,6 +121,9 @@ void main() {
     when(
       () => receiptCubit.generateExchangeReceipt(any()),
     ).thenAnswer((_) async {});
+    when(
+      () => receiptCubit.generatePaymentReceipt(any(), language: any(named: 'language')),
+    ).thenAnswer((_) async {});
 
     settings = _MockSettingsBloc();
     const settingsState = SettingsState(language: Language.de);
@@ -211,7 +217,7 @@ void main() {
       await pumpDetail(tester, _tx(category: TransferCategory.sale));
 
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
-      expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
+      expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
       expect(find.text('Beleg'), findsNothing);
       expect(find.text('Betrag in CHF'), findsNothing);
       expect(
@@ -232,17 +238,75 @@ void main() {
       ).called(1);
       verifyNever(() => receiptCubit.generateExchangeReceipt(any()));
 
-      await tester.tap(find.text('Tausch ZCHF in CHF/EUR'));
+      await tester.tap(find.text('Auszahlung (DFX AG)'));
       await tester.pump();
 
       verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
-      expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
+      expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'sale DfxTransaction shows the bank amount in CHF without sender or tx id',
+    'payment shows the sale receipt and the payment receipt, and no DFX payout',
+    (tester) async {
+      await pumpDetail(tester, _tx(category: TransferCategory.payment));
+
+      expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+      expect(find.text('Zahlungsbeleg'), findsOneWidget);
+      // No DFX payout statement: the proceeds paid the bill, nothing was paid out
+      expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+      expect(find.text('Beleg'), findsNothing);
+
+      await tester.tap(find.text('RealUnit-Verkauf'));
+      await tester.pump();
+      verify(
+        () => receiptCubit.generateReceipt(
+          'tx-42',
+          currency: Currency.chf,
+          language: Language.de,
+        ),
+      ).called(1);
+
+      await tester.tap(find.text('Zahlungsbeleg'));
+      await tester.pump();
+      verify(() => receiptCubit.generatePaymentReceipt('tx-42', language: Language.de)).called(1);
+      verifyNever(() => receiptCubit.generateExchangeReceipt(any()));
+    },
+  );
+
+  testWidgets(
+    'sale DfxTransaction names the sale proceeds and the payout, without sender or tx id',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _dfxTx(
+          category: TransferCategory.sale,
+          inputAmount: 2000,
+          inputAsset: 'ZCHF',
+          outputAmount: 1980.2,
+          outputAsset: 'CHF',
+        ),
+      );
+
+      expect(find.text('Verkaufserlös in ZCHF'), findsOneWidget);
+      expect(find.text('2000.00'), findsOneWidget);
+      expect(find.text('Auszahlung in CHF'), findsOneWidget);
+      expect(find.text('1980.20'), findsOneWidget);
+      expect(find.textContaining('Betrag in'), findsNothing);
+      expect(
+        find.text('0x1111111111111111111111111111111111111111'),
+        findsNothing,
+      );
+      expect(find.text('tx-42'), findsNothing);
+      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+      expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'sale DfxTransaction does not repeat the REALU amount of the title as a field',
     (tester) async {
       await pumpDetail(
         tester,
@@ -251,19 +315,13 @@ void main() {
           inputAmount: 20,
           inputAsset: 'REALU',
           outputAmount: 1980,
-          outputAsset: 'CHF',
+          outputAsset: 'EUR',
         ),
       );
 
-      expect(find.text('Betrag in CHF'), findsOneWidget);
+      expect(find.textContaining('Verkaufserlös in'), findsNothing);
+      expect(find.text('Auszahlung in EUR'), findsOneWidget);
       expect(find.text('1980.00'), findsOneWidget);
-      expect(
-        find.text('0x1111111111111111111111111111111111111111'),
-        findsNothing,
-      );
-      expect(find.text('tx-42'), findsNothing);
-      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
-      expect(find.text('Tausch ZCHF in CHF/EUR'), findsOneWidget);
     },
   );
 
@@ -274,7 +332,7 @@ void main() {
 
       expect(find.text('Beleg'), findsOneWidget);
       expect(find.text('RealUnit-Verkauf'), findsNothing);
-      expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+      expect(find.text('Auszahlung (DFX AG)'), findsNothing);
       expect(
         find.text('0x1111111111111111111111111111111111111111'),
         findsNothing,
@@ -312,9 +370,11 @@ void main() {
 
       expect(find.text('Betrag in CHF'), findsOneWidget);
       expect(find.text('5000.00'), findsOneWidget);
+      expect(find.textContaining('Auszahlung in'), findsNothing);
+      expect(find.textContaining('Verkaufserlös in'), findsNothing);
       expect(find.text('Beleg'), findsOneWidget);
       expect(find.text('RealUnit-Verkauf'), findsNothing);
-      expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+      expect(find.text('Auszahlung (DFX AG)'), findsNothing);
       expect(
         find.text('0x1111111111111111111111111111111111111111'),
         findsNothing,
@@ -331,6 +391,23 @@ void main() {
     },
   );
 
+  testWidgets(
+    'shows the date in the Swiss notation with the local time',
+    (tester) async {
+      final transaction = _tx();
+
+      await pumpDetail(tester, transaction);
+
+      expect(
+        find.text(
+          DateFormat('dd.MM.yyyy | H:mm').format(transaction.timestamp.toLocal()),
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Aug'), findsNothing);
+    },
+  );
+
   testWidgets('referral payout shows FrozenChfLabel and no receipt buttons', (
     tester,
   ) async {
@@ -340,7 +417,7 @@ void main() {
     expect(find.byType(FrozenChfLabel), findsOneWidget);
     expect(find.text('Beleg'), findsNothing);
     expect(find.text('RealUnit-Verkauf'), findsNothing);
-    expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+    expect(find.text('Auszahlung (DFX AG)'), findsNothing);
     expect(find.byType(AppFilledButton), findsNothing);
   });
 
@@ -402,6 +479,35 @@ void main() {
         find.byType(AppFilledButton),
       )) {
         expect(button.state, FilledButtonState.idle);
+        expect(button.onPressed, isNull);
+      }
+    },
+  );
+
+  testWidgets(
+    'tapping the payment receipt loads only that button and keeps the sale receipt idle',
+    (tester) async {
+      final states = StreamController<TransactionHistoryReceiptState>();
+      addTearDown(states.close);
+      whenListen(
+        receiptCubit,
+        states.stream,
+        initialState: const TransactionHistoryReceiptInitial(),
+      );
+
+      await pumpDetail(tester, _tx(category: TransferCategory.payment));
+      await tester.tap(find.text('Zahlungsbeleg'));
+      when(
+        () => receiptCubit.state,
+      ).thenReturn(const TransactionHistoryReceiptLoading());
+      states.add(const TransactionHistoryReceiptLoading());
+      await tester.pump();
+
+      final buttons = tester.widgetList<AppFilledButton>(find.byType(AppFilledButton)).toList();
+      expect(buttons, hasLength(2));
+      expect(buttons[0].state, FilledButtonState.idle);
+      expect(buttons[1].state, FilledButtonState.loading);
+      for (final button in buttons) {
         expect(button.onPressed, isNull);
       }
     },
