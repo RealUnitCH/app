@@ -21,6 +21,9 @@ void main() {
       expect(const PayProcessSwapping().props, isEmpty);
       expect(const PayProcessRefreshingQuote().props, isEmpty);
       expect(const PayProcessPaying().props, isEmpty);
+      // ignore: prefer_const_constructors
+      expect(PayProcessNotOffered().props, isEmpty);
+      expect(const PayProcessNotOffered().props, isEmpty);
       expect(
         const PayProcessPreparingSwap(),
         isNot(equals(const PayProcessWaitingForEth())),
@@ -65,26 +68,13 @@ void main() {
       );
       expect(
         const PayProcessFailure(PayProcessFailureReason.generic),
-        isNot(equals(const PayProcessFailure(PayProcessFailureReason.insufficientEth))),
+        isNot(
+          equals(const PayProcessFailure(PayProcessFailureReason.generic, message: 'other')),
+        ),
       );
       expect(
         const PayProcessFailure(PayProcessFailureReason.generic, message: 'boom').props,
         [PayProcessFailureReason.generic, 'boom'],
-      );
-    });
-
-    test('PayProcessPayRetry is keyed on reason + message', () {
-      expect(
-        const PayProcessPayRetry(PayRetryReason.transient),
-        const PayProcessPayRetry(PayRetryReason.transient),
-      );
-      expect(
-        const PayProcessPayRetry(PayRetryReason.transient),
-        isNot(equals(const PayProcessPayRetry(PayRetryReason.transient, message: 'short'))),
-      );
-      expect(
-        const PayProcessPayRetry(PayRetryReason.transient, message: 'short').props,
-        [PayRetryReason.transient, 'short'],
       );
     });
   });

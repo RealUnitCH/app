@@ -106,16 +106,13 @@ void main() {
     swap: swap ?? _swap(),
   );
 
-  test('debug wallet fails before any confirm', () async {
+  test('debug wallet is not offered pay and never asks the relayer', () async {
     when(() => wallet.walletType).thenReturn(WalletType.debug);
 
     final cubit = build();
     await cubit.start();
 
-    expect(
-      (cubit.state as PayProcessFailure).reason,
-      PayProcessFailureReason.signatureUnsupported,
-    );
+    expect(cubit.state, isA<PayProcessNotOffered>());
     expect(cubit.swapCompleted, isFalse);
     verifyNever(
       () => payService.confirmOcpPay(
@@ -133,10 +130,7 @@ void main() {
     final cubit = build();
     await cubit.start();
 
-    expect(
-      (cubit.state as PayProcessFailure).reason,
-      PayProcessFailureReason.payUnavailable,
-    );
+    expect(cubit.state, isA<PayProcessNotOffered>());
     expect(cubit.swapCompleted, isFalse);
     verifyNever(
       () => payService.confirmOcpPay(
@@ -295,53 +289,33 @@ void main() {
     });
   });
 
-  test(
-    'a dropped confirm is retried without treating the quote as unused',
-    () async {
-      var calls = 0;
-      when(
-        () => payService.confirmOcpPay(
-          swap: any(named: 'swap'),
-          paymentLinkId: any(named: 'paymentLinkId'),
-          quoteId: any(named: 'quoteId'),
-        ),
-      ).thenAnswer((_) async {
-        calls++;
-        if (calls == 1) {
-          throw const ApiException(code: 'NETWORK', message: 'timeout');
-        }
-        return '0xpay';
-      });
-
-      final cubit = build();
-      await cubit.start();
-
-      expect(cubit.state, isA<PayProcessPayRetry>());
-      expect(cubit.swapCompleted, isTrue);
-
-      await cubit.retryPay();
-      expect(cubit.state, isA<PayProcessAwaitingSettlement>());
-      expect(calls, 2);
-      await cubit.close();
-    },
-  );
-
-  test('retry does nothing before a confirm has been attempted', () async {
-    final cubit = build();
-    await cubit.retryPay();
-
-    expect(cubit.state, isA<PayProcessInitial>());
-    verifyNever(
+  test('a dropped confirm fails and is not sent again', () async {
+    when(
       () => payService.confirmOcpPay(
         swap: any(named: 'swap'),
         paymentLinkId: any(named: 'paymentLinkId'),
         quoteId: any(named: 'quoteId'),
       ),
-    );
+    ).thenThrow(const ApiException(code: 'NETWORK', message: 'timeout'));
+
+    final cubit = build();
+    await cubit.start();
+
+    final state = cubit.state as PayProcessFailure;
+    expect(state.reason, PayProcessFailureReason.generic);
+    expect(state.message, 'timeout');
+    expect(cubit.swapCompleted, isTrue);
+    verify(
+      () => payService.confirmOcpPay(
+        swap: any(named: 'swap'),
+        paymentLinkId: any(named: 'paymentLinkId'),
+        quoteId: any(named: 'quoteId'),
+      ),
+    ).called(1);
     await cubit.close();
   });
 
-  test('a terminal unpaid status offers retry and does not confirm again', () {
+  test('a terminal unpaid status fails and does not confirm again', () {
     fakeAsync((async) {
       when(() => payService.getPayStatus(any())).thenAnswer(
         (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.expired),
@@ -353,7 +327,11 @@ void main() {
       async.elapse(const Duration(seconds: 3));
       async.flushMicrotasks();
 
-      expect(cubit.state, isA<PayProcessPayRetry>());
+      expect(cubit.state, isA<PayProcessFailure>());
+      expect(
+        (cubit.state as PayProcessFailure).reason,
+        PayProcessFailureReason.generic,
+      );
       verify(
         () => payService.confirmOcpPay(
           swap: any(named: 'swap'),
@@ -367,31 +345,22 @@ void main() {
     });
   });
 
-  test('a confirm that already left keeps the API message on retry', () async {
-    var calls = 0;
+  test('a confirm that already left keeps the API message on the failure', () async {
     when(
       () => payService.confirmOcpPay(
         swap: any(named: 'swap'),
         paymentLinkId: any(named: 'paymentLinkId'),
         quoteId: any(named: 'quoteId'),
       ),
-    ).thenAnswer((_) async {
-      calls++;
-      if (calls == 1) {
-        throw const ApiException(code: 'NETWORK', message: 'timeout');
-      }
-      throw const PayConfirmNotSubmittedException(
-        'payout short',
-        apiMessage: 'payout short',
-      );
-    });
+    ).thenThrow(const ApiException(code: 'NETWORK', message: 'timeout'));
 
     final cubit = build();
     await cubit.start();
-    await cubit.retryPay();
 
-    final state = cubit.state as PayProcessPayRetry;
-    expect(state.message, 'payout short');
+    final state = cubit.state as PayProcessFailure;
+    expect(state.reason, PayProcessFailureReason.generic);
+    expect(state.message, 'timeout');
+    expect(cubit.swapCompleted, isTrue);
     await cubit.close();
   });
 
@@ -409,7 +378,7 @@ void main() {
         async.flushMicrotasks();
       }
 
-      expect(cubit.state, isA<PayProcessPayRetry>());
+      expect(cubit.state, isA<PayProcessFailure>());
       cubit.close();
       async.flushTimers();
     });
@@ -429,7 +398,7 @@ void main() {
         async.flushMicrotasks();
       }
 
-      expect(cubit.state, isA<PayProcessPayRetry>());
+      expect(cubit.state, isA<PayProcessFailure>());
       cubit.close();
       async.flushTimers();
     });

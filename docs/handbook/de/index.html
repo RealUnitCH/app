@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 424 Visual-Regression Goldens (424 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 429 Visual-Regression Goldens (429 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 424 App-Screenshots dieser Seite sind Goldens aus
+            Die 429 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 424 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 429 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -9373,7 +9373,7 @@
                 <div class="file">test/goldens/screens/pay/</div>
               </div>
               <div class="rhs">
-                <b>16 Screens</b>
+                <b>17 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
@@ -9413,6 +9413,27 @@
                 Aufrundungsbetrag wird nicht gutgeschrieben.
                 Der Link «Standorte anzeigen» öffnet die In-App-Karte der Geschäfte, in denen OpenCryptoPay ZCHF auf Ethereum akzeptiert. Eine andere Chain oder ein anderes Asset ist nicht wählbar.
                 Golden-Quelle: <code>pay_info_page.png</code>.
+              </div>
+            </div>
+            <div class="test" id="425-pay-info-pay-unavailable">
+              <div class="head">
+                <a class="name permalink" href="#425-pay-info-pay-unavailable">425-pay-info-pay-unavailable</a>
+                <button class="copy-link" type="button" data-target="425-pay-info-pay-unavailable" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">pay_info_golden_test.dart</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/425-pay-info-pay-unavailable.png"
+                  alt="Bevor Sie bezahlen — nur Software-Wallet"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Intro-Seite <b>Bevor Sie bezahlen</b>, wenn die geöffnete
+                Wallet keine Software-Wallet ist. Sichtbar ist nur der Satz
+                <b>Bezahlen gibt es nur mit der Software-Wallet.</b>
+                Es gibt kein Weiter, keinen Scanner und kein Fehler-Sheet.
+                Das ist keine fehlgeschlagene Zahlung.
+                Golden-Quelle: <code>pay_info_page_pay_unavailable.png</code>.
               </div>
             </div>
             <div class="test" id="301-pay-quote-ready">
@@ -9520,21 +9541,22 @@
                 <b>Zahlung wird abgeschlossen</b>.
               </div>
             </div>
-            <div class="test" id="333-pay-process-page-pay-retry">
+            <div class="test" id="420-pay-result-sheet-failure">
               <div class="head">
-                <a class="name permalink" href="#333-pay-process-page-pay-retry">333-pay-process-page-pay-retry</a>
-                <button class="copy-link" type="button" data-target="333-pay-process-page-pay-retry" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">pay_process_golden_test.dart</span>
+                <a class="name permalink" href="#420-pay-result-sheet-failure">420-pay-result-sheet-failure</a>
+                <button class="copy-link" type="button" data-target="420-pay-result-sheet-failure" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">pay_result_sheet_golden_test.dart</span>
               </div>
               <div class="img">
                 <img
-                  src="../screenshots/333-pay-process-page-pay-retry.png"
-                  alt="Bezahlen, erneuter Zahlungsversuch"
+                  src="../screenshots/420-pay-result-sheet-failure.png"
+                  alt="Zahlung fehlgeschlagen"
                 />
               </div>
               <div class="desc">
-                Zahlungsablauf mit der Beschriftung für den erneuten
-                Zahlungsversuch. Titel <b>Schließen Sie Ihre Zahlung ab</b>.
+                Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
+                <b>Bei der Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.</b>
+                Die graue Schaltfläche lautet <b>Schließen</b>.
               </div>
             </div>
             <div class="test" id="334-pay-process-page-swapping">

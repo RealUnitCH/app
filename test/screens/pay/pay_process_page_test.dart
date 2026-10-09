@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -38,6 +41,32 @@ class _MockApiConfig extends Mock implements ApiConfig {}
 
 class _MockWallet extends Mock implements SoftwareWallet {}
 
+// The paying step is reached only when the quote carries a delegation.
+// These tests never sign it; the confirm stub never returns.
+const _delegation = Eip7702Data(
+  relayerAddress: '0x1',
+  delegationManagerAddress: '0x2',
+  delegatorAddress: '0x3',
+  userNonce: 0,
+  domain: Eip7702Domain(
+    name: 'DelegationManager',
+    version: '1',
+    chainId: 1,
+    verifyingContract: '0x4',
+  ),
+  types: Eip7702Types(delegation: [], caveat: []),
+  message: Eip7702Message(
+    delegate: '0x5',
+    delegator: '0x6',
+    authority: '0x7',
+    caveats: [],
+    salt: 0,
+  ),
+  tokenAddress: '0x8',
+  amountWei: '1',
+  depositAddress: '',
+);
+
 const _swap = SwapPaymentInfo(
   id: 99,
   amount: 1,
@@ -48,6 +77,7 @@ const _swap = SwapPaymentInfo(
   isValid: true,
   ethereumTransactionFeeChf: 0.05,
   ethereumTransactionFeeRealu: 0.01234567,
+  eip7702: _delegation,
 );
 
 void main() {
@@ -57,10 +87,17 @@ void main() {
     final getIt = GetIt.instance;
     // PayProcessPage resolves a full service graph from getIt and creates
     // the cubit without start(); a route gate starts it after the route
-    // animation completes (immediately when pumped as home). A debug wallet
-    // makes start() settle immediately (signatureUnsupported) without
-    // touching the chain.
+    // animation completes (immediately when pumped as home). A software
+    // wallet whose confirm never returns stays on the paying step.
+    registerFallbackValue(_swap);
     final payService = _MockPayService();
+    when(
+      () => payService.confirmOcpPay(
+        swap: any(named: 'swap'),
+        paymentLinkId: any(named: 'paymentLinkId'),
+        quoteId: any(named: 'quoteId'),
+      ),
+    ).thenAnswer((_) => Completer<String>().future);
     getIt.registerSingleton<RealUnitPayService>(payService);
     getIt.registerSingleton<DfxFaucetService>(_MockFaucetService());
     getIt.registerSingleton<DfxBlockchainApiService>(_MockBlockchainService());
@@ -69,7 +106,7 @@ void main() {
     final apiConfig = _MockApiConfig();
     when(() => apiConfig.asset).thenReturn(realUnitAsset);
     final wallet = _MockWallet();
-    when(() => wallet.walletType).thenReturn(WalletType.debug);
+    when(() => wallet.walletType).thenReturn(WalletType.software);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => appStore.apiConfig).thenReturn(apiConfig);
     getIt.registerSingleton<AppStore>(appStore);
@@ -80,7 +117,6 @@ void main() {
   setUp(() {
     processCubit = _MockPayProcessCubit();
     when(() => processCubit.state).thenReturn(const PayProcessInitial());
-    when(() => processCubit.retryPay()).thenAnswer((_) async {});
     when(() => processCubit.swapCompleted).thenReturn(false);
   });
 
@@ -151,10 +187,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Body label and the result sheet both use payFailureTitle.
-      expect(find.text(S.current.payFailureTitle), findsAtLeast(1));
-      expect(find.text(S.current.close), findsOne);
-      expect(find.byIcon(Icons.error_rounded), findsOne);
+      expect(find.text(S.current.payPaying, skipOffstage: false), findsOne);
+      expect(find.text(S.current.payFailureTitle, skipOffstage: false), findsNothing);
+      expect(find.byIcon(Icons.error_rounded), findsNothing);
     });
   });
 
@@ -207,28 +242,27 @@ void main() {
       );
     });
 
-    testWidgets('pay-retry label', (tester) async {
-      await expectLabel(
-        tester,
-        const PayProcessPayRetry(PayRetryReason.transient),
-        S.current.payRetryTitle,
+    testWidgets('failure hides spinner and outcome title', (tester) async {
+      when(() => processCubit.state).thenReturn(
+        const PayProcessFailure(PayProcessFailureReason.generic),
       );
+      await tester.pumpApp(buildSubject());
+
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      expect(find.text(S.current.payFailureTitle), findsNothing);
     });
 
-    testWidgets('failure label', (tester) async {
-      await expectLabel(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.generic),
-        S.current.payFailureTitle,
-      );
+    testWidgets('a wallet without pay does not use the failure title', (tester) async {
+      await expectLabel(tester, const PayProcessNotOffered(), S.current.payPreparingSwap);
+      expect(find.text(S.current.payFailureTitle), findsNothing);
+      expect(find.text(S.current.payFailurePayUnavailable), findsNothing);
     });
   });
 
-  // The result/retry sheets are modal bottom sheets shown from the listener.
-  // The PayProcessView keeps a CupertinoActivityIndicator animating behind the
-  // sheet, so pumpAndSettle never settles; pump fixed frames to open the sheet.
-  // A phone-sized surface keeps the taller retry sheet from overflowing the
-  // default 800x600 test viewport (mirrors the logout-sheet test convention).
+  // The result sheets are modal bottom sheets shown from the listener.
+  // Pump fixed frames to open the sheet.
+  // A phone-sized surface keeps the sheet inside the test viewport
+  // (mirrors the logout-sheet test convention).
   Future<void> pumpWithState(WidgetTester tester, PayProcessState terminal) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
@@ -371,39 +405,14 @@ void main() {
       expect(completed.walletAddress, '0xwallet');
     });
 
-    testWidgets('insufficient-eth failure message', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.insufficientEth),
-      );
-
-      expect(find.text(S.current.payFailureInsufficientEth), findsOne);
-    });
-
-    testWidgets('signature-unsupported failure message', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.signatureUnsupported),
-      );
-
-      expect(find.text(S.current.payFailureSignatureUnsupported), findsOne);
-    });
-
-    testWidgets('bitbox-required failure message', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.bitboxRequired),
-      );
-
-      expect(find.text(S.current.payFailureBitboxRequired), findsOne);
-    });
-
     testWidgets('generic failure message', (tester) async {
       await pumpWithState(
         tester,
         const PayProcessFailure(PayProcessFailureReason.generic),
       );
 
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      expect(find.text(S.current.payFailureTitle), findsOne);
       expect(find.text(S.current.payFailureGeneric), findsOne);
     });
 
@@ -421,45 +430,25 @@ void main() {
     });
   });
 
-  group('$PayProcessView retry sheet', () {
-    testWidgets('pay-retry emits a retry sheet whose primary action calls retryPay', (
-      tester,
-    ) async {
-      await pumpWithState(tester, const PayProcessPayRetry(PayRetryReason.transient));
-
-      expect(find.text(S.current.payRetryTransient), findsOne);
-      expect(find.byIcon(Icons.replay_rounded), findsOne);
-
-      await tester.tap(find.text(S.current.payRetryButton));
-      await tester.pump();
-
-      verify(() => processCubit.retryPay()).called(1);
-    });
-
-    testWidgets('retry sheet close action dismisses without retrying', (tester) async {
-      await pumpWithState(tester, const PayProcessPayRetry(PayRetryReason.transient));
-
-      expect(find.text(S.current.payRetryTransient), findsOne);
-
-      await tester.tap(find.text(S.current.close));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      verifyNever(() => processCubit.retryPay());
-      expect(find.text(S.current.payRetryTransient), findsNothing);
-    });
-
-    testWidgets('transient retry with API message shows the API text 1:1', (tester) async {
-      await pumpWithState(
+  group('$PayProcessView wallet without pay', () {
+    testWidgets('leaves without a failure sheet', (tester) async {
+      bool? popped = false;
+      var didPop = false;
+      await pumpPushedWithState(
         tester,
-        const PayProcessPayRetry(
-          PayRetryReason.transient,
-          message: 'Quote is no longer valid',
-        ),
+        const PayProcessNotOffered(),
+        onPopped: (result) {
+          didPop = true;
+          popped = result;
+        },
       );
 
-      expect(find.text('Quote is no longer valid'), findsOne);
-      expect(find.text(S.current.payRetryTransient), findsNothing);
+      expect(find.text(S.current.payFailureTitle, skipOffstage: false), findsNothing);
+      expect(find.text(S.current.payFailurePayUnavailable, skipOffstage: false), findsNothing);
+      expect(find.byIcon(Icons.error_rounded), findsNothing);
+      expect(find.byType(PayProcessView), findsNothing);
+      expect(didPop, isTrue);
+      expect(popped, isNull);
     });
   });
 
