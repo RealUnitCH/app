@@ -35,7 +35,7 @@ Column meaning:
   chrome; the page body is the website and is not part of the picture).
   `PayScanPage` is `338`. `PayInfoPage` is `300` and `425`.
   `PayProcessPage` is `332` and `334`.
-  `PayResultSheet` is `420` and `422`. `KycPageManager`
+  `PayResultSheet` is `420`. `KycPageManager`
   (the orchestrator has no Golden of its own — its states are the
   individual KYC pages) carries `—`. Slot ↔ Golden mapping in
   `scripts/assemble-handbook-screenshots.sh`, slot ↔ HTML block in
@@ -75,7 +75,7 @@ Column meaning:
 | Dashboard & trading | `PayScanPage` | — | — | `338` |
 | Dashboard & trading | `PayQuotePage` | — | — | `301`, `302`, `335`, `336`, `337` |
 | Dashboard & trading | `PayProcessPage` | — | — | `332`, `334` |
-| Dashboard & trading | `PayResultSheet` | — | — | `420`, `422` |
+| Dashboard & trading | `PayResultSheet` | — | — | `420` |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | `394`, `395` |

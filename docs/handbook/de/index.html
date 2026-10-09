@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 430 Visual-Regression Goldens (430 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 429 Visual-Regression Goldens (429 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 430 App-Screenshots dieser Seite sind Goldens aus
+            Die 429 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 430 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 429 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -9373,7 +9373,7 @@
                 <div class="file">test/goldens/screens/pay/</div>
               </div>
               <div class="rhs">
-                <b>18 Screens</b>
+                <b>17 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
@@ -9556,24 +9556,6 @@
               <div class="desc">
                 Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
                 <b>Bei der Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.</b>
-                Die graue Schaltfläche lautet <b>Schließen</b>.
-              </div>
-            </div>
-            <div class="test" id="422-pay-result-sheet-failure-signature-unsupported">
-              <div class="head">
-                <a class="name permalink" href="#422-pay-result-sheet-failure-signature-unsupported">422-pay-result-sheet-failure-signature-unsupported</a>
-                <button class="copy-link" type="button" data-target="422-pay-result-sheet-failure-signature-unsupported" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">pay_result_sheet_golden_test.dart</span>
-              </div>
-              <div class="img">
-                <img
-                  src="../screenshots/422-pay-result-sheet-failure-signature-unsupported.png"
-                  alt="Zahlung fehlgeschlagen"
-                />
-              </div>
-              <div class="desc">
-                Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
-                <b>Diese Wallet kann die Zahlung nicht signieren. Wechseln Sie zu einer Software-Wallet.</b>
                 Die graue Schaltfläche lautet <b>Schließen</b>.
               </div>
             </div>

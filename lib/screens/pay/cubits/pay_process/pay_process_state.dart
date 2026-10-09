@@ -6,10 +6,7 @@ part of 'pay_process_cubit.dart';
 /// A wallet that is not offered pay is not a failure. That case is
 /// [PayProcessNotOffered].
 enum PayProcessFailureReason {
-  /// The active wallet mode cannot sign transactions (debug wallet).
-  signatureUnsupported,
-
-  /// Any other unexpected error.
+  /// Any unexpected error after pay was offered.
   generic,
 }
 

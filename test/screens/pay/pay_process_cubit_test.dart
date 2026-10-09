@@ -106,16 +106,13 @@ void main() {
     swap: swap ?? _swap(),
   );
 
-  test('debug wallet fails before any confirm', () async {
+  test('debug wallet is not offered pay and never asks the relayer', () async {
     when(() => wallet.walletType).thenReturn(WalletType.debug);
 
     final cubit = build();
     await cubit.start();
 
-    expect(
-      (cubit.state as PayProcessFailure).reason,
-      PayProcessFailureReason.signatureUnsupported,
-    );
+    expect(cubit.state, isA<PayProcessNotOffered>());
     expect(cubit.swapCompleted, isFalse);
     verifyNever(
       () => payService.confirmOcpPay(

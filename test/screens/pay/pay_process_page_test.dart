@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -57,10 +59,17 @@ void main() {
     final getIt = GetIt.instance;
     // PayProcessPage resolves a full service graph from getIt and creates
     // the cubit without start(); a route gate starts it after the route
-    // animation completes (immediately when pumped as home). A debug wallet
-    // makes start() settle immediately (signatureUnsupported) without
-    // touching the chain.
+    // animation completes (immediately when pumped as home). A software
+    // wallet whose confirm never returns stays on the paying step.
+    registerFallbackValue(_swap);
     final payService = _MockPayService();
+    when(
+      () => payService.confirmOcpPay(
+        swap: any(named: 'swap'),
+        paymentLinkId: any(named: 'paymentLinkId'),
+        quoteId: any(named: 'quoteId'),
+      ),
+    ).thenAnswer((_) => Completer<String>().future);
     getIt.registerSingleton<RealUnitPayService>(payService);
     getIt.registerSingleton<DfxFaucetService>(_MockFaucetService());
     getIt.registerSingleton<DfxBlockchainApiService>(_MockBlockchainService());
@@ -69,7 +78,7 @@ void main() {
     final apiConfig = _MockApiConfig();
     when(() => apiConfig.asset).thenReturn(realUnitAsset);
     final wallet = _MockWallet();
-    when(() => wallet.walletType).thenReturn(WalletType.debug);
+    when(() => wallet.walletType).thenReturn(WalletType.software);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => appStore.apiConfig).thenReturn(apiConfig);
     getIt.registerSingleton<AppStore>(appStore);
@@ -150,10 +159,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // The failure sheet shows payFailureTitle once. The page behind it does not.
-      expect(find.text(S.current.payFailureTitle), findsOne);
-      expect(find.text(S.current.close), findsOne);
-      expect(find.byIcon(Icons.error_rounded), findsOne);
+      expect(find.text(S.current.payPaying, skipOffstage: false), findsOne);
+      expect(find.text(S.current.payFailureTitle, skipOffstage: false), findsNothing);
+      expect(find.byIcon(Icons.error_rounded), findsNothing);
     });
   });
 
@@ -367,15 +375,6 @@ void main() {
       final completed = popped! as PayProcessCompleted;
       expect(completed.transaction, same(tx));
       expect(completed.walletAddress, '0xwallet');
-    });
-
-    testWidgets('signature-unsupported failure message', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.signatureUnsupported),
-      );
-
-      expect(find.text(S.current.payFailureSignatureUnsupported), findsOne);
     });
 
     testWidgets('generic failure message', (tester) async {

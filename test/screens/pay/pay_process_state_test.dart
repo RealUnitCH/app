@@ -68,7 +68,9 @@ void main() {
       );
       expect(
         const PayProcessFailure(PayProcessFailureReason.generic),
-        isNot(equals(const PayProcessFailure(PayProcessFailureReason.signatureUnsupported))),
+        isNot(
+          equals(const PayProcessFailure(PayProcessFailureReason.generic, message: 'other')),
+        ),
       );
       expect(
         const PayProcessFailure(PayProcessFailureReason.generic, message: 'boom').props,

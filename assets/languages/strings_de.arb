@@ -186,7 +186,6 @@
   "payFailureGeneric": "Bei der Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
   "payFailurePayUnavailable": "Bezahlen gibt es nur mit der Software-Wallet.",
   "payFailureQuoteExpired": "Das Zahlungsangebot ist abgelaufen. Bitte scannen Sie den Code erneut.",
-  "payFailureSignatureUnsupported": "Diese Wallet kann die Zahlung nicht signieren. Wechseln Sie zu einer Software-Wallet.",
   "payFailureTitle": "Zahlung fehlgeschlagen",
   "payInfoBody": "Mit der Bezahlfunktion bezahlen Sie in Geschäften, die OpenCryptoPay akzeptieren, derzeit insbesondere in ausgewählten SPAR-Filialen der Deutschschweiz.\n\nFür jede Zahlung verkaufen Sie REALU; aus dem Erlös wird der Händler bezahlt. Da nur ganze Aktien verkauft werden, wird auf ganze REALU aufgerundet. Der Aufrundungsbetrag wird Ihnen nicht gutgeschrieben und fällt bei kleinen Beträgen stärker ins Gewicht.",
   "payInfoLocationsLink": "Standorte anzeigen",

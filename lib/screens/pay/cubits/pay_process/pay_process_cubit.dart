@@ -17,9 +17,9 @@ part 'pay_process_state.dart';
 /// DFX relayer broadcasts one transaction and pays gas from the DFX balance,
 /// the same way as sell. There is no faucet and no user-signed transfer.
 ///
-/// BitBox is not offered pay: [start] ends as [PayProcessNotOffered] and
-/// never asks the relayer. The debug wallet cannot sign and fails before
-/// any confirm. A confirm that never left the device leaves the quote
+/// Only the software wallet is offered pay. Any other wallet, including
+/// BitBox and the debug wallet, ends as [PayProcessNotOffered] and never
+/// asks the relayer. A confirm that never left the device leaves the quote
 /// reusable. A confirm that may already have been relayed ends as a
 /// failure, and this payment is not sent again.
 class PayProcessCubit extends Cubit<PayProcessState> {
@@ -58,12 +58,6 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   Future<void> start() async {
     final walletType = _appStore.wallet.walletType;
-    if (walletType == WalletType.debug) {
-      emit(
-        const PayProcessFailure(PayProcessFailureReason.signatureUnsupported),
-      );
-      return;
-    }
     if (walletType != WalletType.software) {
       emit(const PayProcessNotOffered());
       return;
