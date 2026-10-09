@@ -472,10 +472,8 @@ MAPPING=(
   "418-transaction-detail-sale-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png"
   "419-transaction-detail-sent-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png"
   "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
-  "421-pay-result-sheet-failure-insufficient-eth=screens/pay/goldens/macos/pay_result_sheet_failure_insufficient_eth.png"
   "422-pay-result-sheet-failure-signature-unsupported=screens/pay/goldens/macos/pay_result_sheet_failure_signature_unsupported.png"
   "423-pay-result-sheet-failure-pay-unavailable=screens/pay/goldens/macos/pay_result_sheet_failure_pay_unavailable.png"
-  "424-pay-result-sheet-failure-bitbox-required=screens/pay/goldens/macos/pay_result_sheet_failure_bitbox_required.png"
 )
 
 missing=()

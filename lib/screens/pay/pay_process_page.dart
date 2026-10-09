@@ -140,10 +140,8 @@ class PayProcessView extends StatelessWidget {
       return apiText;
     }
     return switch (state.reason) {
-      PayProcessFailureReason.insufficientEth => S.of(context).payFailureInsufficientEth,
       PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
       PayProcessFailureReason.payUnavailable => S.of(context).payFailurePayUnavailable,
-      PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,
       PayProcessFailureReason.generic => S.of(context).payFailureGeneric,
     };
   }

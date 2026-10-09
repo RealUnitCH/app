@@ -65,7 +65,7 @@ void main() {
       );
       expect(
         const PayProcessFailure(PayProcessFailureReason.generic),
-        isNot(equals(const PayProcessFailure(PayProcessFailureReason.insufficientEth))),
+        isNot(equals(const PayProcessFailure(PayProcessFailureReason.payUnavailable))),
       );
       expect(
         const PayProcessFailure(PayProcessFailureReason.generic, message: 'boom').props,

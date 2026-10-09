@@ -3,17 +3,11 @@ part of 'pay_process_cubit.dart';
 /// Why the pay flow failed. Each reason maps to a localized, user-facing
 /// message in the view — the cubit carries the reason, not the copy.
 enum PayProcessFailureReason {
-  /// Not used. The relayer pays gas. There is no faucet.
-  insufficientEth,
-
   /// The active wallet mode cannot sign transactions (debug wallet).
   signatureUnsupported,
 
   /// Pay is not offered for this wallet. BitBox has no Pay option.
   payUnavailable,
-
-  /// A BitBox is required but not connected.
-  bitboxRequired,
 
   /// Any other unexpected error.
   generic,

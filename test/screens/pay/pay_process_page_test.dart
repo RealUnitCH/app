@@ -363,15 +363,6 @@ void main() {
       expect(completed.walletAddress, '0xwallet');
     });
 
-    testWidgets('insufficient-eth failure message', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.insufficientEth),
-      );
-
-      expect(find.text(S.current.payFailureInsufficientEth), findsOne);
-    });
-
     testWidgets('signature-unsupported failure message', (tester) async {
       await pumpWithState(
         tester,
@@ -379,15 +370,6 @@ void main() {
       );
 
       expect(find.text(S.current.payFailureSignatureUnsupported), findsOne);
-    });
-
-    testWidgets('bitbox-required failure message', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.bitboxRequired),
-      );
-
-      expect(find.text(S.current.payFailureBitboxRequired), findsOne);
     });
 
     testWidgets('generic failure message', (tester) async {

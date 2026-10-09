@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 426 Visual-Regression Goldens (426 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 430 Visual-Regression Goldens (430 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 426 App-Screenshots dieser Seite sind Goldens aus
+            Die 430 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 426 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 430 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -9538,24 +9538,6 @@
                 Die graue Schaltfläche lautet <b>Schließen</b>.
               </div>
             </div>
-            <div class="test" id="421-pay-result-sheet-failure-insufficient-eth">
-              <div class="head">
-                <a class="name permalink" href="#421-pay-result-sheet-failure-insufficient-eth">421-pay-result-sheet-failure-insufficient-eth</a>
-                <button class="copy-link" type="button" data-target="421-pay-result-sheet-failure-insufficient-eth" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">pay_result_sheet_golden_test.dart</span>
-              </div>
-              <div class="img">
-                <img
-                  src="../screenshots/421-pay-result-sheet-failure-insufficient-eth.png"
-                  alt="Zahlung fehlgeschlagen"
-                />
-              </div>
-              <div class="desc">
-                Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
-                <b>Es konnten nicht genügend Mittel für die Netzwerkgebühren bereitgestellt werden. Bitte versuchen Sie es später erneut.</b>
-                Die graue Schaltfläche lautet <b>Schließen</b>.
-              </div>
-            </div>
             <div class="test" id="422-pay-result-sheet-failure-signature-unsupported">
               <div class="head">
                 <a class="name permalink" href="#422-pay-result-sheet-failure-signature-unsupported">422-pay-result-sheet-failure-signature-unsupported</a>
@@ -9589,24 +9571,6 @@
               <div class="desc">
                 Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
                 <b>Bezahlen gibt es nur mit der Software-Wallet.</b>
-                Die graue Schaltfläche lautet <b>Schließen</b>.
-              </div>
-            </div>
-            <div class="test" id="424-pay-result-sheet-failure-bitbox-required">
-              <div class="head">
-                <a class="name permalink" href="#424-pay-result-sheet-failure-bitbox-required">424-pay-result-sheet-failure-bitbox-required</a>
-                <button class="copy-link" type="button" data-target="424-pay-result-sheet-failure-bitbox-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">pay_result_sheet_golden_test.dart</span>
-              </div>
-              <div class="img">
-                <img
-                  src="../screenshots/424-pay-result-sheet-failure-bitbox-required.png"
-                  alt="Zahlung fehlgeschlagen"
-                />
-              </div>
-              <div class="desc">
-                Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
-                <b>Bitte verbinden Sie Ihre BitBox, um fortzufahren.</b>
                 Die graue Schaltfläche lautet <b>Schließen</b>.
               </div>
             </div>
