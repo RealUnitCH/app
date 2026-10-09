@@ -2,12 +2,12 @@ part of 'pay_process_cubit.dart';
 
 /// Why the pay flow failed. Each reason maps to a localized, user-facing
 /// message in the view — the cubit carries the reason, not the copy.
+///
+/// A wallet that is not offered pay is not a failure. That case is
+/// [PayProcessNotOffered].
 enum PayProcessFailureReason {
   /// The active wallet mode cannot sign transactions (debug wallet).
   signatureUnsupported,
-
-  /// Pay is not offered for this wallet. BitBox has no Pay option.
-  payUnavailable,
 
   /// Any other unexpected error.
   generic,
@@ -61,6 +61,12 @@ class PayProcessSuccess extends PayProcessState {
 
   @override
   List<Object?> get props => [txHash, shareAmount];
+}
+
+/// Pay is not offered for this wallet. The info page already says so, and
+/// the relayer is never asked. This is not a failed payment.
+class PayProcessNotOffered extends PayProcessState {
+  const PayProcessNotOffered();
 }
 
 class PayProcessFailure extends PayProcessState {

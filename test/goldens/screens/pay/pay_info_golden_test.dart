@@ -7,6 +7,11 @@ import 'package:realunit_wallet/screens/pay/pay_info_page.dart';
 
 import '../../../helper/helper.dart';
 
+class _BitboxWallet extends Fake implements BitboxWallet {
+  @override
+  WalletType get walletType => WalletType.bitbox;
+}
+
 void main() {
   late MockHomeBloc homeBloc;
 
@@ -31,5 +36,19 @@ void main() {
     builder: () => wrapForGolden(
       BlocProvider<HomeBloc>.value(value: homeBloc, child: const PayInfoPage()),
     ),
+  );
+
+  goldenTest(
+    'pay info when pay is not offered',
+    fileName: 'pay_info_page_pay_unavailable',
+    constraints: phoneConstraints,
+    builder: () {
+      when(() => homeBloc.state).thenReturn(
+        HomeState(hasWallet: true, openWallet: _BitboxWallet()),
+      );
+      return wrapForGolden(
+        BlocProvider<HomeBloc>.value(value: homeBloc, child: const PayInfoPage()),
+      );
+    },
   );
 }

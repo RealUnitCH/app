@@ -215,6 +215,12 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
       expect(find.text(S.current.payFailureTitle), findsNothing);
     });
+
+    testWidgets('a wallet without pay does not use the failure title', (tester) async {
+      await expectLabel(tester, const PayProcessNotOffered(), S.current.payPreparingSwap);
+      expect(find.text(S.current.payFailureTitle), findsNothing);
+      expect(find.text(S.current.payFailurePayUnavailable), findsNothing);
+    });
   });
 
   // The result sheets are modal bottom sheets shown from the listener.
@@ -394,6 +400,28 @@ void main() {
 
       expect(find.text('Price source is temporarily unavailable'), findsOne);
       expect(find.text(S.current.payFailureGeneric), findsNothing);
+    });
+  });
+
+  group('$PayProcessView wallet without pay', () {
+    testWidgets('leaves without a failure sheet', (tester) async {
+      bool? popped = false;
+      var didPop = false;
+      await pumpPushedWithState(
+        tester,
+        const PayProcessNotOffered(),
+        onPopped: (result) {
+          didPop = true;
+          popped = result;
+        },
+      );
+
+      expect(find.text(S.current.payFailureTitle, skipOffstage: false), findsNothing);
+      expect(find.text(S.current.payFailurePayUnavailable, skipOffstage: false), findsNothing);
+      expect(find.byIcon(Icons.error_rounded), findsNothing);
+      expect(find.byType(PayProcessView), findsNothing);
+      expect(didPop, isTrue);
+      expect(popped, isNull);
     });
   });
 

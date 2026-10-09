@@ -473,7 +473,7 @@ MAPPING=(
   "419-transaction-detail-sent-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png"
   "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
   "422-pay-result-sheet-failure-signature-unsupported=screens/pay/goldens/macos/pay_result_sheet_failure_signature_unsupported.png"
-  "423-pay-result-sheet-failure-pay-unavailable=screens/pay/goldens/macos/pay_result_sheet_failure_pay_unavailable.png"
+  "425-pay-info-pay-unavailable=screens/pay/goldens/macos/pay_info_page_pay_unavailable.png"
 )
 
 missing=()

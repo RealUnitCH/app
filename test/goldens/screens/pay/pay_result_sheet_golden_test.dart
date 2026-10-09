@@ -45,23 +45,4 @@ void main() {
     ),
   );
 
-  goldenTest(
-    'pay-unavailable failure sheet with close',
-    fileName: 'pay_result_sheet_failure_pay_unavailable',
-    constraints: phoneConstraints,
-    builder: () => wrapForGolden(
-      Builder(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black54,
-          bottomSheet: PayResultSheet(
-            icon: Icons.error_rounded,
-            title: S.of(context).payFailureTitle,
-            description: S.of(context).payFailurePayUnavailable,
-            closeLabel: S.of(context).close,
-            onClose: () {},
-          ),
-        ),
-      ),
-    ),
-  );
 }

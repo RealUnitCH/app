@@ -63,8 +63,17 @@ class PayProcessView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<PayProcessCubit, PayProcessState>(
       listenWhen: (previous, current) =>
-          current is PayProcessSuccess || current is PayProcessFailure,
+          current is PayProcessSuccess ||
+          current is PayProcessFailure ||
+          current is PayProcessNotOffered,
       listener: (context, state) async {
+        if (state is PayProcessNotOffered) {
+          // Not a failed payment, so there is no result sheet. Null leaves
+          // the quote the same way system back does, and Pay is not offered
+          // again on that quote.
+          Navigator.of(context).pop();
+          return;
+        }
         if (state is PayProcessSuccess) {
           final completed = await resolveCompleted(
             CompletedTransactionRequest(
@@ -124,7 +133,9 @@ class PayProcessView extends StatelessWidget {
   }
 
   String _progressLabel(BuildContext context, PayProcessState state) => switch (state) {
-    PayProcessInitial() || PayProcessPreparingSwap() => S.of(context).payPreparingSwap,
+    PayProcessInitial() ||
+    PayProcessPreparingSwap() ||
+    PayProcessNotOffered() => S.of(context).payPreparingSwap,
     PayProcessWaitingForEth() => S.of(context).payWaitingForEth,
     PayProcessSwapping() => S.of(context).paySwapping,
     PayProcessRefreshingQuote() => S.of(context).payRefreshingQuote,
@@ -141,7 +152,6 @@ class PayProcessView extends StatelessWidget {
     }
     return switch (state.reason) {
       PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
-      PayProcessFailureReason.payUnavailable => S.of(context).payFailurePayUnavailable,
       PayProcessFailureReason.generic => S.of(context).payFailureGeneric,
     };
   }

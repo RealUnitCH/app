@@ -33,8 +33,9 @@ Column meaning:
   `268` is `PhoneNumberField` under `test/goldens/widgets/form/`, and slot
   `393` is `ImageSourceSheet`. `WebViewPage` is slots `394` and `395` (the
   chrome; the page body is the website and is not part of the picture).
-  `PayScanPage` is `338`. `PayProcessPage` is `332` and `334`.
-  `PayResultSheet` is `420`, `422`, and `423`. `KycPageManager`
+  `PayScanPage` is `338`. `PayInfoPage` is `300` and `425`.
+  `PayProcessPage` is `332` and `334`.
+  `PayResultSheet` is `420` and `422`. `KycPageManager`
   (the orchestrator has no Golden of its own — its states are the
   individual KYC pages) carries `—`. Slot ↔ Golden mapping in
   `scripts/assemble-handbook-screenshots.sh`, slot ↔ HTML block in
@@ -64,7 +65,7 @@ Column meaning:
 | Dashboard & trading | `SellBitboxPage` | `sellBitbox` | `/sellBitbox` | `126`, `127`, `128`, `129`, `130`, `131`, `132`, `133`, `134`, `135`, `136`, `363`, `364`, `365`, `366` |
 | Dashboard & trading | `SellBankAccountSelectionPage` | — | — | `121`, `122` |
 | Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102`, `296`, `297` |
-| Dashboard & trading | `PayInfoPage` | `pay` | `/pay` | `300` |
+| Dashboard & trading | `PayInfoPage` | `pay` | `/pay` | `300`, `425` |
 | Dashboard & trading | `PayLocationsPage` | `payLocations` | `/payLocations` | `410`, `411`, `412`, `413`, `414`, `415` |
 | Dashboard & trading | `SendInfoPage` | `send` | `/send` | `373` |
 | Dashboard & trading | `SendRecipientPage` | — | — | `375` |
@@ -74,7 +75,7 @@ Column meaning:
 | Dashboard & trading | `PayScanPage` | — | — | `338` |
 | Dashboard & trading | `PayQuotePage` | — | — | `301`, `302`, `335`, `336`, `337` |
 | Dashboard & trading | `PayProcessPage` | — | — | `332`, `334` |
-| Dashboard & trading | `PayResultSheet` | — | — | `420`, `422`, `423` |
+| Dashboard & trading | `PayResultSheet` | — | — | `420`, `422` |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | `394`, `395` |
