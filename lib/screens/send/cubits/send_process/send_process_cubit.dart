@@ -114,7 +114,7 @@ class SendProcessCubit extends Cubit<SendProcessState> {
     } on ApiException catch (e) {
       // The API is the authority on recipient/amount/eligibility. Render its
       // signaled reason rather than re-deriving limits locally.
-      prepareFailure = SendProcessFailure(_reasonForApi(e), message: e.message);
+      prepareFailure = _failureFromApi(e);
     } catch (e) {
       prepareFailure = SendProcessFailure(
         SendProcessFailureReason.generic,
@@ -233,9 +233,8 @@ class SendProcessCubit extends Cubit<SendProcessState> {
       // Definitive client/server business failures are terminal. Other API
       // status codes (e.g. 500) may be transient after a confirm that already
       // has a known-good id — offer retry against the same intent.
-      nextState = SendProcessFailure(
-        _reasonForApi(e),
-        message: e.message,
+      nextState = _failureFromApi(
+        e,
         canRetry: !_isDefinitiveApiFailure(e),
       );
     } catch (e) {
@@ -261,13 +260,27 @@ class SendProcessCubit extends Cubit<SendProcessState> {
     emit(nextState);
   }
 
-  /// Maps an API error to a typed failure reason. The API's
-  /// `RECIPIENT_NOT_REGISTERED` code maps to [recipientNotRegistered]. Any
-  /// other 400 from `PUT /transfer` (invalid recipient, insufficient REALU)
-  /// renders a generic "could not prepare the transfer" message keyed off the
-  /// API text, so they share [SendProcessFailureReason.invalidRequest]. A 403
-  /// (including unmapped compliance codes) maps to [registrationOrKycRequired].
+  /// Maps an API error to a typed failure reason. Transfer-cost codes are
+  /// read from `e.code` first; a 503 without those codes stays
+  /// [gasFundingUnavailable]. The API's `RECIPIENT_NOT_REGISTERED` code maps
+  /// to [recipientNotRegistered]. Any other 400 from `PUT /transfer` (invalid
+  /// recipient, insufficient REALU) renders a generic "could not prepare the
+  /// transfer" message keyed off the API text, so they share
+  /// [SendProcessFailureReason.invalidRequest]. A 403 (including unmapped
+  /// compliance codes) maps to [registrationOrKycRequired].
   static SendProcessFailureReason _reasonForApi(ApiException e) {
+    if (e.code == 'TRANSFER_GAS_TOO_HIGH') {
+      return SendProcessFailureReason.transferGasTooHigh;
+    }
+    if (e.code == 'TRANSFER_MONTHLY_COST_EXCEEDED') {
+      return SendProcessFailureReason.transferMonthlyCap;
+    }
+    if (e.code == 'TRANSFER_COST_LIMIT_NOT_CONFIGURED') {
+      return SendProcessFailureReason.transferCostNotConfigured;
+    }
+    if (e.code == 'TRANSFER_COST_PRICE_UNAVAILABLE') {
+      return SendProcessFailureReason.transferCostPriceUnavailable;
+    }
     if (e.code == 'RECIPIENT_NOT_REGISTERED') {
       return SendProcessFailureReason.recipientNotRegistered;
     }
@@ -282,6 +295,30 @@ class SendProcessCubit extends Cubit<SendProcessState> {
     }
     return SendProcessFailureReason.generic;
   }
+
+  /// Builds a [SendProcessFailure] from an API error. Transfer-cost reasons
+  /// omit [SendProcessFailure.message] so the view cannot prefer the API's
+  /// English text over the localized sentence.
+  static SendProcessFailure _failureFromApi(
+    ApiException e, {
+    bool canRetry = false,
+  }) {
+    final reason = _reasonForApi(e);
+    if (_omitsApiMessage(reason)) {
+      return SendProcessFailure(reason, canRetry: canRetry);
+    }
+    return SendProcessFailure(
+      reason,
+      message: e.message,
+      canRetry: canRetry,
+    );
+  }
+
+  static bool _omitsApiMessage(SendProcessFailureReason reason) =>
+      reason == SendProcessFailureReason.transferGasTooHigh ||
+      reason == SendProcessFailureReason.transferMonthlyCap ||
+      reason == SendProcessFailureReason.transferCostNotConfigured ||
+      reason == SendProcessFailureReason.transferCostPriceUnavailable;
 
   /// Definitive API failures that must not be retried via [retryConfirm].
   static bool _isDefinitiveApiFailure(ApiException e) {

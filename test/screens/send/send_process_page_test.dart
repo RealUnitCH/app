@@ -396,6 +396,64 @@ void main() {
       );
     });
 
+    testWidgets('gas-too-high failure shows localized copy, not the API text', (tester) async {
+      await pumpWithState(
+        tester,
+        const SendProcessFailure(
+          SendProcessFailureReason.transferGasTooHigh,
+          message: 'Gas cost exceeds the current transfer budget',
+        ),
+      );
+
+      expect(find.text(S.current.sendFailureTransferGasTooHigh), findsOne);
+      expect(find.text('Gas cost exceeds the current transfer budget'), findsNothing);
+    });
+
+    testWidgets('monthly-cap failure shows localized copy, not the API text', (tester) async {
+      await pumpWithState(
+        tester,
+        const SendProcessFailure(
+          SendProcessFailureReason.transferMonthlyCap,
+          message: 'Monthly transfer cost limit exceeded',
+        ),
+      );
+
+      expect(find.text(S.current.sendFailureTransferMonthlyCap), findsOne);
+      expect(find.text('Monthly transfer cost limit exceeded'), findsNothing);
+    });
+
+    testWidgets(
+      'cost-not-configured failure shows localized copy, not the API text',
+      (tester) async {
+        await pumpWithState(
+          tester,
+          const SendProcessFailure(
+            SendProcessFailureReason.transferCostNotConfigured,
+            message: 'Transfer cost limit is not configured',
+          ),
+        );
+
+        expect(find.text(S.current.sendFailureTransferCostNotConfigured), findsOne);
+        expect(find.text('Transfer cost limit is not configured'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'cost-price-unavailable failure shows localized copy, not the API text',
+      (tester) async {
+        await pumpWithState(
+          tester,
+          const SendProcessFailure(
+            SendProcessFailureReason.transferCostPriceUnavailable,
+            message: 'Transfer cost price is currently unavailable',
+          ),
+        );
+
+        expect(find.text(S.current.sendFailureTransferCostPriceUnavailable), findsOne);
+        expect(find.text('Transfer cost price is currently unavailable'), findsNothing);
+      },
+    );
+
     testWidgets('invalid-request failure message', (tester) async {
       await pumpWithState(
         tester,
@@ -403,6 +461,19 @@ void main() {
       );
 
       expect(find.text(S.current.sendFailureInvalidRequest), findsOne);
+    });
+
+    testWidgets('invalid-request with API message shows the API text', (tester) async {
+      await pumpWithState(
+        tester,
+        const SendProcessFailure(
+          SendProcessFailureReason.invalidRequest,
+          message: 'Invalid recipient address',
+        ),
+      );
+
+      expect(find.text('Invalid recipient address'), findsOne);
+      expect(find.text(S.current.sendFailureInvalidRequest), findsNothing);
     });
 
     testWidgets(
