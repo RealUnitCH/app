@@ -4,14 +4,13 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:web3dart/crypto.dart';
-import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
-import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
@@ -23,7 +22,6 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto
 import 'package:realunit_wallet/packages/service/dfx/real_unit_hardware_transfer_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_transfer_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
-import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/hardware_wallet/cubit/move_balance_cubit.dart';
@@ -32,8 +30,6 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import '../../../helper/fake_bitbox_credentials.dart';
 
 class _MockWalletService extends Mock implements WalletService {}
-
-class _MockBalanceRepository extends Mock implements BalanceRepository {}
 
 class _MockTransferService extends Mock implements RealUnitTransferService {}
 
@@ -117,17 +113,8 @@ RealUnitTransferPaymentInfoDto _softwareQuote({
   'eip7702': _eip7702Json(),
 });
 
-Balance _balance(String address, int shares) => Balance(
-  chainId: realUnitAsset.chainId,
-  contractAddress: realUnitAsset.address,
-  walletAddress: address,
-  balance: BigInt.from(shares),
-  asset: realUnitAsset,
-);
-
 void main() {
   late _MockWalletService walletService;
-  late _MockBalanceRepository balances;
   late _MockTransferService transfer;
   late _MockHardwareTransferService hardware;
   late _MockFaucet faucet;
@@ -154,7 +141,6 @@ void main() {
 
   setUp(() {
     walletService = _MockWalletService();
-    balances = _MockBalanceRepository();
     transfer = _MockTransferService();
     hardware = _MockHardwareTransferService();
     faucet = _MockFaucet();
@@ -174,12 +160,8 @@ void main() {
     when(() => walletService.listWallets()).thenAnswer((_) async => [software, bitbox]);
     when(() => walletService.switchCurrentWallet(1)).thenAnswer((_) async => software);
     when(() => walletService.switchCurrentWallet(2)).thenAnswer((_) async => bitbox);
-    when(() => balances.getBalance(realUnitAsset, _softwareAddr)).thenAnswer(
-      (_) async => _balance(_softwareAddr, 10),
-    );
-    when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer(
-      (_) async => _balance(_bitboxAddr, 5),
-    );
+    when(() => balanceService.freshShareBalance(_softwareAddr)).thenAnswer((_) async => 10);
+    when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async => 5);
     when(() => appStore.apiConfig).thenReturn(
       const ApiConfig(networkMode: NetworkMode.mainnet),
     );
@@ -192,7 +174,6 @@ void main() {
 
   MoveBalanceCubit build() => MoveBalanceCubit(
     walletService: walletService,
-    balanceRepository: balances,
     transferService: transfer,
     hardwareTransferService: hardware,
     faucetService: faucet,
@@ -203,15 +184,16 @@ void main() {
 
   group('load', () {
     test('emits both whole-share balances; missing balance counts as zero', () async {
-      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer((_) async => null);
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async => 0);
       final cubit = build();
       await cubit.load();
       expect(
         cubit.state,
         const MoveBalanceInitial(softwareBalance: 10, bitboxBalance: 0),
       );
-      verify(() => balanceService.updateBalance(_softwareAddr)).called(1);
-      verify(() => balanceService.updateBalance(_bitboxAddr)).called(1);
+      verify(() => balanceService.freshShareBalance(_softwareAddr)).called(1);
+      verify(() => balanceService.freshShareBalance(_bitboxAddr)).called(1);
+      verifyNever(() => balanceService.updateBalance(any()));
       await cubit.close();
     });
 
@@ -262,9 +244,7 @@ void main() {
 
   group('software to BitBox', () {
     test('zero software balance does not prepare', () async {
-      when(() => balances.getBalance(realUnitAsset, _softwareAddr)).thenAnswer(
-        (_) async => _balance(_softwareAddr, 0),
-      );
+      when(() => balanceService.freshShareBalance(_softwareAddr)).thenAnswer((_) async => 0);
       final cubit = build();
       await cubit.load();
       await cubit.prepareSoftwareToBitbox();
@@ -272,6 +252,17 @@ void main() {
         cubit.state,
         const MoveBalanceFailure('', reason: MoveBalanceFailureReason.softwareEmpty),
       );
+      verifyNever(() => transfer.prepareTransfer(any()));
+      await cubit.close();
+    });
+
+    test('a thrown freshShareBalance does not call prepareTransfer', () async {
+      final cubit = build();
+      await cubit.load();
+      when(() => balanceService.freshShareBalance(_softwareAddr)).thenThrow(
+        Exception('account'),
+      );
+      await cubit.prepareSoftwareToBitbox();
       verifyNever(() => transfer.prepareTransfer(any()));
       await cubit.close();
     });
@@ -298,9 +289,7 @@ void main() {
     });
 
     test('one prepare when the software balance is one share', () async {
-      when(() => balances.getBalance(realUnitAsset, _softwareAddr)).thenAnswer(
-        (_) async => _balance(_softwareAddr, 1),
-      );
+      when(() => balanceService.freshShareBalance(_softwareAddr)).thenAnswer((_) async => 1);
       when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
         final dto = inv.positionalArguments.single as RealUnitTransferDto;
         return _softwareQuote(amount: dto.amount, fee: 0);
@@ -316,9 +305,7 @@ void main() {
     });
 
     test('fails when the fee consumes the whole balance', () async {
-      when(() => balances.getBalance(realUnitAsset, _softwareAddr)).thenAnswer(
-        (_) async => _balance(_softwareAddr, 1),
-      );
+      when(() => balanceService.freshShareBalance(_softwareAddr)).thenAnswer((_) async => 1);
       when(() => transfer.prepareTransfer(any())).thenAnswer(
         (_) async => _softwareQuote(amount: 1, fee: 1),
       );
@@ -428,8 +415,10 @@ void main() {
       await cubit.prepareSoftwareToBitbox();
       await cubit.confirm();
       expect(cubit.state, const MoveBalanceSuccess(MoveBalanceDirection.softwareToBitbox));
-      verify(() => balanceService.updateBalance(_softwareAddr)).called(3);
-      verify(() => balanceService.updateBalance(_bitboxAddr)).called(2);
+      verify(() => balanceService.freshShareBalance(_softwareAddr)).called(2);
+      verify(() => balanceService.freshShareBalance(_bitboxAddr)).called(1);
+      verify(() => balanceService.updateBalance(_softwareAddr)).called(1);
+      verify(() => balanceService.updateBalance(_bitboxAddr)).called(1);
       verify(() => balanceService.startSync(_softwareAddr)).called(1);
       await cubit.close();
     });
@@ -871,9 +860,7 @@ void main() {
     });
 
     test('zero BitBox balance does not prepare', () async {
-      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer(
-        (_) async => _balance(_bitboxAddr, 0),
-      );
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async => 0);
       final cubit = build();
       await cubit.load();
       await cubit.prepareBitboxToSoftware();
@@ -885,10 +872,19 @@ void main() {
       await cubit.close();
     });
 
-    test('zero BitBox balance keeps a prepared software quote confirmable', () async {
-      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer(
-        (_) async => _balance(_bitboxAddr, 0),
+    test('a thrown freshShareBalance does not call prepareTransfer', () async {
+      final cubit = build();
+      await cubit.load();
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenThrow(
+        Exception('account'),
       );
+      await cubit.prepareBitboxToSoftware();
+      verifyNever(() => hardware.prepareTransfer(any()));
+      await cubit.close();
+    });
+
+    test('zero BitBox balance keeps a prepared software quote confirmable', () async {
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async => 0);
       when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
         final dto = inv.positionalArguments.single as RealUnitTransferDto;
         return _softwareQuote(amount: dto.amount, fee: 0);
@@ -921,9 +917,9 @@ void main() {
 
     test('a BitBox that gains a balance after load is prepared once', () async {
       var reads = 0;
-      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer((_) async {
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async {
         reads += 1;
-        return _balance(_bitboxAddr, reads == 1 ? 0 : 4);
+        return reads == 1 ? 0 : 4;
       });
       when(() => hardware.prepareTransfer(any())).thenAnswer((invocation) async {
         final dto = invocation.positionalArguments.single as RealUnitHardwareTransferRequestDto;
@@ -949,9 +945,9 @@ void main() {
 
     test('a later BitBox balance replaces a software quote', () async {
       var reads = 0;
-      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer((_) async {
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async {
         reads += 1;
-        return _balance(_bitboxAddr, reads == 1 ? 0 : 4);
+        return reads == 1 ? 0 : 4;
       });
       when(() => transfer.prepareTransfer(any())).thenAnswer((invocation) async {
         final dto = invocation.positionalArguments.single as RealUnitTransferDto;
@@ -1104,9 +1100,9 @@ void main() {
 
     test('a refresh that finds an empty BitBox does not prepare', () async {
       var reads = 0;
-      when(() => balances.getBalance(realUnitAsset, _bitboxAddr)).thenAnswer((_) async {
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async {
         reads += 1;
-        return _balance(_bitboxAddr, reads == 1 ? 5 : 0);
+        return reads == 1 ? 5 : 0;
       });
       final cubit = build();
       await cubit.load();
@@ -1212,6 +1208,31 @@ void main() {
       expect(cubit.state, isA<MoveBalanceSuccess>());
       await cubit.close();
     });
+  });
+
+  group('reattachBitbox', () {
+    test('returns the wallet from existingBitboxWallet when the id matches', () async {
+      final paired = _MockBitboxWallet();
+      when(() => paired.id).thenReturn(2);
+      when(() => walletService.existingBitboxWallet()).thenAnswer((_) async => paired);
+      final cubit = build();
+      await cubit.load();
+      expect(await cubit.reattachBitbox(), same(paired));
+      await cubit.close();
+    });
+
+    test(
+      'throws StateError when existingBitboxWallet throws BitboxAddressMismatchException',
+      () async {
+        when(() => walletService.existingBitboxWallet()).thenThrow(
+          const BitboxAddressMismatchException(),
+        );
+        final cubit = build();
+        await cubit.load();
+        await expectLater(cubit.reattachBitbox(), throwsA(isA<StateError>()));
+        await cubit.close();
+      },
+    );
   });
 
   group('state equality', () {

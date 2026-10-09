@@ -4,11 +4,11 @@ import 'package:convert/convert.dart' as convert;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
-import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
@@ -26,7 +26,6 @@ part 'move_balance_state.dart';
 
 class MoveBalanceCubit extends Cubit<MoveBalanceState> {
   final WalletService _walletService;
-  final BalanceRepository _balanceRepository;
   final RealUnitTransferService _transferService;
   final RealUnitHardwareTransferService _hardwareTransferService;
   final DfxFaucetService _faucetService;
@@ -51,7 +50,6 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
 
   MoveBalanceCubit({
     required WalletService walletService,
-    required BalanceRepository balanceRepository,
     required RealUnitTransferService transferService,
     required RealUnitHardwareTransferService hardwareTransferService,
     required DfxFaucetService faucetService,
@@ -59,7 +57,6 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     required HomeBloc homeBloc,
     required BalanceService balanceService,
   }) : _walletService = walletService,
-       _balanceRepository = balanceRepository,
        _transferService = transferService,
        _hardwareTransferService = hardwareTransferService,
        _faucetService = faucetService,
@@ -269,7 +266,15 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     if (bitbox is! BitboxWallet) {
       throw StateError('No paired BitBox');
     }
-    return bitbox;
+    try {
+      final existing = await _walletService.existingBitboxWallet();
+      if (existing.id != bitbox.id) {
+        throw StateError('No paired BitBox');
+      }
+      return existing;
+    } on BitboxAddressMismatchException {
+      throw StateError('No paired BitBox');
+    }
   }
 
   Future<void> confirm() async {
@@ -456,21 +461,8 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     _balanceService.startSync(_appStore.primaryAddress);
   }
 
-  Future<int> _freshShares(AWallet wallet) async {
-    await _balanceService.updateBalance(_addressOf(wallet));
-    return _sharesFor(wallet);
-  }
-
-  Future<int> _sharesFor(AWallet wallet) async {
-    final stored = await _balanceRepository.getBalance(
-      _appStore.apiConfig.asset,
-      _addressOf(wallet),
-    );
-    if (stored == null) {
-      return 0;
-    }
-    return stored.balance.toInt();
-  }
+  Future<int> _freshShares(AWallet wallet) =>
+      _balanceService.freshShareBalance(_addressOf(wallet));
 
   String _addressOf(AWallet wallet) => wallet.currentAccount.primaryAddress.address.hex;
 

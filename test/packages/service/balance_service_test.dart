@@ -158,6 +158,104 @@ void main() {
       });
     });
 
+    group('freshShareBalance', () {
+      test('returns the parsed int and saves on 200', () async {
+        Balance? savedBalance;
+        const address = '0xTestAddress';
+
+        when(() => balanceRepository.saveBalance(any())).thenAnswer((inv) async {
+          savedBalance = inv.positionalArguments[0] as Balance;
+        });
+
+        final appStore = buildAppStore(
+          (_) async => http.Response(
+            jsonEncode({
+              'balance': '12345',
+              'addressType': 0,
+            }),
+            200,
+          ),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+        final shares = await service.freshShareBalance(address);
+
+        expect(shares, 12345);
+        expect(savedBalance, isNotNull);
+        expect(savedBalance!.balance, equals(BigInt.from(12345)));
+        expect(savedBalance!.asset.symbol, equals(realUnitAsset.symbol));
+        expect(savedBalance!.walletAddress, equals(address));
+      });
+
+      test('returns 0 and does not save on 404', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response('{"error": "Not Found"}', 404),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+        final shares = await service.freshShareBalance('0xTestAddress');
+
+        expect(shares, 0);
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
+
+      test('throws and does not save on 500', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response('{"error": "Server error"}', 500),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+
+        await expectLater(
+          service.freshShareBalance('0xTestAddress'),
+          throwsA(isA<Exception>()),
+        );
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
+
+      test('throws and does not save on a 200 body without balance', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response(jsonEncode({'addressType': 0}), 200),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+
+        await expectLater(
+          service.freshShareBalance('0xAnyAddress'),
+          throwsA(isA<Exception>()),
+        );
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
+
+      test('throws and does not save on a non-numeric balance', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response(jsonEncode({'balance': 'NaN'}), 200),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+
+        await expectLater(
+          service.freshShareBalance('0xAnyAddress'),
+          throwsA(isA<Exception>()),
+        );
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
+
+      test('throws and does not save on a non-JSON 200 body', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response('not json', 200),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+
+        await expectLater(
+          service.freshShareBalance('0xTestAddress'),
+          throwsA(isA<Exception>()),
+        );
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
+    });
+
     test('getBalance delegates to BalanceRepository.getBalance', () async {
       final expected = Balance(
         chainId: realUnitAsset.chainId,

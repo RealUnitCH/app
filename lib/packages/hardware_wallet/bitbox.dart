@@ -117,6 +117,18 @@ class BitboxService {
     _connectionStatusObserver = null;
   }
 
+  /// Drop the connected device so its manager is not left on stored credentials.
+  Future<void> detachConnectedDevice() async {
+    _isConnected = false;
+    for (final credentials in _credentialsByAddress.values) {
+      credentials.clearBitbox();
+    }
+    stopConnectionStatusObserver();
+    _pendingDisconnect = _disconnectAndForget();
+    await _pendingDisconnect;
+    _pendingDisconnect = null;
+  }
+
   /// Get channel hash - this is shown on the BitBox device
   Future<String> getChannelHash() async {
     final hash = await bitboxManager.getChannelHash();

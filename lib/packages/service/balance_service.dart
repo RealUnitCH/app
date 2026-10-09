@@ -84,6 +84,36 @@ class BalanceService {
     }
   }
 
+  /// The share count just parsed from the account endpoint. A 404 is a fresh
+  /// zero and must not reuse a cached row. Every other failure throws.
+  Future<int> freshShareBalance(String address) async {
+    final uri = buildUri(_host, '$_balancePath/$address');
+    final response = await _appStore.httpClient.get(uri);
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final balanceString = json['balance'] as String?;
+      if (balanceString == null) {
+        throw const FormatException('Account response has no balance');
+      }
+      final balanceValue = BigInt.parse(balanceString);
+      await _balanceRepository.saveBalance(
+        Balance(
+          chainId: _appStore.apiConfig.asset.chainId,
+          contractAddress: _appStore.apiConfig.asset.address,
+          walletAddress: address,
+          balance: balanceValue,
+          asset: _appStore.apiConfig.asset,
+        ),
+      );
+      return balanceValue.toInt();
+    }
+    if (response.statusCode == 404) {
+      return 0;
+    }
+    throw Exception('Unexpected account status ${response.statusCode}');
+  }
+
   Future<Balance?> getBalance(Asset asset, String address) =>
       _balanceRepository.getBalance(asset, address);
 }

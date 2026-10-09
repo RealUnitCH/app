@@ -632,13 +632,16 @@ void main() {
               _info(id: 2, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
         );
         when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+        when(() => bitbox.getEthAddress()).thenAnswer((_) async => _debugAddress);
 
         final wallet = await service.existingBitboxWallet();
 
         expect(wallet, isA<BitboxWallet>());
         expect(wallet.id, 2);
+        verify(() => bitbox.getEthAddress()).called(1);
         verifyNever(() => repo.createViewWallet(any(), any(), any()));
         verifyNever(() => settings.saveCurrentWalletId(any()));
+        verifyNever(() => bitbox.detachConnectedDevice());
       });
 
       test('throws when no BitBox row exists', () async {
@@ -655,8 +658,37 @@ void main() {
           () => service.existingBitboxWallet(),
           throwsA(isA<StateError>()),
         );
+        verifyNever(() => bitbox.getEthAddress());
         verifyNever(() => repo.createViewWallet(any(), any(), any()));
         verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      test('refuses the stored row when the connected device address differs', () async {
+        const otherAddress = '0x0000000000000000000000000000000000000002';
+        when(() => repo.listWalletInfos()).thenAnswer(
+          (_) async => [
+            _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+            _info(id: 2, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+          ],
+        );
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+        );
+        when(() => repo.getWalletInfo(2)).thenAnswer(
+          (_) async =>
+              _info(id: 2, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+        );
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+        when(() => bitbox.getEthAddress()).thenAnswer((_) async => otherAddress);
+        when(() => bitbox.detachConnectedDevice()).thenAnswer((_) async {});
+
+        await expectLater(
+          service.existingBitboxWallet(),
+          throwsA(isA<BitboxAddressMismatchException>()),
+        );
+        verifyNever(() => repo.createViewWallet(any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+        verify(() => bitbox.detachConnectedDevice()).called(1);
       });
     });
 

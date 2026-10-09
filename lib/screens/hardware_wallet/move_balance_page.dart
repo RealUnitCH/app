@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
@@ -26,7 +25,6 @@ class MoveBalancePage extends StatelessWidget {
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => MoveBalanceCubit(
       walletService: getIt<WalletService>(),
-      balanceRepository: getIt<BalanceRepository>(),
       transferService: getIt<RealUnitTransferService>(),
       hardwareTransferService: getIt<RealUnitHardwareTransferService>(),
       faucetService: getIt<DfxFaucetService>(),

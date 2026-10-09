@@ -117,14 +117,27 @@ class WalletService {
   /// The BitBox already paired beside the software wallet.
   /// Does not create a row and does not change the current wallet.
   /// Throws [StateError] with message `No paired BitBox` when none exists.
+  /// Throws [BitboxAddressMismatchException] when the connected device's
+  /// address is not the stored one; the device is detached first.
   Future<BitboxWallet> existingBitboxWallet() async {
     final wallets = await listWallets();
+    BitboxWallet? found;
     for (final wallet in wallets) {
       if (wallet is BitboxWallet) {
-        return wallet;
+        found = wallet;
+        break;
       }
     }
-    throw StateError('No paired BitBox');
+    if (found == null) {
+      throw StateError('No paired BitBox');
+    }
+    final derived = await _bitboxService.getEthAddress();
+    final stored = found.currentAccount.primaryAddress.address.hex;
+    if (!_isValidEthAddress(derived) || derived.toLowerCase() != stored.toLowerCase()) {
+      await _bitboxService.detachConnectedDevice();
+      throw const BitboxAddressMismatchException();
+    }
+    return found;
   }
 
   /// Every persisted row as an [AWallet], via the same switch as
