@@ -27,7 +27,7 @@ class ValidateSeedCubit extends Cubit<ValidateSeedState> {
     }
   }
 
-  bool _containsAll(Iterable a, Iterable b) {
+  bool _containsAll(Iterable<String> a, Iterable<String> b) {
     for (final element in b) {
       if (!a.contains(element)) return false;
     }

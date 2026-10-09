@@ -30,7 +30,7 @@ class DebugAuthService {
     );
 
     if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
       return body['message'] as String;
     }
     throw Exception('Failed to fetch sign message (${response.statusCode})');

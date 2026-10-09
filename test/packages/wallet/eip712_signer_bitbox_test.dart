@@ -72,10 +72,15 @@ void main() {
           () => manager.signETHTypedMessage(captureAny(), any(), captureAny()),
         )..called(1)).captured;
         final typedData = jsonDecode(utf8.decode(captured[1] as Uint8List)) as Map<String, dynamic>;
+        final domain = typedData['domain'];
+        final types = typedData['types'];
+        if (domain is! Map<String, dynamic> || types is! Map<String, dynamic>) {
+          fail('Typed data must contain typed domain and types maps');
+        }
 
         expect(captured[0], chainId);
-        expect(typedData['domain']['chainId'], chainId);
-        expect(typedData['types']['EIP712Domain'], [
+        expect(domain['chainId'], chainId);
+        expect(types['EIP712Domain'], [
           {'name': 'name', 'type': 'string'},
           {'name': 'version', 'type': 'string'},
           {'name': 'chainId', 'type': 'uint256'},

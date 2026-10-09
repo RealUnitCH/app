@@ -60,7 +60,7 @@ void main() {
       build: build,
       seed: () => const SetupPinState(currentPin: '123456'),
       act: (cubit) => cubit.addDigit(7),
-      expect: () => [],
+      expect: () => <SetupPinState>[],
     );
 
     blocTest<SetupPinCubit, SetupPinState>(
@@ -75,7 +75,7 @@ void main() {
       'deleteDigit on an empty pin is a no-op',
       build: build,
       act: (cubit) => cubit.deleteDigit(),
-      expect: () => [],
+      expect: () => <SetupPinState>[],
     );
 
     test('completing 6 digits in create mode switches to confirm with an empty pin', () async {
@@ -230,7 +230,7 @@ void main() {
         isSubmitting: true,
       ),
       act: (cubit) => cubit.addDigit(3),
-      expect: () => [],
+      expect: () => <SetupPinState>[],
     );
 
     blocTest<SetupPinCubit, SetupPinState>(
@@ -242,7 +242,7 @@ void main() {
         isSubmitting: true,
       ),
       act: (cubit) => cubit.deleteDigit(),
-      expect: () => [],
+      expect: () => <SetupPinState>[],
     );
 
     blocTest<SetupPinCubit, SetupPinState>(

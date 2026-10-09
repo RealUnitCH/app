@@ -90,7 +90,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return;
     }
 
-    _balanceService.updateBalance(_appStore.primaryAddress);
+    unawaited(_balanceService.updateBalance(_appStore.primaryAddress));
     _balanceService.startSync(_appStore.primaryAddress);
     _syncHistory();
   }

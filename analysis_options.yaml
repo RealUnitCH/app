@@ -4,12 +4,6 @@ formatter:
   page_width: 100
   trailing_commas: preserve
 
-linter:
-  rules:
-    annotate_overrides: true
-    avoid_print: true
-    prefer_const_constructors: true
-    prefer_single_quotes: true
 analyzer:
   exclude:
     - build/**
@@ -17,3 +11,20 @@ analyzer:
     - ios/**
     - macos/**
     - third_party/**
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+linter:
+  rules:
+    annotate_overrides: true
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_single_quotes: true
+    unawaited_futures: true
+    avoid_dynamic_calls: true
+    cast_nullable_to_non_nullable: true
+    null_check_on_nullable_type_parameter: true
+    unnecessary_null_checks: true
+    prefer_final_locals: true

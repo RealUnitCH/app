@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,9 +70,11 @@ void main() {
     (tester) async {
       await pumpRouter(tester);
 
-      routerConfig.pushNamed(
-        AppRoutes.pay,
-        extra: 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD',
+      unawaited(
+        routerConfig.pushNamed(
+          AppRoutes.pay,
+          extra: 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD',
+        ),
       );
       // A single pump is not enough for an imperative pushNamed to land in
       // the tree yet, and pumpAndSettle is unsafe here (PayScanView shows an
@@ -94,7 +98,7 @@ void main() {
     (tester) async {
       await pumpRouter(tester);
 
-      routerConfig.pushNamed(AppRoutes.pay, extra: 42);
+      unawaited(routerConfig.pushNamed(AppRoutes.pay, extra: 42));
       // Same reasoning as the test above: two plain pumps, no pumpAndSettle.
       await tester.pump();
       await tester.pump();

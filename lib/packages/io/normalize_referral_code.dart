@@ -182,7 +182,7 @@ String? referralPasteFieldText(String? raw) {
 /// extra path segments stays the first segment.
 String? referralCodeFromPathRemainder(String? rest) {
   if (rest == null) return null;
-  var value = _repairSplitUrlSchemes(rest.trim());
+  final value = _repairSplitUrlSchemes(rest.trim());
   if (value.isEmpty) return null;
   var decoded = value;
   try {

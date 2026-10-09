@@ -61,7 +61,9 @@ void main() {
         path: '/pinGate',
         builder: (_, state) {
           pushedRoutes.add(PinRoutes.gate);
-          gateParams = state.extra as VerifyPinParams;
+          final params = state.extra as VerifyPinParams?;
+          if (params == null) fail('PIN gate route requires parameters');
+          gateParams = params;
           return const Scaffold(body: Text('GATE'));
         },
       ),
@@ -70,7 +72,9 @@ void main() {
         path: '/settings/security/changePin',
         builder: (_, state) {
           pushedRoutes.add(SettingsRoutes.changePin);
-          changePinParams = state.extra as ChangePinParams;
+          final params = state.extra as ChangePinParams?;
+          if (params == null) fail('Change PIN route requires parameters');
+          changePinParams = params;
           return const Scaffold(body: Text('CHANGE_PIN'));
         },
       ),

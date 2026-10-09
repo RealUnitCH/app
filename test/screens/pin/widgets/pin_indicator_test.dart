@@ -25,7 +25,7 @@ void main() {
       ));
 
       final fills = dots(tester)
-          .map((c) => (c.decoration as BoxDecoration).color)
+          .map((c) => (c.decoration! as BoxDecoration).color)
           .toList();
       // First three filled (black), last three transparent.
       expect(fills.take(3), everyElement(RealUnitColors.realUnitBlack));
@@ -38,7 +38,7 @@ void main() {
       ));
 
       final borderColors = dots(tester)
-          .map((c) => (c.decoration as BoxDecoration).border!.top.color)
+          .map((c) => (c.decoration! as BoxDecoration).border!.top.color)
           .toList();
 
       expect(borderColors, everyElement(RealUnitColors.status.red600));
@@ -51,7 +51,7 @@ void main() {
       ));
 
       final borderColors = dots(tester)
-          .map((c) => (c.decoration as BoxDecoration).border!.top.color)
+          .map((c) => (c.decoration! as BoxDecoration).border!.top.color)
           .toList();
 
       expect(borderColors, everyElement(RealUnitColors.realUnitBlack));
@@ -63,7 +63,7 @@ void main() {
       ));
 
       final fills = dots(tester)
-          .map((c) => (c.decoration as BoxDecoration).color)
+          .map((c) => (c.decoration! as BoxDecoration).color)
           .toList();
       expect(fills, everyElement(RealUnitColors.realUnitBlack));
     });

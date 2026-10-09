@@ -140,10 +140,9 @@ void main() {
               )
               .first,
         );
-        expect(
-          (box.decoration as BoxDecoration).color,
-          RealUnitColors.neutral300,
-        );
+        final decoration = box.decoration;
+        if (decoration is! BoxDecoration) fail('Download button requires a box decoration');
+        expect(decoration.color, RealUnitColors.neutral300);
 
         await tester.tap(find.byIcon(Icons.file_download_outlined));
         await tester.pump();

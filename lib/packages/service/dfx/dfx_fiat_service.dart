@@ -40,8 +40,9 @@ class DfxFiatService {
       throw Exception('Failed to fetch fiats: ${response.statusCode}');
     }
 
-    final List<dynamic> jsonList = jsonDecode(response.body);
-    final fiats = jsonList.map((json) => DfxFiatDto.fromJson(json)).toList();
+    final jsonList = jsonDecode(response.body) as List<dynamic>;
+    final fiats =
+        jsonList.map((json) => DfxFiatDto.fromJson(json as Map<String, dynamic>)).toList();
     _cachedFiats = fiats;
     _cachedAt = clock.now();
     return fiats;

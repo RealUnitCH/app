@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:realunit_wallet/packages/service/dfx/dfx_fiat_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/fiat/dto/dfx_fiat_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 /// Translates the backend's per-user fiat list into the local [Currency]
@@ -23,7 +24,7 @@ class SupportedFiatRepository {
 
   Future<List<Currency>> getAll() => _resolve((_) => true);
 
-  Future<List<Currency>> _resolve(bool Function(dynamic) filter) async {
+  Future<List<Currency>> _resolve(bool Function(DfxFiatDto) filter) async {
     final fiats = await _fiatService.getAllFiats();
     final result = <Currency>[];
     for (final fiat in fiats) {

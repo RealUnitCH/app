@@ -33,10 +33,10 @@ String encodeFrozenFiatData({required num chfValue, num? eurValue}) {
 /// can turn `1.005` into `1.00`.
 String _roundHalfUpToCents(String normalized) {
   final negative = normalized.startsWith('-');
-  var value = negative ? normalized.substring(1) : normalized;
+  final value = negative ? normalized.substring(1) : normalized;
   final dot = value.indexOf('.');
   var whole = dot < 0 ? value : value.substring(0, dot);
-  var frac = dot < 0 ? '' : value.substring(dot + 1);
+  final frac = dot < 0 ? '' : value.substring(dot + 1);
   if (whole.isEmpty) whole = '0';
   if (frac.length <= 2) {
     return '${negative ? '-' : ''}$whole.${frac.padRight(2, '0')}';

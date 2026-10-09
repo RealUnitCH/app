@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -217,7 +219,7 @@ void main() {
     await tester.pump();
     expect(find.text('Empfehlungen'), findsNothing);
 
-    router.push('/s');
+    unawaited(router.push('/s'));
     await tester.pump();
     await tester.pump();
     expect(find.text('settings'), findsOneWidget);
@@ -338,7 +340,7 @@ void main() {
     await tester.pump();
     expect(calls, greaterThanOrEqualTo(1));
 
-    router.push('/s');
+    unawaited(router.push('/s'));
     await tester.pump();
     await tester.pump();
     expect(find.text('settings'), findsOneWidget);

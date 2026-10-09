@@ -231,22 +231,22 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
   /// base state falls through to `copyWith`.
   VerifyPinState _withBiometricStatus(VerifyPinState current, BiometricStatus status) =>
       switch (current) {
-        VerifyPinVerifying s => VerifyPinVerifying(
+        final VerifyPinVerifying s => VerifyPinVerifying(
           pin: s.pin,
           failedAttempts: s.failedAttempts,
           biometricStatus: status,
         ),
         VerifyPinSuccess _ => VerifyPinSuccess(biometricStatus: status),
-        VerifyPinTemporarilyLocked s => VerifyPinTemporarilyLocked(
+        final VerifyPinTemporarilyLocked s => VerifyPinTemporarilyLocked(
           failedAttempts: s.failedAttempts,
           lockedUntil: s.lockedUntil,
           biometricStatus: status,
         ),
-        VerifyPinLocked s =>
+        final VerifyPinLocked s =>
           VerifyPinLocked(failedAttempts: s.failedAttempts, biometricStatus: status),
-        VerifyPinUnverifiable s =>
+        final VerifyPinUnverifiable s =>
           VerifyPinUnverifiable(failedAttempts: s.failedAttempts, biometricStatus: status),
-        VerifyPinFailure s =>
+        final VerifyPinFailure s =>
           VerifyPinFailure(failedAttempts: s.failedAttempts, biometricStatus: status),
         _ => current.copyWith(biometricStatus: status),
       };

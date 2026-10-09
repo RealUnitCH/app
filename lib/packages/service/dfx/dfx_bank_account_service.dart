@@ -24,8 +24,9 @@ class DfxBankAccountService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final List<dynamic> jsonList = jsonDecode(response.body);
-    final bankAccounts = jsonList.map((json) => BankAccountDto.fromJson(json)).toList();
+    final jsonList = jsonDecode(response.body) as List<dynamic>;
+    final bankAccounts =
+        jsonList.map((json) => BankAccountDto.fromJson(json as Map<String, dynamic>)).toList();
     return bankAccounts;
   }
 
@@ -47,7 +48,7 @@ class DfxBankAccountService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return BankAccountDto.fromJson(jsonDecode(response.body));
+    return BankAccountDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<BankAccountDto> updateBankAccount({
@@ -74,6 +75,6 @@ class DfxBankAccountService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return BankAccountDto.fromJson(jsonDecode(response.body));
+    return BankAccountDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 }

@@ -110,7 +110,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: OnboardingRoutes.verifySeed,
       path: '/verifySeed',
-      builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
+      builder: (_, state) => VerifySeedPage(wallet: state.extra! as SoftwareWallet),
     ),
 
     GoRoute(
@@ -130,7 +130,7 @@ final GoRouter routerConfig = GoRouter(
       name: PinRoutes.gate,
       path: '/pinGate',
       builder: (_, state) {
-        final params = state.extra as VerifyPinParams;
+        final params = state.extra! as VerifyPinParams;
         return VerifyPinPage(
           description: params.description,
           onAuthenticated: params.onAuthenticated,
@@ -186,9 +186,10 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.buyPaymentDetails,
       path: '/buyPaymentDetails',
-      builder: (_, state) => BuyPaymentDetailsPage(
-        params: state.extra as BuyPaymentDetailsParams,
-      ),
+      builder: (_, state) {
+        final params = state.extra! as BuyPaymentDetailsParams;
+        return BuyPaymentDetailsPage(params: params);
+      },
     ),
 
     GoRoute(
@@ -200,15 +201,16 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.sellBitbox,
       path: '/sellBitbox',
-      builder: (_, state) => SellBitboxPage(paymentInfo: state.extra as SellPaymentInfo),
+      builder: (_, state) => SellBitboxPage(paymentInfo: state.extra! as SellPaymentInfo),
     ),
 
     GoRoute(
       name: AppRoutes.pay,
       path: '/pay',
-      builder: (_, state) => PayInfoPage(
-        initialPayload: state.extra is String ? state.extra as String : null,
-      ),
+      builder: (_, state) {
+        final extra = state.extra;
+        return PayInfoPage(initialPayload: extra is String ? extra : null);
+      },
     ),
 
     GoRoute(
@@ -235,7 +237,7 @@ final GoRouter routerConfig = GoRouter(
       builder: (_, state) {
         final extra = state.extra;
         return LegalDocumentPage(
-          params: extra as LegalDocumentParams,
+          params: extra! as LegalDocumentParams,
         );
       },
     ),
@@ -332,7 +334,7 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.changePin,
           path: 'security/changePin',
           builder: (_, state) {
-            final params = state.extra as ChangePinParams;
+            final params = state.extra! as ChangePinParams;
             return SetupPinPage(
               promptBiometrics: false,
               onCompleted: params.onCompleted,
@@ -431,7 +433,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.webView,
       path: '/webView',
-      builder: (_, state) => WebViewPage(state.extra as WebViewRouteParams),
+      builder: (_, state) => WebViewPage(state.extra! as WebViewRouteParams),
     ),
   ],
 );

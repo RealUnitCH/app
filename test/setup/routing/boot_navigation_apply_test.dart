@@ -71,7 +71,7 @@ void main() {
         GoRoute(
           name: AppRoutes.buyPaymentDetails,
           path: '/buyPaymentDetails',
-          builder: (_, state) => Text('buy ${state.extra as Object}'),
+          builder: (_, state) => Text('buy ${state.extra!}'),
         ),
         GoRoute(
           name: AppRoutes.pay,

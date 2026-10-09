@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -56,7 +57,7 @@ class SellBitboxView extends StatelessWidget {
           }
           final reconnected = await showBitboxReconnectSheet(context);
           if (reconnected && context.mounted) {
-            context.read<SellBitboxCubit>().retryAfterConnection();
+            unawaited(context.read<SellBitboxCubit>().retryAfterConnection());
           }
           return;
         }

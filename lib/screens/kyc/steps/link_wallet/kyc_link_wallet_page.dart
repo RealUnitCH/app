@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,7 +57,7 @@ class KycLinkWalletView extends StatelessWidget {
             // Aktionariat share register, so `getRegistrationInfo` will return
             // `AlreadyRegistered` and `_runCheckKyc` will dispatch the next
             // KYC step.
-            context.read<KycCubit>().checkKyc();
+            unawaited(context.read<KycCubit>().checkKyc());
           }
           if (state is KycLinkWalletFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +73,7 @@ class KycLinkWalletView extends StatelessWidget {
             // retry registration once the device is linked. Mirror of
             // `KycRegistrationPage`.
             final userData = state.userData;
-            final result = await showModalBottomSheet(
+            final result = await showModalBottomSheet<bool>(
               context: context,
               isScrollControlled: true,
               builder: (_) => ConnectBitboxPage(
@@ -82,7 +84,7 @@ class KycLinkWalletView extends StatelessWidget {
               ),
             );
             if (context.mounted && result == true) {
-              context.read<KycLinkWalletCubit>().retrySubmit(userData);
+              unawaited(context.read<KycLinkWalletCubit>().retrySubmit(userData));
             }
           }
         },

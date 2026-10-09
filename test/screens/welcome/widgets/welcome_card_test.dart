@@ -14,7 +14,7 @@ void main() {
   String? description;
   VoidCallback? onPressed;
   Widget? trailing;
-  MockFunction functions = MockFunction();
+  final MockFunction functions = MockFunction();
 
   setUp(() {
     title = 'Welcome';

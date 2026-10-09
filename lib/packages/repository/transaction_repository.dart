@@ -42,7 +42,7 @@ class TransactionRepository {
     }
     try {
       if (await findTxIdIgnoreCase(transaction.txId) != null) {
-        return updateTransaction(transaction);
+        return await updateTransaction(transaction);
       }
       return await _appDatabase.insertTransactions(
         transaction.height,
@@ -61,7 +61,7 @@ class TransactionRepository {
     } finally {
       mine.complete();
       if (identical(_insertTxLocks[key], mine.future)) {
-        _insertTxLocks.remove(key);
+        unawaited(_insertTxLocks.remove(key));
       }
     }
   }

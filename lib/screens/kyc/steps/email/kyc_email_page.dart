@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -67,7 +68,7 @@ class _KycEmailFormState extends State<KycEmailForm> {
         }
         if (state is KycEmailStepSuccess) {
           if (state.status == .emailRegistered) {
-            context.read<KycCubit>().checkKyc();
+            unawaited(context.read<KycCubit>().checkKyc());
           }
           if (state.status == .mergeRequested) {
             final isConfirmed = await Navigator.push<bool>(
@@ -83,7 +84,7 @@ class _KycEmailFormState extends State<KycEmailForm> {
               // AlreadyRegistered → forward. The KYC flow is the single source
               // of registration routing — see CONTRIBUTING.md "API as Decision
               // Authority".
-              context.read<KycCubit>().checkKyc();
+              unawaited(context.read<KycCubit>().checkKyc());
             }
           }
         }
