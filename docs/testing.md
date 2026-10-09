@@ -471,6 +471,7 @@ Every PR runs Tier 0 and Tier 1 via the `RealUnit Build` workflow (`.github/work
 flutter pub get
 dart run tool/generate_localization.dart
 flutter pub run build_runner build
+dart run tool/lints/pattern_guard.dart
 flutter analyze --fatal-warnings
 flutter test --coverage
 ```

@@ -38,6 +38,30 @@ void main() {
     expect(analyzeJob, isNot(contains('continue-on-error: true')));
   });
 
+  test('Analyze & Test job runs the fatal High-Pattern Guard after code generation', () {
+    final workflow = File('.github/workflows/pull-request.yaml').readAsStringSync();
+    final buildStart = workflow.indexOf('  build:\n');
+    final coverageFloorStart = workflow.indexOf('\n  coverage-floor:\n', buildStart);
+
+    expect(buildStart, greaterThanOrEqualTo(0));
+    expect(coverageFloorStart, greaterThan(buildStart));
+
+    final buildJob = workflow.substring(buildStart, coverageFloorStart);
+    final codeGeneration = buildJob.indexOf(
+      '- run: flutter pub run build_runner build',
+    );
+    final guard = buildJob.indexOf('''- name: High-Pattern Guard
+        run: dart run tool/lints/pattern_guard.dart''');
+    final flutterAnalyze = buildJob.indexOf(
+      '- run: flutter analyze --fatal-warnings',
+    );
+
+    expect(codeGeneration, greaterThanOrEqualTo(0));
+    expect(guard, greaterThan(codeGeneration));
+    expect(flutterAnalyze, greaterThan(guard));
+    expect(buildJob, isNot(contains('continue-on-error: true')));
+  });
+
   test('A38 Analyze job runs the High-Pattern Guard before flutter analyze', () {
     final config = jsonDecode(File('.github/a38.json').readAsStringSync())
         as Map<String, dynamic>;

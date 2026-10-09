@@ -78,6 +78,8 @@ jobs:
       - run: dart run tool/generate_localization.dart
       - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
+      - name: High-Pattern Guard
+        run: dart run tool/lints/pattern_guard.dart
       - run: bash scripts/run-handbook-flows.sh --matcher-self-test
       - run: flutter analyze --fatal-warnings
       # Excludes the `golden` tag: visual-regression tests live under
