@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/send/send_process_page.dart';
@@ -62,9 +64,11 @@ class _SendConfirmPageState extends State<SendConfirmPage> {
                           return;
                         }
                         setState(() => _navigating = true);
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => SendProcessPage(recipient: recipient, amount: amount),
+                        unawaited(
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => SendProcessPage(recipient: recipient, amount: amount),
+                            ),
                           ),
                         );
                       },
