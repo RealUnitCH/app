@@ -309,12 +309,18 @@ void main() {
       await tester.tap(find.text(S.current.payConfirmButton));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
 
       expect(find.byType(PayProcessView), findsOne);
+      expect(find.text(S.current.payPaying), findsOne);
+      expect(find.text(S.current.payFailureTitle), findsNothing);
 
       // The confirm has not left the device. Popping false re-enables Pay.
+      // The route leaves on the frame after its reverse animation completes.
       final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
       navigator.pop(false);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
