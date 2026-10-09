@@ -514,7 +514,7 @@ void main() {
         await bloc.close();
       });
 
-      test('stops the observer when the deleted wallet is a BitBox and another remains', () async {
+      test('detaches the BitBox when the deleted wallet is a BitBox and another remains', () async {
         final deleted = _MockBitboxWallet();
         when(() => deleted.walletType).thenReturn(WalletType.bitbox);
         when(() => deleted.id).thenReturn(1);
@@ -531,12 +531,14 @@ void main() {
         bloc.add(const LoadCurrentWalletEvent());
         await bloc.stream.firstWhere((s) => s.openWallet == deleted);
 
+        when(() => bitboxService.detachConnectedDevice()).thenAnswer((_) async {});
         bloc.add(const DeleteCurrentWalletEvent());
         await bloc.stream.firstWhere(
           (s) => s.openWallet == remaining && s.hasWallet && !s.isLoadingWallet,
         );
 
-        verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+        verify(() => bitboxService.detachConnectedDevice()).called(1);
+        verifyNever(() => bitboxService.stopConnectionStatusObserver());
         expect(resetDevicePinCalls, 0);
         await bloc.close();
       });

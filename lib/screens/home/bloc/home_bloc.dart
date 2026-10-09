@@ -124,7 +124,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final deletedIsBitbox = state.openWallet?.walletType == WalletType.bitbox;
     await _appStore.sessionCache.clear();
     if (deletedIsBitbox) {
-      _bitboxService.stopConnectionStatusObserver();
+      await _bitboxService.detachConnectedDevice();
     }
     if (_walletService.hasWallet()) {
       final remainingId = await _walletService.deleteCurrentWallet();

@@ -118,6 +118,8 @@ class BitboxService {
   }
 
   /// Drop the connected device so its manager is not left on stored credentials.
+  // @no-integration-test: USB disconnect is covered by the replaceable
+  //   BitboxUsbPlatform until a device integration test exists.
   Future<void> detachConnectedDevice() async {
     _isConnected = false;
     for (final credentials in _credentialsByAddress.values) {

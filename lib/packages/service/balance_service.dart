@@ -7,6 +7,7 @@ import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/account/dto/real_unit_account_balance_dto.dart';
 
 class BalanceService {
   static const _balancePath = '/v1/realunit/account';
@@ -60,8 +61,9 @@ class BalanceService {
       if (response.statusCode == 200) {
         if (generation == _syncGeneration) _accountMissing = false;
 
-        final json = jsonDecode(response.body);
-        final balanceString = json['balance'] as String?;
+        final balanceString = RealUnitAccountBalanceDto.fromJson(
+          jsonDecode(response.body),
+        ).balance;
 
         if (balanceString != null) {
           final balanceValue = BigInt.parse(balanceString);
@@ -91,8 +93,9 @@ class BalanceService {
     final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      final balanceString = json['balance'] as String?;
+      final balanceString = RealUnitAccountBalanceDto.fromJson(
+        jsonDecode(response.body),
+      ).balance;
       if (balanceString == null) {
         throw const FormatException('Account response has no balance');
       }
