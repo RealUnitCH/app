@@ -72,7 +72,6 @@ Future<CompletedTransaction> resolveCompletedTransaction(
   AppStore? appStore,
   DateTime? now,
 }) async {
-  final historyService = history ?? getIt<TransactionHistoryService>();
   final repo = repository ?? getIt<TransactionRepository>();
   final store = appStore ?? getIt<AppStore>();
   final timestamp = now ?? DateTime.now();
@@ -83,7 +82,7 @@ Future<CompletedTransaction> resolveCompletedTransaction(
   final txId = usableTxHash(request.txHash);
   if (txId != null) {
     try {
-      await historyService.apiBasedSync();
+      await (history ?? getIt<TransactionHistoryService>()).apiBasedSync();
     } catch (_) {}
     try {
       final storedId = await repo.findTxIdIgnoreCase(txId);
