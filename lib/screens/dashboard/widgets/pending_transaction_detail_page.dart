@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -15,9 +17,11 @@ void openPendingTransactionDetail(
   BuildContext context,
   TransactionDto transaction,
 ) {
-  context.pushNamed(
-    AppRoutes.transactionDetail,
-    extra: PendingTransactionDetailArgs(transaction: transaction),
+  unawaited(
+    context.pushNamed(
+      AppRoutes.transactionDetail,
+      extra: PendingTransactionDetailArgs(transaction: transaction),
+    ),
   );
 }
 

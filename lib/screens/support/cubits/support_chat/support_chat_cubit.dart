@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +17,7 @@ class SupportChatCubit extends Cubit<SupportChatState> {
     : _supportService = supportService,
       _ticketUid = ticketUid,
       super(const SupportChatInitial()) {
-    loadTicket();
+    unawaited(loadTicket());
   }
 
   Future<void> loadTicket() async {

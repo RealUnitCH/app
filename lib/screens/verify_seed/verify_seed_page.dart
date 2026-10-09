@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/verify_seed/cubit/verify_seed_cubit.dart';
@@ -41,13 +43,13 @@ class _VerifySeedViewState extends State<VerifySeedView> {
     // Seed words are entered/visible here — block screenshots and the
     // app-switcher snapshot. Released on dispose; screenshots re-enable only
     // when the last protected screen leaves (see ScreenshotGuard).
-    ScreenshotGuard.acquire();
+    unawaited(ScreenshotGuard.acquire());
     super.initState();
   }
 
   @override
   void dispose() {
-    ScreenshotGuard.release();
+    unawaited(ScreenshotGuard.release());
     super.dispose();
   }
 

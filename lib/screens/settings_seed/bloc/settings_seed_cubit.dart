@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -16,8 +18,8 @@ class SettingsSeedCubit extends Cubit<SettingsSeedState> {
   // briefly be empty, which trips MnemonicReadOnlyField's `length == 12`
   // assert and crashes the screen on open.
   SettingsSeedCubit(this._appStore, this._walletService)
-      : super(SettingsSeedState(_initialSeed(_appStore))) {
-    _loadSeed();
+    : super(SettingsSeedState(_initialSeed(_appStore))) {
+    unawaited(_loadSeed());
   }
 
   static String _initialSeed(AppStore store) {

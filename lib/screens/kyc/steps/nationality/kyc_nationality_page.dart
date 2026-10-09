@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -46,7 +48,7 @@ class _KycNationalityViewState extends State<KycNationalityView> {
       body: BlocListener<KycNationalityCubit, KycNationalityState>(
         listener: (context, state) {
           if (state is KycNationalitySuccess) {
-            context.read<KycCubit>().checkKyc();
+            unawaited(context.read<KycCubit>().checkKyc());
           }
           if (state is KycNationalityFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -81,9 +83,11 @@ class _KycNationalityViewState extends State<KycNationalityView> {
                             state: state is KycNationalityLoading ? .loading : .idle,
                             onPressed: () {
                               if (_formKey.currentState?.validate() ?? false) {
-                                context.read<KycNationalityCubit>().registerNationality(
-                                  url: widget.url,
-                                  nationality: nationalityCtrl.value!,
+                                unawaited(
+                                  context.read<KycNationalityCubit>().registerNationality(
+                                    url: widget.url,
+                                    nationality: nationalityCtrl.value!,
+                                  ),
                                 );
                               }
                             },

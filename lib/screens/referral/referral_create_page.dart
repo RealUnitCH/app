@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,9 +32,11 @@ class ReferralCreatePage extends StatelessWidget {
       create: (_) {
         final cubit = ReferralCubit(getIt<RealUnitReferralService>());
         // Seed create-ready after a summary load so guest-name submit can run.
-        cubit.load().then((_) {
-          if (!cubit.isClosed) cubit.openCreate();
-        });
+        unawaited(
+          cubit.load().then((_) {
+            if (!cubit.isClosed) cubit.openCreate();
+          }),
+        );
         return cubit;
       },
       child: const ReferralCreateView(),
@@ -81,7 +85,7 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
       return;
     }
     setState(() => _mode = mode);
-    cubit.createImpersonalInvite();
+    unawaited(cubit.createImpersonalInvite());
   }
 
   Future<void> _submit(BuildContext context) async {
@@ -226,9 +230,11 @@ class _ReferralCreateViewState extends State<ReferralCreateView> {
                                     return;
                                   }
                                   final cubit = context.read<ReferralCubit>();
-                                  cubit.load().then((_) {
-                                    if (!cubit.isClosed) cubit.openCreate();
-                                  });
+                                  unawaited(
+                                    cubit.load().then((_) {
+                                      if (!cubit.isClosed) cubit.openCreate();
+                                    }),
+                                  );
                                 },
                         ),
                       ],

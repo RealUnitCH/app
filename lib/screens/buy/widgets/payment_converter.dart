@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -39,32 +40,34 @@ class _PaymentConverterState extends State<PaymentConverter> {
   @override
   void initState() {
     super.initState();
-    getIt<SupportedFiatRepository>().getBuyable().then(
-      (currencies) {
-        if (mounted) setState(() => _buyable = currencies);
-      },
-      onError: (Object error, StackTrace stack) {
-        developer.log(
-          'PaymentConverter: failed to load buyable currencies — picker will '
-          'be disabled and the user is notified',
-          name: 'realunit_wallet.buy',
-          error: error,
-          stackTrace: stack,
-          level: 1000, // SEVERE
-        );
-        if (!mounted) return;
-        setState(() => _loadFailed = true);
-        // Defer to post-frame so we have a Scaffold ancestor in scope.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(S.of(context).settingsCurrencyLoadFailed),
-              backgroundColor: RealUnitColors.status.red600,
-            ),
+    unawaited(
+      getIt<SupportedFiatRepository>().getBuyable().then(
+        (currencies) {
+          if (mounted) setState(() => _buyable = currencies);
+        },
+        onError: (Object error, StackTrace stack) {
+          developer.log(
+            'PaymentConverter: failed to load buyable currencies — picker will '
+            'be disabled and the user is notified',
+            name: 'realunit_wallet.buy',
+            error: error,
+            stackTrace: stack,
+            level: 1000, // SEVERE
           );
-        });
-      },
+          if (!mounted) return;
+          setState(() => _loadFailed = true);
+          // Defer to post-frame so we have a Scaffold ancestor in scope.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(S.of(context).settingsCurrencyLoadFailed),
+                backgroundColor: RealUnitColors.status.red600,
+              ),
+            );
+          });
+        },
+      ),
     );
   }
 
@@ -131,7 +134,9 @@ class _PaymentConverterState extends State<PaymentConverter> {
                           initialValue: state.currency,
                           onSelected: (currency) {
                             if (currency == state.currency) return;
-                            context.read<BuyConverterCubit>().onCurrencyChanged(currency);
+                            unawaited(
+                              context.read<BuyConverterCubit>().onCurrencyChanged(currency),
+                            );
                           },
                           itemBuilder: (context) => _buyable.map((currency) {
                             return PopupMenuItem(

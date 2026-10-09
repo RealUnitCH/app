@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -144,13 +146,15 @@ class WebDocumentConfig implements DocumentConfig {
   @override
   void onTap(BuildContext context) {
     if (openExternally) {
-      launchUrl(Uri.parse(url(context)), mode: LaunchMode.externalApplication);
+      unawaited(launchUrl(Uri.parse(url(context)), mode: LaunchMode.externalApplication));
     } else {
-      context.pushNamed(
-        AppRoutes.webView,
-        extra: WebViewRouteParams(
-          title: title(context),
-          url: Uri.parse(url(context)),
+      unawaited(
+        context.pushNamed(
+          AppRoutes.webView,
+          extra: WebViewRouteParams(
+            title: title(context),
+            url: Uri.parse(url(context)),
+          ),
         ),
       );
     }

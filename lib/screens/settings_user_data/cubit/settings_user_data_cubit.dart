@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -34,7 +35,7 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
        _countryService = countryService,
        _kycService = kycService,
        super(const SettingsUserDataInitial()) {
-    getUserData();
+    unawaited(getUserData());
   }
 
   Future<void> getUserData() async {

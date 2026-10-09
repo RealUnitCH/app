@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -22,7 +24,7 @@ class CreateWalletView extends StatefulWidget {
 class _CreateWalletViewState extends State<CreateWalletView> {
   @override
   void initState() {
-    ScreenshotGuard.acquire();
+    unawaited(ScreenshotGuard.acquire());
     super.initState();
   }
 
@@ -96,7 +98,7 @@ class _CreateWalletViewState extends State<CreateWalletView> {
 
   @override
   void dispose() {
-    ScreenshotGuard.release();
+    unawaited(ScreenshotGuard.release());
     super.dispose();
   }
 }

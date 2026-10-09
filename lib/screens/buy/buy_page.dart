@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -21,10 +23,14 @@ class BuyPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => BuyConverterCubit(
-            getIt<DfxBrokerbotService>(),
-            currency: currency,
-          )..onFiatChanged('300'),
+          create: (_) {
+            final cubit = BuyConverterCubit(
+              getIt<DfxBrokerbotService>(),
+              currency: currency,
+            );
+            unawaited(cubit.onFiatChanged('300'));
+            return cubit;
+          },
         ),
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(
@@ -37,7 +43,7 @@ class BuyPage extends StatelessWidget {
         listener: (context, settingsState) {
           final cubit = context.read<BuyConverterCubit>();
           if (cubit.state.currency == settingsState.currency) return;
-          cubit.onCurrencyChanged(settingsState.currency);
+          unawaited(cubit.onCurrencyChanged(settingsState.currency));
         },
         child: const BuyView(),
       ),
@@ -78,9 +84,11 @@ class _BuyViewState extends State<BuyView> {
           _syncController(_resultController, state.sharesText);
           // The quote charges the Rappen-exact payable of the conversion,
           // not the field text: the field keeps what the user typed.
-          payment.getPaymentInfo(
-            amount: state.quoteAmountText,
-            currency: state.currency,
+          unawaited(
+            payment.getPaymentInfo(
+              amount: state.quoteAmountText,
+              currency: state.currency,
+            ),
           );
         },
         builder: (context, state) {

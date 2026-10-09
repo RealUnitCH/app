@@ -82,7 +82,7 @@ class _ReferralEligibilityResumeReloaderState
         if (!mounted) return;
         if (ModalRoute.of(context)?.isCurrent != true) return;
         if (_lifecycle != AppLifecycleState.resumed) return;
-        context.read<ReferralEligibilityCubit>().reload();
+        unawaited(context.read<ReferralEligibilityCubit>().reload());
       });
       return;
     }
@@ -94,7 +94,7 @@ class _ReferralEligibilityResumeReloaderState
     if (!mounted) return;
     _syncPoll();
     if (ModalRoute.of(context)?.isCurrent != true) return;
-    context.read<ReferralEligibilityCubit>().reload();
+    unawaited(context.read<ReferralEligibilityCubit>().reload());
   }
 
   @override
@@ -103,7 +103,7 @@ class _ReferralEligibilityResumeReloaderState
     if (!mounted) return;
     _syncPoll();
     if (state != AppLifecycleState.resumed) return;
-    context.read<ReferralEligibilityCubit>().reload();
+    unawaited(context.read<ReferralEligibilityCubit>().reload());
   }
 
   @override

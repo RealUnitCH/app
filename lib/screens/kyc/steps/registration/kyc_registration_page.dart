@@ -100,10 +100,12 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   void initState() {
     super.initState();
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
-      _pageController.animateToPage(
-        state.index,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
+      unawaited(
+        _pageController.animateToPage(
+          state.index,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+        ),
       );
     });
 
@@ -434,7 +436,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   @override
   void dispose() {
-    _stepSubscription?.cancel();
+    unawaited(_stepSubscription?.cancel());
     _pageController.dispose();
     typeCtrl.dispose();
     firstnameCtrl.dispose();

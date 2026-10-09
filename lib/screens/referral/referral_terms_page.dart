@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -102,7 +104,7 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
         _accepted = false;
       });
     }
-    _loadMarkdown();
+    unawaited(_loadMarkdown());
   }
 
   String _languageCode() {
@@ -208,7 +210,7 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                           _reloading = true;
                           _accepted = false;
                         });
-                        _loadMarkdown();
+                        unawaited(_loadMarkdown());
                       },
               ),
             ] else if (_markdown == null)
@@ -242,11 +244,13 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                 onTapLink: (text, href, title) {
                   final uri = referralTermsInAppUri(href);
                   if (uri == null) return;
-                  context.pushNamed(
-                    AppRoutes.webView,
-                    extra: WebViewRouteParams(
-                      title: text,
-                      url: uri,
+                  unawaited(
+                    context.pushNamed(
+                      AppRoutes.webView,
+                      extra: WebViewRouteParams(
+                        title: text,
+                        url: uri,
+                      ),
                     ),
                   );
                 },

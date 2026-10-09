@@ -27,7 +27,7 @@ class SellBalanceCubit extends Cubit<Balance> {
 
   @override
   Future<void> close() {
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     return super.close();
   }
 }

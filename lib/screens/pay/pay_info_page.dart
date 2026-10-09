@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -55,7 +57,7 @@ class PayInfoPage extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     if (!context.mounted) return;
-                    context.pushNamed(AppRoutes.payLocations);
+                    unawaited(context.pushNamed(AppRoutes.payLocations));
                   },
                   child: Text(
                     S.of(context).payInfoLocationsLink,

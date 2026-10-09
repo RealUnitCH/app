@@ -85,7 +85,7 @@ class _VerifyPinViewState extends State<VerifyPinView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<VerifyPinCubit>().checkBiometricAvailability();
+      unawaited(context.read<VerifyPinCubit>().checkBiometricAvailability());
     });
   }
 
@@ -248,7 +248,7 @@ class _VerifyPinViewState extends State<VerifyPinView> {
       if (!mounted) return;
       if (DateTime.now().isAfter(lockedUntil)) {
         _countdownTimer?.cancel();
-        context.read<VerifyPinCubit>().onLockExpired();
+        unawaited(context.read<VerifyPinCubit>().onLockExpired());
       } else {
         setState(() {});
       }

@@ -63,7 +63,7 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
     getIt<SettingsBloc>().add(const RefreshWalletFeaturesEvent());
     final appStore = getIt<AppStore>();
     if (appStore.isWalletLoaded) {
-      getIt<BalanceService>().updateBalance(appStore.primaryAddress);
+      unawaited(getIt<BalanceService>().updateBalance(appStore.primaryAddress));
     }
   }
 

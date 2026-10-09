@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer show log;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,7 +7,7 @@ import 'package:realunit_wallet/packages/service/transaction_history_service.dar
 
 class PendingTransactionsCubit extends Cubit<List<TransactionDto>> {
   PendingTransactionsCubit(this._transactionHistoryService) : super([]) {
-    _loadPendingTransactions();
+    unawaited(_loadPendingTransactions());
   }
 
   final TransactionHistoryService _transactionHistoryService;

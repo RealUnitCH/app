@@ -50,7 +50,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
        _pairingPinTimeout = pairingPinTimeout,
        _acquireWallet = acquireWallet,
        super(BitboxNotConnected()) {
-    _startScanning();
+    unawaited(_startScanning());
   }
 
   final Duration _confirmPairingTimeout;
@@ -155,9 +155,11 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   void _releasePendingInit() {
     final orphan = _pendingInit;
     if (orphan == null) return;
-    orphan.timeout(_pairingPinTimeout, onTimeout: () => false).whenComplete(() {
-      if (identical(_pendingInit, orphan)) _pendingInit = null;
-    });
+    unawaited(
+      orphan.timeout(_pairingPinTimeout, onTimeout: () => false).whenComplete(() {
+        if (identical(_pendingInit, orphan)) _pendingInit = null;
+      }),
+    );
   }
 
   Future<void> confirmPairing() async {

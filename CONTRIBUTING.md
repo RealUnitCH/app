@@ -79,8 +79,9 @@ This is a **public** repository. GitHub-hosted and self-hosted runners execute
 the heavy suite (unit and widget tests, the coverage floor, visual regression,
 the handbook image, and the BitBox simulator). A38 does not replace those
 GitHub checks. The author report only covers the light local job in
-`.github/a38.json` (`flutter analyze --fatal-warnings` on Flutter 3.41.6, after `flutter pub get`,
-localization generation, release-info generation, and `build_runner`). Do not
+`.github/a38.json` (`flutter pub get`, localization generation, release-info
+generation, `build_runner`, `dart run tool/lints/pattern_guard.dart`, then
+`flutter analyze --fatal-warnings` on Flutter 3.41.6). Do not
 run `flutter test` or the visual-regression suite locally for A38.
 
 Draft pull requests run the GitHub CI jobs. GitHub holds fork runs from

@@ -44,7 +44,7 @@ class BalanceService {
     _syncGeneration++;
     _syncTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (_accountMissing) return;
-      updateBalance(address);
+      unawaited(updateBalance(address));
     });
   }
 

@@ -230,6 +230,7 @@ extension ToEpiAddress on String {
   String get asHexEip55 => EthereumAddress.fromHex(this).hexEip55;
 
   String get asShortTxId {
+    // realunit-lint:ignore fixed_index_address_substring — 66-char chain hashes and referral-payout-<id> IDs exceed 10 chars, so both slices stay in range.
     return '${substring(0, 10)}...${substring(length - 10)}';
   }
 }
