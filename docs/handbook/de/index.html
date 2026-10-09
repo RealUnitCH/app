@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 424 Visual-Regression Goldens (424 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 426 Visual-Regression Goldens (426 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 424 App-Screenshots dieser Seite sind Goldens aus
+            Die 426 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 424 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 426 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -8120,7 +8120,7 @@
                 />
               </div>
               <div class="desc">
-                Das Formular <b>Telefonnummer ändern</b> im Ausgangszustand: eine Länderauswahl mit Vorwahl <b>+41</b> und das Eingabefeld für die Nummer (Platzhalter 1231234567), darunter <b>Speichern</b>. Hier trägt der Nutzer seine neue Telefonnummer ein.
+                Das Formular <b>Telefonnummer ändern</b> im Ausgangszustand: ein frei eingebbares Vorwahlfeld mit der Standardvorwahl <b>+41</b> und das Eingabefeld für die Nummer (Platzhalter 1231234567), darunter <b>Speichern</b>. Hier trägt der Nutzer seine neue Telefonnummer ein.
               </div>
             </div>
             <div class="test" id="238-settings-edit-address-page-default">
@@ -8933,7 +8933,7 @@
                 <div class="file">test/goldens/widgets/form/</div>
               </div>
               <div class="rhs">
-                <b>1 Screen</b>
+                <b>3 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/widgets/form"
@@ -8944,7 +8944,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Das Telefonnummer-Feld kombiniert eine Vorwahl-Auswahl mit einem separaten Eingabefeld für die Rufnummer. Es wird bei der Registrierung und in Formularen verwendet, in denen eine Telefonnummer erfasst wird.
+            Das Telefonnummer-Feld kombiniert ein frei eingebbares Vorwahlfeld (1 bis 3 Ziffern) mit einem separaten Eingabefeld für die Rufnummer. Es wird bei der Registrierung und in Formularen verwendet, in denen eine Telefonnummer erfasst wird.
           </p>
 
           <div class="tests cols-2">
@@ -8961,7 +8961,39 @@
                 />
               </div>
               <div class="desc">
-                Zeigt den <b>Ausgangszustand</b> des Telefonnummer-Felds: die Überschrift <b>Telefonnummer</b>, links das frei editierbare Vorwahlfeld mit der Standardvorwahl <b>+41</b> und rechts das noch leere Rufnummernfeld mit dem Platzhalter <b>1231234567</b>. So sehen Nutzer das Feld, bevor sie eine Nummer eingeben; die Länge der Nummer wird erst serverseitig geprüft.
+                Zeigt den <b>Ausgangszustand</b> des Telefonnummer-Felds: die Überschrift <b>Telefonnummer</b>, links das frei eingebbare Vorwahlfeld mit der Standardvorwahl <b>+41</b> (1 bis 3 Ziffern) und rechts das noch leere Rufnummernfeld mit dem Platzhalter <b>1231234567</b>. So sehen Nutzer das Feld, bevor sie eine Nummer eingeben; die Länge der Nummer wird erst serverseitig geprüft. Die Nummer wird nach den Regeln von libphonenumber in die internationale Form gebracht; wo der Nummernplan keine Verkehrsausscheidungsziffer kennt — bei italienischen Festnetznummern etwa —, bleibt die Null erhalten.
+              </div>
+            </div>
+            <div class="test" id="420-phone-number-field-leading-zero-error">
+              <div class="head">
+                <a class="name permalink" href="#420-phone-number-field-leading-zero-error">420-phone-number-field-leading-zero-error</a>
+                <button class="copy-link" type="button" data-target="420-phone-number-field-leading-zero-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">widgets/form/goldens/macos/phone_number_field_leading_zero_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/420-phone-number-field-leading-zero-error.png"
+                  alt="Telefonnummer-Feld mit Fehlermeldung zur führenden Null"
+                />
+              </div>
+              <div class="desc">
+                Zeigt den <b>deutschen Fehlerzustand</b> nach der Eingabe einer unzulässigen führenden Null. Unter dem Rufnummernfeld steht die sichtbare Fehlermeldung <b>Ohne führende Null eingeben</b>.
+              </div>
+            </div>
+            <div class="test" id="421-phone-number-field-leading-zero-error-en">
+              <div class="head">
+                <a class="name permalink" href="#421-phone-number-field-leading-zero-error-en">421-phone-number-field-leading-zero-error-en</a>
+                <button class="copy-link" type="button" data-target="421-phone-number-field-leading-zero-error-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">widgets/form/goldens/macos/phone_number_field_leading_zero_error_en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/421-phone-number-field-leading-zero-error-en.png"
+                  alt="Englisches Telefonnummer-Feld mit Fehlermeldung zur führenden Null"
+                />
+              </div>
+              <div class="desc">
+                Zeigt denselben <b>Fehlerzustand auf Englisch</b>. Unter dem Rufnummernfeld steht die sichtbare Fehlermeldung <b>Leave out the leading zero</b>.
               </div>
             </div>
           </div>

@@ -29,9 +29,10 @@ Column meaning:
   and `debugAuth` (a `kDebugMode`-only dev tool). Each row lists **all** the
   slots whose Golden renders that widget — a screen usually has several (its
   default plus its state variants), so most cells now carry a range rather
-  than a single anchor. Shared-widget goldens rather than screens: slot
-  `268` is `PhoneNumberField` under `test/goldens/widgets/form/`, and slot
-  `393` is `ImageSourceSheet`. `WebViewPage` is slots `394` and `395` (the
+  than a single anchor. Shared-widget goldens rather than screens: slots
+  `268`, `420` and `421` are `PhoneNumberField` under
+  `test/goldens/widgets/form/`. Slot `393` is `ImageSourceSheet`.
+  `WebViewPage` is slots `394` and `395` (the
   chrome; the page body is the website and is not part of the picture).
   `PayScanPage` is `338`. `PayProcessPage` is `332`–`334`. `KycPageManager`
   (the orchestrator has no Golden of its own — its states are the
@@ -139,13 +140,14 @@ Column meaning:
 | KYC | `KycManualReviewPage` | — | — | `208`, `323` |
 | KYC | `KycAccountMergePage` | — | — | `209` |
 | KYC | `KycMergeProcessingPage` | — | — | `210` |
-| Shared widgets | `PhoneNumberField` | — | — | `268` |
+| Shared widgets | `PhoneNumberField` | — | — | `268`, `420`, `421` |
 | Shared widgets | `ImageSourceSheet` | — | — | `393` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282`, `356`, `357` |
 
 95 screens — 51 routed (`GoRoute`) + 44 non-routed. The table also carries
 three shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`, `ImageSourceSheet`),
-which are not screens.
+which are not screens; the three Golden baselines under
+`test/goldens/widgets/form/` are handbook slots `268`, `420` and `421`.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook
 documents the programme in `#spec-referral`. Overlay slots `291` and `292`
 are listed on `DashboardPage` (the host screen), not as a second shared-widget
