@@ -25,6 +25,7 @@ void main() {
     final exceptions = <Object>[
       const BitboxNotConnectedException(),
       const BitboxAddressUnavailableException(),
+      const BitboxAddressMismatchException(),
       const SigningCancelledException(),
       const ApiException(code: 'TEST', message: 'test'),
       const UpgradeRequiredException(minSupportedVersion: '1.3.0'),

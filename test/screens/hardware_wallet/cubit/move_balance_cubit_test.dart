@@ -45,6 +45,8 @@ class _MockBalanceService extends Mock implements BalanceService {}
 
 class _MockBitboxWallet extends Mock implements BitboxWallet {}
 
+class _MockPlainWallet extends Mock implements AWallet {}
+
 class _MockAccount extends Mock implements BitboxWalletAccount {}
 
 class _FakeWallet extends Fake implements AWallet {}
@@ -1233,6 +1235,29 @@ void main() {
         await cubit.close();
       },
     );
+
+    test('throws StateError when the loaded wallet is not a BitboxWallet', () async {
+      final plain = _MockPlainWallet();
+      when(() => plain.walletType).thenReturn(WalletType.bitbox);
+      when(() => plain.currentAccount).thenReturn(bitboxAccount);
+      when(() => walletService.listWallets()).thenAnswer((_) async => [software, plain]);
+      final cubit = build();
+      await cubit.load();
+      expect(cubit.state, const MoveBalanceInitial(softwareBalance: 10, bitboxBalance: 5));
+      await expectLater(cubit.reattachBitbox(), throwsA(isA<StateError>()));
+      verifyNever(() => walletService.existingBitboxWallet());
+      await cubit.close();
+    });
+
+    test('throws StateError when existingBitboxWallet returns a different id', () async {
+      final other = _MockBitboxWallet();
+      when(() => other.id).thenReturn(9);
+      when(() => walletService.existingBitboxWallet()).thenAnswer((_) async => other);
+      final cubit = build();
+      await cubit.load();
+      await expectLater(cubit.reattachBitbox(), throwsA(isA<StateError>()));
+      await cubit.close();
+    });
   });
 
   group('state equality', () {
