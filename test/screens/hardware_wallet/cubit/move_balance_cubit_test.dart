@@ -952,6 +952,48 @@ void main() {
       await cubit.close();
     });
 
+    test('confirm does not send while a BitBox prepare is reading the balance', () async {
+      when(() => transfer.prepareTransfer(any())).thenAnswer((inv) async {
+        final dto = inv.positionalArguments.single as RealUnitTransferDto;
+        return _softwareQuote(amount: dto.amount, fee: 0);
+      });
+      when(() => hardware.prepareTransfer(any())).thenAnswer(
+        (_) async => const RealUnitHardwareTransferPaymentInfoDto(
+          unsignedTx: '0x02aabb',
+          toAddress: _softwareAddr,
+          amount: 5,
+        ),
+      );
+      final cubit = build();
+      await cubit.load();
+      await cubit.prepareSoftwareToBitbox();
+      expect(cubit.state, isA<MoveBalanceQuoteReady>());
+      final balance = Completer<int>();
+      when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) => balance.future);
+      final pending = cubit.prepareBitboxToSoftware();
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state, isA<MoveBalanceQuoteReady>());
+      await cubit.confirm();
+      verifyNever(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      );
+      balance.complete(5);
+      await pending;
+      verifyNever(
+        () => transfer.confirmTransfer(
+          any(),
+          confirmedRecipient: any(named: 'confirmedRecipient'),
+          confirmedAmount: any(named: 'confirmedAmount'),
+        ),
+      );
+      expect(cubit.state, isNot(isA<MoveBalanceSuccess>()));
+      await cubit.close();
+    });
+
     test('a BitBox that gains a balance after load is prepared once', () async {
       var reads = 0;
       when(() => balanceService.freshShareBalance(_bitboxAddr)).thenAnswer((_) async {

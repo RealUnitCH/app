@@ -281,6 +281,9 @@ class MoveBalanceCubit extends Cubit<MoveBalanceState> {
     if (_confirmInFlight) {
       return;
     }
+    if (_prepareInFlight) {
+      return;
+    }
     if (state is MoveBalanceSuccess) {
       return;
     }

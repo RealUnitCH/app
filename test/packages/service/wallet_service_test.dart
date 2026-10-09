@@ -625,7 +625,8 @@ void main() {
           ],
         );
         when(() => repo.getWalletInfo(1)).thenAnswer(
-          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+          (_) async =>
+              _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
         );
         when(() => repo.getWalletInfo(2)).thenAnswer(
           (_) async =>
@@ -651,7 +652,8 @@ void main() {
           ],
         );
         when(() => repo.getWalletInfo(1)).thenAnswer(
-          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+          (_) async =>
+              _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
         );
 
         expect(
@@ -672,7 +674,8 @@ void main() {
           ],
         );
         when(() => repo.getWalletInfo(1)).thenAnswer(
-          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+          (_) async =>
+              _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
         );
         when(() => repo.getWalletInfo(2)).thenAnswer(
           (_) async =>
@@ -701,7 +704,8 @@ void main() {
           ],
         );
         when(() => repo.getWalletInfo(1)).thenAnswer(
-          (_) async => _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
+          (_) async =>
+              _info(id: 1, name: 'Main', address: _debugAddress, type: WalletType.software),
         );
         when(() => repo.getWalletInfo(2)).thenAnswer(
           (_) async =>
