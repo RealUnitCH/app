@@ -86,9 +86,17 @@ void f(bool resident) {
   });
 
   group('fixed_index_address_substring', () {
-    test('fires on two constant indices with end >= 6', () {
+    test('fires on two integer-literal indices with end >= 6', () {
       final hits = _rules('lib/x.dart', 'void f(String a) => a.substring(0, 6);');
       expect(hits, contains('fixed_index_address_substring'));
+    });
+
+    test('does not evaluate constant expressions (literal shape only)', () {
+      final hits = _rules(
+        'lib/x.dart',
+        'void f(String value) => value.substring(0, 5 + 5);',
+      );
+      expect(hits, isNot(contains('fixed_index_address_substring')));
     });
 
     test('silent on a trivial peek (end < 6)', () {

@@ -22,7 +22,7 @@
 //                                     `true`/`false` literal instead of a value
 //                                     derived from the user's actual residence.
 //   fixed_index_address_substring     `.substring(<int>, <int>)` with two
-//                                     constant indices — assumes a fixed string
+//                                     integer-literal indices — assumes a fixed string
 //                                     length and throws RangeError on a shorter
 //                                     one (the audit's qr_address_widget crash).
 //   cross_flow_brokerbot_endpoint     a sell-flow file calling a buy-price/-
@@ -176,7 +176,7 @@ class _PatternVisitor extends RecursiveAstVisitor<void> {
           args[1] is IntegerLiteral &&
           ((args[1] as IntegerLiteral).value ?? 0) >= 6) {
         _report('fixed_index_address_substring', node.methodName.offset,
-            'substring() with two constant indices assumes a fixed length; '
+            'substring() with two integer-literal indices assumes a fixed length; '
             'guard the length or compute indices to avoid RangeError.');
       }
     }

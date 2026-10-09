@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:realunit_wallet/packages/config/network_mode.dart';
 
 class SettingsRepository {
   final SharedPreferences _sharedPreferences;
