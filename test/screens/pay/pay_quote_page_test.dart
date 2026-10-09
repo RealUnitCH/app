@@ -308,12 +308,17 @@ void main() {
 
       await tester.tap(find.text(S.current.payConfirmButton));
       await tester.pump();
+      await tester.pump(); // flush the post-frame callback that arms the route gate
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byType(PayProcessView), findsOne);
-      expect(find.text(S.current.payPaying), findsOne);
-      expect(find.text(S.current.payFailureTitle), findsNothing);
+      expect(
+        find.text(S.current.payFailureTitle, skipOffstage: false),
+        findsNothing,
+      );
+      expect(find.text(S.current.payPaying, skipOffstage: false), findsOne);
 
       // The confirm has not left the device. Popping false re-enables Pay.
       // The route leaves on the frame after its reverse animation completes.
