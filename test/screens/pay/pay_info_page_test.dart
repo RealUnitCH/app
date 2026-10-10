@@ -85,15 +85,20 @@ void main() {
       await tester.pump();
       expect(find.byType(PayLocationsPage), findsOneWidget);
       expect(find.text(S.current.next), findsOneWidget);
-      // The approved wording (RealUnit legal, 28.09.2026) states that every payment is a
-      // sale of REALU and that the sale is rounded up to whole REALU.
+      // Payment is not made with the shares. The proceeds, minus the fee, are
+      // received as ZCHF, and only whole shares are sold.
+      expect(
+        S.current.payInfoBody,
+        anyOf(contains('nicht mit Ihren Aktien'), contains('not with your shares')),
+      );
+      expect(S.current.payInfoBody, contains('ZCHF'));
       expect(
         S.current.payInfoBody,
         anyOf(contains('verkaufen Sie REALU'), contains('you sell REALU')),
       );
       expect(
         S.current.payInfoBody,
-        anyOf(contains('ganze REALU'), contains('whole REALU')),
+        anyOf(contains('ganze Aktien'), contains('whole shares')),
       );
     });
 
