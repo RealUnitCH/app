@@ -80,11 +80,22 @@ class KycCubit extends Cubit<KycState> {
     _walletAtCheckStart = getIt.isRegistered<AccountCurrencySync>()
         ? getIt<AccountCurrencySync>().currentWallet
         : null;
+    final wasMergeProcessing = state is KycMergeProcessing;
     final generation = ++_runGeneration;
+    KycProcessStatus? refreshedProcessStatus;
     try {
-      await _runCheckKyc(generation).timeout(_checkKycTimeout);
+      await _runCheckKyc(
+        generation,
+        onProcessStatus: (status) => refreshedProcessStatus = status,
+      ).timeout(_checkKycTimeout);
     } on TimeoutException {
       if (isClosed || generation != _runGeneration) return;
+      if (wasMergeProcessing &&
+          (refreshedProcessStatus == null ||
+              refreshedProcessStatus == KycProcessStatus.mergeProcessing)) {
+        emit(const KycMergeProcessing());
+        return;
+      }
       emit(const KycFailure('KYC backend did not respond in time'));
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
@@ -97,15 +108,21 @@ class KycCubit extends Cubit<KycState> {
     getIt<AccountCurrencySync>().applyFromUser(user, captured: _walletAtCheckStart);
   }
 
-  Future<void> _runCheckKyc(int generation) async {
+  Future<void> _runCheckKyc(
+    int generation, {
+    required void Function(KycProcessStatus) onProcessStatus,
+  }) async {
     try {
       if (isClosed || generation != _runGeneration) return;
       emit(const KycLoading());
 
       final results = await Future.wait([
-        _kycService.getKycStatus(context: _kycContext),
+        _kycService.getKycStatus(context: _kycContext).then((status) {
+          onProcessStatus(status.processStatus);
+          return status;
+        }),
         _kycService.getUser(),
-      ]);
+      ], eagerError: true);
 
       if (isClosed || generation != _runGeneration) return;
 
@@ -131,7 +148,7 @@ class KycCubit extends Cubit<KycState> {
         _emailRegistrationAttempted = true;
         await _registrationService.registerEmail(user.mail!);
         if (isClosed || generation != _runGeneration) return;
-        await _runCheckKyc(generation);
+        await _runCheckKyc(generation, onProcessStatus: onProcessStatus);
         return;
       }
 

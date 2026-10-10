@@ -1444,6 +1444,140 @@ void main() {
         });
       },
     );
+
+    // A slow refresh from the merge-processing waiting screen must NOT route the
+    // user to the error screen when no newer process status arrived before the
+    // watchdog fired. Contrast with the watchdog test above (non-merge state ->
+    // KycFailure), which still holds.
+    test(
+      'stays on KycMergeProcessing instead of KycFailure when a refresh exceeds the timeout',
+      () {
+        fakeAsync((async) {
+          // Phase 1: backend reports MergeProcessing -> cubit reaches the waiting state.
+          when(() => kycService.getKycStatus()).thenAnswer(
+            (_) async => _kycStatus(
+              level: KycLevel.level20,
+              processStatus: KycProcessStatus.mergeProcessing,
+            ),
+          );
+          when(() => kycService.getUser()).thenAnswer((_) async => _user());
+
+          final cubit = buildCubit();
+          final states = <KycState>[];
+          final sub = cubit.stream.listen(states.add);
+
+          unawaited(cubit.checkKyc());
+          async.flushMicrotasks();
+
+          // Phase 2: refresh while the backend hangs past the 30s watchdog.
+          when(() => kycService.getKycStatus()).thenAnswer((_) => Completer<KycLevelDto>().future);
+          unawaited(cubit.checkKyc());
+          async.elapse(const Duration(seconds: 31));
+
+          expect(states, [
+            const KycLoading(),
+            const KycMergeProcessing(),
+            const KycLoading(),
+            const KycMergeProcessing(),
+          ]);
+
+          sub.cancel();
+          cubit.close();
+        });
+      },
+    );
+
+    test(
+      'does not restore KycMergeProcessing when a refresh receives a non-merge status before timing out',
+      () {
+        fakeAsync((async) {
+          when(() => kycService.getKycStatus()).thenAnswer(
+            (_) async => _kycStatus(
+              level: KycLevel.level20,
+              processStatus: KycProcessStatus.mergeProcessing,
+            ),
+          );
+          when(() => kycService.getUser()).thenAnswer((_) async => _user());
+
+          final cubit = buildCubit();
+          final states = <KycState>[];
+          final sub = cubit.stream.listen(states.add);
+
+          unawaited(cubit.checkKyc());
+          async.flushMicrotasks();
+
+          when(() => kycService.getKycStatus()).thenAnswer(
+            (_) async => _kycStatus(
+              level: KycLevel.level50,
+              processStatus: KycProcessStatus.completed,
+            ),
+          );
+          when(() => legalService.getLegalInfo()).thenAnswer(
+            (_) => Completer<RealUnitLegalInfoDto>().future,
+          );
+
+          unawaited(cubit.checkKyc());
+          async.flushMicrotasks();
+          async.elapse(const Duration(seconds: 31));
+
+          expect(states, [
+            const KycLoading(),
+            const KycMergeProcessing(),
+            const KycLoading(),
+            const KycFailure('KYC backend did not respond in time'),
+          ]);
+
+          sub.cancel();
+          cubit.close();
+        });
+      },
+    );
+
+    test('emits KycFailure promptly when an API call fails while its sibling hangs', () {
+      fakeAsync((async) {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.mergeProcessing,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+
+        final cubit = buildCubit();
+        final states = <KycState>[];
+        final sub = cubit.stream.listen(states.add);
+
+        unawaited(cubit.checkKyc());
+        async.flushMicrotasks();
+
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) => Completer<KycLevelDto>().future,
+        );
+        when(() => kycService.getUser()).thenAnswer(
+          (_) async => throw const ApiException(
+            statusCode: 500,
+            code: 'SERVER_ERROR',
+            message: 'refresh failed',
+          ),
+        );
+
+        unawaited(cubit.checkKyc());
+        async.flushMicrotasks();
+
+        expect(states, [
+          const KycLoading(),
+          const KycMergeProcessing(),
+          const KycLoading(),
+          const KycFailure('refresh failed'),
+        ]);
+
+        async.elapse(const Duration(seconds: 31));
+        expect(states.last, const KycFailure('refresh failed'));
+
+        sub.cancel();
+        cubit.close();
+      });
+    });
   });
 
   group('$KycCubit context forwarding', () {
