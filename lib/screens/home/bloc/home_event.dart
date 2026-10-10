@@ -19,6 +19,15 @@ final class DeleteCurrentWalletEvent extends HomeEvent {
   const DeleteCurrentWalletEvent();
 }
 
+final class SwitchWalletEvent extends HomeEvent {
+  const SwitchWalletEvent(this.id);
+
+  final int id;
+
+  @override
+  List<Object> get props => [id];
+}
+
 final class LoadWalletEvent extends HomeEvent {
   const LoadWalletEvent(this.wallet);
 

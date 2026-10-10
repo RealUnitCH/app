@@ -7,6 +7,7 @@ import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/account/dto/real_unit_account_balance_dto.dart';
 
 class BalanceService {
   static const _balancePath = '/v1/realunit/account';
@@ -60,8 +61,9 @@ class BalanceService {
       if (response.statusCode == 200) {
         if (generation == _syncGeneration) _accountMissing = false;
 
-        final json = jsonDecode(response.body);
-        final balanceString = json['balance'] as String?;
+        final balanceString = RealUnitAccountBalanceDto.fromJson(
+          jsonDecode(response.body),
+        ).balance;
 
         if (balanceString != null) {
           final balanceValue = BigInt.parse(balanceString);
@@ -82,6 +84,37 @@ class BalanceService {
     } catch (e) {
       developer.log('Failed to update RealUnit balance: $e');
     }
+  }
+
+  /// The share count just parsed from the account endpoint. A 404 is a fresh
+  /// zero and must not reuse a cached row. Every other failure throws.
+  Future<int> freshShareBalance(String address) async {
+    final uri = buildUri(_host, '$_balancePath/$address');
+    final response = await _appStore.httpClient.get(uri);
+
+    if (response.statusCode == 200) {
+      final balanceString = RealUnitAccountBalanceDto.fromJson(
+        jsonDecode(response.body),
+      ).balance;
+      if (balanceString == null) {
+        throw const FormatException('Account response has no balance');
+      }
+      final balanceValue = BigInt.parse(balanceString);
+      await _balanceRepository.saveBalance(
+        Balance(
+          chainId: _appStore.apiConfig.asset.chainId,
+          contractAddress: _appStore.apiConfig.asset.address,
+          walletAddress: address,
+          balance: balanceValue,
+          asset: _appStore.apiConfig.asset,
+        ),
+      );
+      return balanceValue.toInt();
+    }
+    if (response.statusCode == 404) {
+      return 0;
+    }
+    throw Exception('Unexpected account status ${response.statusCode}');
   }
 
   Future<Balance?> getBalance(Asset asset, String address) =>

@@ -26,6 +26,8 @@ class _MockBitboxService extends Mock implements BitboxService {}
 
 class _MockSessionCache extends Mock implements SessionCache {}
 
+class _MockBitboxWallet extends Mock implements BitboxWallet {}
+
 class _FakeWallet extends Fake implements AWallet {}
 
 const _debugAddress = '0x0000000000000000000000000000000000000001';
@@ -39,6 +41,7 @@ void main() {
   late _MockAppStore appStore;
   late _MockBitboxService bitboxService;
   late _MockSessionCache sessionCache;
+  late int resetDevicePinCalls;
 
   setUpAll(() {
     registerFallbackValue(_FakeWallet());
@@ -55,6 +58,7 @@ void main() {
     appStore = _MockAppStore();
     bitboxService = _MockBitboxService();
     sessionCache = _MockSessionCache();
+    resetDevicePinCalls = 0;
 
     // Sensible defaults so the auto-fired CheckWalletExistsEvent doesn't crash
     // and the AppStore-driven side effects (`primaryAddress`, `sessionCache`,
@@ -83,6 +87,9 @@ void main() {
     settingsService,
     appStore,
     bitboxService,
+    () async {
+      resetDevicePinCalls++;
+    },
   );
 
   group('$HomeBloc', () {
@@ -387,10 +394,37 @@ void main() {
       );
     });
 
+    group('SwitchWalletEvent', () {
+      test('always reloads even when openWallet is already set', () async {
+        final first = DebugWallet(1, 'Software', _debugAddress);
+        final second = DebugWallet(2, 'BitBox', _debugAddress);
+        when(() => walletService.hasWallet()).thenReturn(true);
+        when(() => walletService.getCurrentWallet()).thenAnswer((_) async => first);
+        when(() => walletService.switchCurrentWallet(2)).thenAnswer((_) async => second);
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => s.hasWallet);
+        bloc.add(const LoadCurrentWalletEvent());
+        await bloc.stream.firstWhere((s) => s.openWallet == first);
+
+        bloc.add(const SwitchWalletEvent(2));
+        await bloc.stream.firstWhere((s) => s.openWallet == second);
+
+        expect(bloc.state.openWallet, same(second));
+        expect(bloc.state.hasWallet, isTrue);
+        verify(() => walletService.switchCurrentWallet(2)).called(1);
+        verify(() => appStore.wallet = second).called(1);
+        verify(() => balanceService.updateBalance(_primary)).called(greaterThanOrEqualTo(2));
+        verify(() => balanceService.startSync(_primary)).called(greaterThanOrEqualTo(2));
+        verify(() => transactionHistoryService.apiBasedSync()).called(greaterThanOrEqualTo(2));
+        await bloc.close();
+      });
+    });
+
     group('DeleteCurrentWalletEvent', () {
       test('with wallet present → clears wallet, terms, session cache', () async {
         when(() => walletService.hasWallet()).thenReturn(true);
-        when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async {});
+        when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async => null);
 
         final bloc = build();
         await bloc.stream.firstWhere((s) => s.hasWallet);
@@ -407,6 +441,7 @@ void main() {
         verify(() => sessionCache.clear()).called(1);
         verify(() => walletService.deleteCurrentWallet()).called(1);
         verify(() => settingsService.setTermsAccepted(false)).called(1);
+        expect(resetDevicePinCalls, 1);
       });
 
       test('with no wallet → still clears session, does NOT call deleteCurrentWallet', () async {
@@ -426,6 +461,7 @@ void main() {
         // termsAccepted is NOT cleared again (it was never true to begin with).
         verifyNever(() => walletService.deleteCurrentWallet());
         verifyNever(() => settingsService.setTermsAccepted(false));
+        expect(resetDevicePinCalls, 1);
       });
 
       test('preserves softwareTermsAccepted in the final HomeState', () async {
@@ -444,6 +480,67 @@ void main() {
         // disclaimer, deleting the wallet must not force them to accept it
         // again.
         expect(bloc.state.softwareTermsAccepted, isTrue);
+        verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+        expect(resetDevicePinCalls, 1);
+      });
+
+      test('when another wallet remains, loads it and keeps terms and deeplink', () async {
+        addTearDown(clearPendingPaymentDeeplink);
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
+        final remaining = DebugWallet(2, 'BitBox', _debugAddress);
+        when(() => walletService.hasWallet()).thenReturn(true);
+        when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async => 2);
+        when(() => walletService.getWalletById(2)).thenAnswer((_) async => remaining);
+        when(() => settingsService.isSoftwareTermsAccepted).thenReturn(true);
+        when(() => settingsService.isTermsAccepted).thenReturn(true);
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => s.hasWallet);
+
+        bloc.add(const DeleteCurrentWalletEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.openWallet == remaining && s.hasWallet && !s.isLoadingWallet,
+        );
+
+        expect(bloc.state.hasWallet, isTrue);
+        expect(bloc.state.openWallet, same(remaining));
+        verify(() => appStore.wallet = remaining).called(1);
+        verifyNever(() => settingsService.setTermsAccepted(false));
+        expect(peekPendingPaymentDeeplink(), isNotNull);
+        verify(() => balanceService.updateBalance(_primary)).called(1);
+        verify(() => balanceService.startSync(_primary)).called(1);
+        verifyNever(() => bitboxService.stopConnectionStatusObserver());
+        expect(resetDevicePinCalls, 0);
+        await bloc.close();
+      });
+
+      test('detaches the BitBox when the deleted wallet is a BitBox and another remains', () async {
+        final deleted = _MockBitboxWallet();
+        when(() => deleted.walletType).thenReturn(WalletType.bitbox);
+        when(() => deleted.id).thenReturn(1);
+        final remaining = SoftwareViewWallet(2, 'Software', _debugAddress);
+        when(() => walletService.hasWallet()).thenReturn(true);
+        when(() => walletService.getCurrentWallet()).thenAnswer((_) async => deleted);
+        when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async => 2);
+        when(() => walletService.getWalletById(2)).thenAnswer((_) async => remaining);
+        when(() => settingsService.isSoftwareTermsAccepted).thenReturn(true);
+        when(() => settingsService.isTermsAccepted).thenReturn(true);
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => s.hasWallet);
+        bloc.add(const LoadCurrentWalletEvent());
+        await bloc.stream.firstWhere((s) => s.openWallet == deleted);
+
+        when(() => bitboxService.detachConnectedDevice()).thenAnswer((_) async {});
+        bloc.add(const DeleteCurrentWalletEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.openWallet == remaining && s.hasWallet && !s.isLoadingWallet,
+        );
+
+        verify(() => bitboxService.detachConnectedDevice()).called(1);
+        verifyNever(() => bitboxService.stopConnectionStatusObserver());
+        expect(resetDevicePinCalls, 0);
+        await bloc.close();
       });
 
       test('clears a stashed payment deeplink so it cannot replay into a re-onboarded wallet', () async {
@@ -459,6 +556,8 @@ void main() {
         );
 
         expect(peekPendingPaymentDeeplink(), isNull);
+        verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+        expect(resetDevicePinCalls, 1);
       });
     });
 
@@ -526,6 +625,9 @@ void main() {
       expect(const CheckWalletExistsEvent(), const CheckWalletExistsEvent());
       expect(const LoadCurrentWalletEvent(), const LoadCurrentWalletEvent());
       expect(const DeleteCurrentWalletEvent(), const DeleteCurrentWalletEvent());
+      expect(const SwitchWalletEvent(2), const SwitchWalletEvent(2));
+      expect(const SwitchWalletEvent(2).props, [2]);
+      expect(const SwitchWalletEvent(1), isNot(const SwitchWalletEvent(2)));
       expect(const CompleteOnboardingEvent(), const CompleteOnboardingEvent());
       expect(const AcceptSoftwareTermsEvent(), const AcceptSoftwareTermsEvent());
       // Default props from the sealed base class.

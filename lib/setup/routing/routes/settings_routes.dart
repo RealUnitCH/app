@@ -19,4 +19,9 @@ abstract final class SettingsRoutes {
   static const editPhone = 'settingsEditPhone';
   static const referral = 'settingsReferral';
   static const referralCreate = 'settingsReferralCreate';
+  static const hardwareWalletIntro = 'settingsHardwareWalletIntro';
+  static const hardwareWalletBuy = 'settingsHardwareWalletBuy';
+  static const hardwareWalletSetup = 'settingsHardwareWalletSetup';
+  static const hardwareWalletPaired = 'settingsHardwareWalletPaired';
+  static const moveBalance = 'settingsMoveBalance';
 }

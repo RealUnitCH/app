@@ -353,4 +353,39 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
         'test/screens/transaction_history/transaction_detail_responsive_matrix_test.dart',
     productionPath: 'lib/screens/transaction_history/transaction_detail_page.dart',
   ),
+  ResponsiveSurface(
+    id: 'hardware_wallet_intro_page',
+    description: 'Hardware wallet intro page (sticky continue CTA)',
+    matrixTestPath:
+        'test/screens/hardware_wallet/hardware_wallet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/hardware_wallet/hardware_wallet_intro_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'hardware_wallet_buy_page',
+    description: 'Hardware wallet buy page (sticky confirm CTA)',
+    matrixTestPath:
+        'test/screens/hardware_wallet/hardware_wallet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/hardware_wallet/hardware_wallet_buy_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'hardware_wallet_setup_page',
+    description: 'Hardware wallet setup page (sticky confirm CTA)',
+    matrixTestPath:
+        'test/screens/hardware_wallet/hardware_wallet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/hardware_wallet/hardware_wallet_setup_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'hardware_wallet_paired_page',
+    description: 'Hardware wallet paired page (sticky register and next CTAs)',
+    matrixTestPath:
+        'test/screens/hardware_wallet/hardware_wallet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/hardware_wallet/hardware_wallet_paired_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'move_balance_page',
+    description: 'Move balance page (sticky confirm / retry / register CTAs)',
+    matrixTestPath:
+        'test/screens/hardware_wallet/hardware_wallet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/hardware_wallet/move_balance_page.dart',
+  ),
 ];

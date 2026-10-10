@@ -24,12 +24,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     this._settingsService,
     this._appStore,
     this._bitboxService,
+    this.resetDevicePin,
   ) : super(const HomeState()) {
     on<CheckWalletExistsEvent>(_onCheckWalletExists);
     on<LoadCurrentWalletEvent>(_onLoadCurrentWallet);
     on<LoadWalletEvent>(_onLoadWallet);
     on<SyncWalletServicesEvent>(_onSyncWalletServices);
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
+    on<SwitchWalletEvent>(_onSwitchWallet);
     on<CompleteOnboardingEvent>(_onCompleteOnboarding);
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
     on<DebugAuthCompleteEvent>(_onDebugAuthComplete);
@@ -45,6 +47,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final SettingsService _settingsService;
   final AppStore _appStore;
   final BitboxService _bitboxService;
+  final Future<void> Function() resetDevicePin;
 
   void _onCheckWalletExists(CheckWalletExistsEvent event, Emitter<HomeState> emit) {
     final hasWallet = _walletService.hasWallet();
@@ -95,21 +98,60 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _syncHistory();
   }
 
+  Future<void> _onSwitchWallet(SwitchWalletEvent event, Emitter<HomeState> emit) async {
+    // Always reload, even when [openWallet] is already set — the caller is
+    // switching to a different persisted row.
+    final wallet = await _walletService.switchCurrentWallet(event.id);
+    _appStore.wallet = wallet;
+    emit(
+      state.copyWith(
+        openWallet: wallet,
+        hasWallet: true,
+        isLoadingWallet: false,
+      ),
+    );
+    _balanceService.updateBalance(_appStore.primaryAddress);
+    _balanceService.startSync(_appStore.primaryAddress);
+    _syncHistory();
+  }
+
   Future<void> _onDeleteCurrentWallet(
     DeleteCurrentWalletEvent event,
     Emitter<HomeState> emit,
   ) async {
     emit(state.copyWith(isLoadingWallet: true));
 
-    _bitboxService.stopConnectionStatusObserver();
+    final deletedIsBitbox = state.openWallet?.walletType == WalletType.bitbox;
     await _appStore.sessionCache.clear();
+    if (deletedIsBitbox) {
+      await _bitboxService.detachConnectedDevice();
+    }
     if (_walletService.hasWallet()) {
-      await _walletService.deleteCurrentWallet();
+      final remainingId = await _walletService.deleteCurrentWallet();
+      if (remainingId != null) {
+        final wallet = await _walletService.getWalletById(remainingId);
+        _appStore.wallet = wallet;
+        emit(
+          state.copyWith(
+            hasWallet: true,
+            openWallet: wallet,
+            isLoadingWallet: false,
+          ),
+        );
+        _balanceService.updateBalance(_appStore.primaryAddress);
+        _balanceService.startSync(_appStore.primaryAddress);
+        _syncHistory();
+        return;
+      }
       _settingsService.setTermsAccepted(false);
     }
+    if (!deletedIsBitbox) {
+      _bitboxService.stopConnectionStatusObserver();
+    }
+    await resetDevicePin();
     // Drop any stashed payment deeplink so it cannot replay into a re-onboarded
     // wallet. Covers every DeleteCurrentWalletEvent path (settings delete and
-    // BitBox recovery cancel), including those that never call PinAuthCubit.reset().
+    // BitBox recovery cancel).
     clearPendingPaymentDeeplink();
     // A pending referral code must not be credited to the next wallet either;
     // unlike the deeplink that binding cannot be undone.

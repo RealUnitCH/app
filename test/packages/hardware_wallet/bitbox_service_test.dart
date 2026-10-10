@@ -475,6 +475,52 @@ void main() {
       },
     );
 
+    test(
+      'detachConnectedDevice clears stored credentials, closes the transport, and stops the '
+      'observer',
+      () {
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          final credentials = service.getCredentials(knownAddress);
+          expect(credentials.isConnected, isTrue);
+
+          service.startConnectionStatusObserver();
+          final closeBefore = platform.count(SimulatedBitboxMethod.close);
+
+          var completed = false;
+          service.detachConnectedDevice().then((_) => completed = true);
+          async.flushMicrotasks();
+
+          expect(
+            completed,
+            isTrue,
+            reason: 'detachConnectedDevice must finish after the transport close',
+          );
+          expect(
+            credentials.isConnected,
+            isFalse,
+            reason: 'detachConnectedDevice must clear stored credentials',
+          );
+
+          final closeAfter = platform.count(SimulatedBitboxMethod.close);
+          expect(
+            closeAfter,
+            greaterThan(closeBefore),
+            reason: 'detachConnectedDevice must close the USB transport',
+          );
+
+          platform.when(SimulatedBitboxMethod.getDevices, (_) async => const <BitboxDevice>[]);
+          async.elapse(observerSettleTime);
+
+          expect(
+            platform.count(SimulatedBitboxMethod.close),
+            closeAfter,
+            reason: 'the observer must not close again after being stopped',
+          );
+        });
+      },
+    );
+
     // The empty-address self-heal boundary. The SDK coerces a native `null`
     // into `""` at its transport layer (`return result ?? ''`), so a device
     // that stalls right after channel-hash verify resolves getETHAddress with

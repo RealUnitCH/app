@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/generated/release_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_eligibility_cubit.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_eligibility_resume.dart';
@@ -23,6 +23,14 @@ import 'package:realunit_wallet/styles/icons.dart';
 // The Settings Network row exists only while insider network options are on.
 bool showSettingsNetworkRow({required bool networkOptionsEnabled}) =>
     networkOptionsEnabled;
+
+// Paired or not is a local BitBox limit. A stored balance does not hide this row.
+bool showHardwareWalletRow({required bool bitboxPaired}) => !bitboxPaired;
+
+bool showMoveBalanceRow({
+  required bool hasSoftware,
+  required bool hasBitbox,
+}) => hasSoftware && hasBitbox;
 
 class SettingsPage extends StatelessWidget {
   final Duration unavailablePollInterval;
@@ -52,7 +60,16 @@ class SettingsPage extends StatelessWidget {
                 bloc: getIt<SettingsBloc>(),
                 builder: (context, state) =>
                     BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
-                      builder: (context, eligibility) => SettingsSections(
+                      builder: (context, eligibility) => FutureBuilder<_HardwareWalletFlags>(
+                        future: _loadHardwareWalletFlags(
+                          walletService: getIt<WalletService>(),
+                        ),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            throw snapshot.error!;
+                          }
+                          final flags = snapshot.data;
+                          return SettingsSections(
                         settings: [
                           SettingOption(
                             title: S.of(context).settingsLanguages,
@@ -143,6 +160,35 @@ class SettingsPage extends StatelessWidget {
                             trailing: _forwardIcon,
                             onTap: () => context.pushNamed(SettingsRoutes.walletAddress),
                           ),
+                          if (flags != null &&
+                              showHardwareWalletRow(bitboxPaired: flags.bitboxPaired))
+                            SettingOption(
+                              title: S.of(context).settingsHardwareWallet,
+                              leading: const Icon(
+                                Icons.developer_board_outlined,
+                                size: 24,
+                                color: RealUnitColors.realUnitBlue,
+                              ),
+                              trailing: _forwardIcon,
+                              onTap: () => context.pushNamed(
+                                SettingsRoutes.hardwareWalletIntro,
+                              ),
+                            ),
+                          if (flags != null &&
+                              showMoveBalanceRow(
+                                hasSoftware: flags.hasSoftware,
+                                hasBitbox: flags.hasBitbox,
+                              ))
+                            SettingOption(
+                              title: S.of(context).settingsMoveBalance,
+                              leading: const Icon(
+                                Icons.swap_horiz,
+                                size: 24,
+                                color: RealUnitColors.realUnitBlue,
+                              ),
+                              trailing: _forwardIcon,
+                              onTap: () => context.pushNamed(SettingsRoutes.moveBalance),
+                            ),
                           if (state.insiderFeaturesUnlocked)
                             SettingOption(
                               title: S.of(context).settingsInsiderFeatures,
@@ -170,6 +216,8 @@ class SettingsPage extends StatelessWidget {
                               ),
                             ),
                         ],
+                          );
+                        },
                       ),
                     ),
               ),
@@ -191,12 +239,9 @@ class SettingsPage extends StatelessWidget {
                       if (isLogout ?? false) {
                         await Future.delayed(const Duration(milliseconds: 300));
                         if (context.mounted) {
-                          await context.read<PinAuthCubit>().reset();
-                          if (context.mounted) {
-                            context.read<HomeBloc>().add(
-                              const DeleteCurrentWalletEvent(),
-                            );
-                          }
+                          context.read<HomeBloc>().add(
+                            const DeleteCurrentWalletEvent(),
+                          );
                         }
                       }
                     },
@@ -209,5 +254,37 @@ class SettingsPage extends StatelessWidget {
         ),
       ),
     ),
+  );
+}
+
+class _HardwareWalletFlags {
+  final bool bitboxPaired;
+  final bool hasSoftware;
+  final bool hasBitbox;
+
+  const _HardwareWalletFlags({
+    required this.bitboxPaired,
+    required this.hasSoftware,
+    required this.hasBitbox,
+  });
+}
+
+Future<_HardwareWalletFlags> _loadHardwareWalletFlags({
+  required WalletService walletService,
+}) async {
+  final wallets = await walletService.listWallets();
+  var hasSoftware = false;
+  var hasBitbox = false;
+  for (final wallet in wallets) {
+    if (wallet.walletType == WalletType.software) {
+      hasSoftware = true;
+    } else if (wallet.walletType == WalletType.bitbox) {
+      hasBitbox = true;
+    }
+  }
+  return _HardwareWalletFlags(
+    bitboxPaired: hasBitbox,
+    hasSoftware: hasSoftware,
+    hasBitbox: hasBitbox,
   );
 }

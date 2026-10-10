@@ -45,6 +45,20 @@ void main() {
     });
   });
 
+  group('SwitchWalletEvent', () {
+    test('same id is equal and props match', () {
+      final a = SwitchWalletEvent(4);
+      final b = SwitchWalletEvent(4);
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+      expect(a.props, [4]);
+    });
+
+    test('different ids are unequal', () {
+      expect(SwitchWalletEvent(1), isNot(equals(SwitchWalletEvent(2))));
+    });
+  });
+
   group('LoadWalletEvent', () {
     test('same wallet is equal and props match', () {
       final AWallet wallet = _FakeWallet();

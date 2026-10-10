@@ -25,10 +25,12 @@ void main() {
     final exceptions = <Object>[
       const BitboxNotConnectedException(),
       const BitboxAddressUnavailableException(),
+      const BitboxAddressMismatchException(),
       const SigningCancelledException(),
       const ApiException(code: 'TEST', message: 'test'),
       const UpgradeRequiredException(minSupportedVersion: '1.3.0'),
       const RegistrationRejectedException(code: 'TEST', message: 'test'),
+      const InsufficientEthForGasException(message: 'test'),
       const RegistrationRequiredException(code: 'TEST', message: 'test'),
       const KycLevelRequiredException(
         code: 'TEST',
