@@ -86,7 +86,8 @@ void main() {
       expect(find.byType(PayLocationsPage), findsOneWidget);
       expect(find.text(S.current.next), findsOneWidget);
       // Payment is not made with the shares. The proceeds, minus the fee, are
-      // received as ZCHF, and only whole shares are sold.
+      // received as ZCHF, and only whole shares are sold. The round-up is not
+      // credited to the wallet.
       expect(
         S.current.payInfoBody,
         anyOf(
@@ -103,6 +104,12 @@ void main() {
         S.current.payInfoBody,
         anyOf(contains('ganze Aktien'), contains('whole shares')),
       );
+      expect(
+        S.current.payInfoBody,
+        anyOf(contains('nicht gutgeschrieben'), contains('not credited to you')),
+      );
+      expect(S.current.payInfoBody, isNot(contains('bleibt als ZCHF')));
+      expect(S.current.payInfoBody, isNot(contains('stays as ZCHF')));
     });
 
     testWidgets('continues to the scanner with the initial payload', (tester) async {
