@@ -187,7 +187,7 @@
   "payFailurePayUnavailable": "Pay is available with the software wallet only.",
   "payFailureQuoteExpired": "The payment quote expired. Please scan the code again.",
   "payFailureTitle": "Payment failed",
-  "payInfoBody": "With the pay function you pay in shops that accept OpenCryptoPay, currently especially at selected SPAR stores in German-speaking Switzerland.\n\nFor every payment you sell REALU; the merchant is paid from the proceeds. Because only whole shares are sold, the sale is rounded up to whole REALU. The round-up amount is not credited to you and weighs more heavily on small amounts.",
+  "payInfoBody": "With the pay function you pay in shops that accept OpenCryptoPay, currently especially at selected SPAR stores in German-speaking Switzerland.\n\nYou do not pay with your shares. For each payment you sell REALU. You receive the proceeds minus the fee in ZCHF, a Swiss-franc stablecoin, and that ZCHF is what pays. Because only whole shares can be sold, the proceeds are usually a little above the bill. The remainder stays as ZCHF on your wallet address and is used first on the next payment. Before you confirm, you see the number of shares, the price and the fee. Each payment appears in the history as a sale.",
   "payInfoLocationsLink": "Show locations",
   "payInfoTitle": "Before you pay",
   "payLocationsCountMany": "${count} locations",

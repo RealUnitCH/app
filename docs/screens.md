@@ -33,7 +33,9 @@ Column meaning:
   `268` is `PhoneNumberField` under `test/goldens/widgets/form/`, and slot
   `393` is `ImageSourceSheet`. `WebViewPage` is slots `394` and `395` (the
   chrome; the page body is the website and is not part of the picture).
-  `PayScanPage` is `338`. `PayInfoPage` is `300` and `425`.
+  `PayScanPage` is `338`. `PayInfoPage` is `300` and `425`. `/pay` shows
+  `PayInfoPage` until a software wallet has seen that intro, then
+  `PayScanPage`. The shop-map link stays on the scanner.
   `PayProcessPage` is `332` and `334`.
   `PayResultSheet` is `420`. `KycPageManager`
   (the orchestrator has no Golden of its own — its states are the
