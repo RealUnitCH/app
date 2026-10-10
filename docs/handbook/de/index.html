@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 424 Visual-Regression Goldens (424 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 429 Visual-Regression Goldens (429 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 424 App-Screenshots dieser Seite sind Goldens aus
+            Die 429 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 424 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 429 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -4543,6 +4543,70 @@
               </div>
               <div class="desc">
                 Die Detailseite einer Empfehlungsprämie zeigt den Titel <b>Empfehlungsprämie</b>, den Betrag <b>+ 20 REALU</b> und die Gutschrift <b>246.50</b>. Sie zeigt weder den Abschnitt <b>Belege</b> noch einen Button <b>Beleg</b>.
+              </div>
+            </div>
+            <div class="test" id="416-transaction-detail-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#416-transaction-detail-back-to-main">416-transaction-detail-back-to-main</a>
+                <button class="copy-link" type="button" data-target="416-transaction-detail-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/416-transaction-detail-back-to-main.png"
+                  alt="Verkauf mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Bezahlen mit Transaktions-Hash zeigt den Titel <b>Verkauf</b>, den Abschnitt <b>Belege</b>, die Buttons <b>RealUnit-Verkauf</b> und <b>Tausch ZCHF in CHF/EUR</b> und den Button <b>Zurück zum Hauptscreen</b>.
+              </div>
+            </div>
+            <div class="test" id="417-transaction-detail-sent-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#417-transaction-detail-sent-back-to-main">417-transaction-detail-sent-back-to-main</a>
+                <button class="copy-link" type="button" data-target="417-transaction-detail-sent-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sent_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/417-transaction-detail-sent-back-to-main.png"
+                  alt="Gesendet mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Überweisen mit Transaktions-Hash zeigt den Titel <b>Gesendet</b>, den Betrag <b>- 10 REALU</b>, den Abschnitt <b>Belege</b>, den Button <b>Beleg</b> und den Button <b>Zurück zum Hauptscreen</b>. Sie zeigt weder <b>Verkauf</b> noch <b>RealUnit-Verkauf</b>.
+              </div>
+            </div>
+            <div class="test" id="418-transaction-detail-sale-no-receipt-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#418-transaction-detail-sale-no-receipt-back-to-main">418-transaction-detail-sale-no-receipt-back-to-main</a>
+                <button class="copy-link" type="button" data-target="418-transaction-detail-sale-no-receipt-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/418-transaction-detail-sale-no-receipt-back-to-main.png"
+                  alt="Verkauf ohne Beleg mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Bezahlen ohne Transaktions-Hash zeigt den Titel <b>Verkauf</b>, den Betrag <b>- 20 REALU</b> und den Button <b>Zurück zum Hauptscreen</b>. Sie zeigt keinen Abschnitt <b>Belege</b>.
+              </div>
+            </div>
+            <div class="test" id="419-transaction-detail-sent-no-receipt-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#419-transaction-detail-sent-no-receipt-back-to-main">419-transaction-detail-sent-no-receipt-back-to-main</a>
+                <button class="copy-link" type="button" data-target="419-transaction-detail-sent-no-receipt-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/419-transaction-detail-sent-no-receipt-back-to-main.png"
+                  alt="Gesendet ohne Beleg mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Überweisen ohne Transaktions-Hash zeigt den Titel <b>Gesendet</b>, den Betrag <b>- 10 REALU</b> und den Button <b>Zurück zum Hauptscreen</b>. Sie zeigt keinen Abschnitt <b>Belege</b> und keinen Button <b>Beleg</b>.
               </div>
             </div>
             <div class="test" id="98-transaction-history-row-receipt-loading">
@@ -9309,7 +9373,7 @@
                 <div class="file">test/goldens/screens/pay/</div>
               </div>
               <div class="rhs">
-                <b>16 Screens</b>
+                <b>17 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
@@ -9337,18 +9401,45 @@
               <div class="img">
                 <img
                   src="../screenshots/300-pay-info.png"
-                  alt="Bevor Sie bezahlen — Hinweis auf Verkauf und Aufrundung"
+                  alt="Bevor Sie bezahlen — Hinweis, dass nicht mit den Aktien, sondern mit ZCHF bezahlt wird"
                 />
               </div>
               <div class="desc">
-                Intro-Seite <b>Bevor Sie bezahlen</b> mit dem von RealUnit Legal
-                freigegebenen Text (28.09.2026): Bezahlen in Geschäften mit
+                Intro-Seite <b>Bevor Sie bezahlen</b>: Bezahlen in Geschäften mit
                 OpenCryptoPay, derzeit insbesondere ausgewählte SPAR-Filialen der
-                Deutschschweiz; für jede Zahlung wird REALU verkauft und aus dem
-                Erlös der Händler bezahlt; Aufrundung auf ganze REALU, der
-                Aufrundungsbetrag wird nicht gutgeschrieben.
+                Deutschschweiz. Bezahlt wird nicht mit den Aktien. Für jede
+                Zahlung wird REALU verkauft; den Erlös abzüglich der Gebühr
+                erhält man in ZCHF, einem Stablecoin in Schweizer Franken, und
+                mit diesem ZCHF wird bezahlt. Weil nur ganze Aktien verkauft
+                werden können, wird auf ganze REALU aufgerundet. Der
+                Aufrundungsbetrag wird nicht gutgeschrieben und fällt bei
+                kleinen Beträgen stärker ins Gewicht. Vor der
+                Bestätigung sieht man Anzahl, Preis und Gebühr. Jede Zahlung
+                erscheint in der Historie als Verkauf.
                 Der Link «Standorte anzeigen» öffnet die In-App-Karte der Geschäfte, in denen OpenCryptoPay ZCHF auf Ethereum akzeptiert. Eine andere Chain oder ein anderes Asset ist nicht wählbar.
+                Bei einer Software-Wallet erscheint diese Seite nur einmal; danach öffnet Bezahlen direkt den Scanner. Dort bleibt derselbe Link.
                 Golden-Quelle: <code>pay_info_page.png</code>.
+              </div>
+            </div>
+            <div class="test" id="425-pay-info-pay-unavailable">
+              <div class="head">
+                <a class="name permalink" href="#425-pay-info-pay-unavailable">425-pay-info-pay-unavailable</a>
+                <button class="copy-link" type="button" data-target="425-pay-info-pay-unavailable" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">pay_info_golden_test.dart</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/425-pay-info-pay-unavailable.png"
+                  alt="Bevor Sie bezahlen — nur Software-Wallet"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Intro-Seite <b>Bevor Sie bezahlen</b>, wenn die geöffnete
+                Wallet keine Software-Wallet ist. Sichtbar ist nur der Satz
+                <b>Bezahlen gibt es nur mit der Software-Wallet.</b>
+                Es gibt kein Weiter, keinen Scanner und kein Fehler-Sheet.
+                Das ist keine fehlgeschlagene Zahlung.
+                Golden-Quelle: <code>pay_info_page_pay_unavailable.png</code>.
               </div>
             </div>
             <div class="test" id="301-pay-quote-ready">
@@ -9456,21 +9547,22 @@
                 <b>Zahlung wird abgeschlossen</b>.
               </div>
             </div>
-            <div class="test" id="333-pay-process-page-pay-retry">
+            <div class="test" id="420-pay-result-sheet-failure">
               <div class="head">
-                <a class="name permalink" href="#333-pay-process-page-pay-retry">333-pay-process-page-pay-retry</a>
-                <button class="copy-link" type="button" data-target="333-pay-process-page-pay-retry" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">pay_process_golden_test.dart</span>
+                <a class="name permalink" href="#420-pay-result-sheet-failure">420-pay-result-sheet-failure</a>
+                <button class="copy-link" type="button" data-target="420-pay-result-sheet-failure" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">pay_result_sheet_golden_test.dart</span>
               </div>
               <div class="img">
                 <img
-                  src="../screenshots/333-pay-process-page-pay-retry.png"
-                  alt="Bezahlen, erneuter Zahlungsversuch"
+                  src="../screenshots/420-pay-result-sheet-failure.png"
+                  alt="Zahlung fehlgeschlagen"
                 />
               </div>
               <div class="desc">
-                Zahlungsablauf mit der Beschriftung für den erneuten
-                Zahlungsversuch. Titel <b>Schließen Sie Ihre Zahlung ab</b>.
+                Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
+                <b>Bei der Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.</b>
+                Die graue Schaltfläche lautet <b>Schließen</b>.
               </div>
             </div>
             <div class="test" id="334-pay-process-page-swapping">
@@ -9504,7 +9596,8 @@
               </div>
               <div class="desc">
                 Scan-Seite im Scan-Zustand mit Platzhalter für die Kamera. Titel
-                <b>Zahlungscode scannen</b>.
+                <b>Zahlungscode scannen</b>. Der Link <b>Standorte anzeigen</b>
+                öffnet dieselbe Karte wie auf der Intro-Seite.
               </div>
             </div>
             <div class="test" id="410-pay-locations-loading">

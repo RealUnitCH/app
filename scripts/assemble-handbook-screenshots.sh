@@ -385,7 +385,6 @@ MAPPING=(
   "330-kyc-registration-referral-step-unavailable=screens/kyc/goldens/macos/kyc_registration_referral_step_unavailable.png"
   "331-kyc-unsupported-step-page-default=screens/kyc/goldens/macos/kyc_unsupported_step_page_default.png"
   "332-pay-process-page-awaiting-settlement=screens/pay/goldens/macos/pay_process_page_awaiting_settlement.png"
-  "333-pay-process-page-pay-retry=screens/pay/goldens/macos/pay_process_page_pay_retry.png"
   "334-pay-process-page-swapping=screens/pay/goldens/macos/pay_process_page_swapping.png"
   "335-pay-quote-page-expired=screens/pay/goldens/macos/pay_quote_page_expired.png"
   "336-pay-quote-page-loading=screens/pay/goldens/macos/pay_quote_page_loading.png"
@@ -468,6 +467,12 @@ MAPPING=(
   "413-pay-locations-places=screens/pay/goldens/macos/pay_locations_page_places.png"
   "414-pay-locations-no-match=screens/pay/goldens/macos/pay_locations_page_no_match.png"
   "415-pay-locations-unpublished=screens/pay/goldens/macos/pay_locations_page_unpublished.png"
+  "416-transaction-detail-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_back_to_main.png"
+  "417-transaction-detail-sent-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_back_to_main.png"
+  "418-transaction-detail-sale-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png"
+  "419-transaction-detail-sent-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png"
+  "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
+  "425-pay-info-pay-unavailable=screens/pay/goldens/macos/pay_info_page_pay_unavailable.png"
 )
 
 missing=()
