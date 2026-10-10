@@ -89,7 +89,10 @@ void main() {
       // received as ZCHF, and only whole shares are sold.
       expect(
         S.current.payInfoBody,
-        anyOf(contains('nicht mit Ihren Aktien'), contains('not with your shares')),
+        anyOf(
+          contains('nicht mit Ihren Aktien'),
+          contains('do not pay with your shares'),
+        ),
       );
       expect(S.current.payInfoBody, contains('ZCHF'));
       expect(
