@@ -213,13 +213,27 @@ lib/
 - Before adding a new key: search existing keys first — reuse where possible.
 - Avoid using `S.current` (no context) in cubits/blocs. Prefer emitting typed states and resolving localization in the UI via `S.of(context)`. When localization is needed in functions, pass `BuildContext` rather than `S`.
 
-### Shareholder wording
+### German forms of address
 
-German text in this repository that names the shareholders uses **Aktionärinnen und Aktionäre**. That is the only correct form, and it is the form to use every time. It applies to `assets/languages/strings_de.arb`, `docs/handbook/de/`, and any other German wording the app shows.
+German product copy that names a person uses two forms. The rule applies to every German noun that names a person, not to one role. The examples show the pattern. They are not a list of the nouns it covers.
 
-Do not use **AktionärIn**, **Aktionär**, **Aktionäre**, or **Aktionärin** as a stand-in for the group, and do not use a gender star, colon, or underscore (`Aktionär:innen`, `Aktionär*innen`, `Aktionär_innen`). If a label is too short for the full form, rewrite the sentence so the full form fits. Do not shorten it.
+- A group: the feminine plural and the masculine plural, written out (`Aktionärinnen und Aktionäre`, `Anlegerinnen und Anleger`).
+- One person whose gender is not known: the feminine singular or the masculine singular, in the grammatical case of the sentence (`eine Aktionärin oder ein Aktionär`, `einer Anlegerin oder einem Anleger`).
+- One identified person: the form that matches that person.
 
-English stays **shareholder** or **shareholders**. A pull request that adds or changes German shareholder wording and uses another form is a blocking review finding.
+Do not mark gender inside a word with an interior capital (`AktionärIn`, `AnlegerInnen`), a gender star, a colon, or an underscore (`Aktionär:innen`, `Aktionär*innen`, `Aktionär_innen`). Do not use the masculine alone as a stand-in for unknown people.
+
+Leave these unchanged:
+
+- Proper names, including company names such as Aktionariat.
+- Compounds that name a thing rather than a person (`Aktionärsrechte`, `Aktionärsdaten`, `Aktionärsdokumente`, `Aktienbuch`).
+- Wording that reproduces a legal source, such as a registration agreement, a prospectus, or a statute. Change that only when the source changes.
+
+If a label is too short for the full form, rewrite the sentence so the full form fits and the grammar agrees. Do not shorten it.
+
+English uses the ordinary English word (`shareholder`, `shareholders`). Do not build a German-style pair in English.
+
+This applies to `assets/languages/strings_de.arb`, `docs/handbook/de/`, and any other German product wording the app shows. A pull request that adds or changes such wording and breaks this rule is a blocking review finding. Wording the pull request does not touch stays as it is.
 
 ## Release Versioning
 
