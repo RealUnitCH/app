@@ -4,10 +4,10 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 /// The payment flow in one picture, as RealUnit asked for on 06.10.2026: the
 /// shareholder sells REALU for ZCHF (1), the merchant receives the countervalue
-/// for the goods (2). Three stations with the two numbered steps explained
-/// below. Above the default text size the stations stand one below the other
-/// so the full names fit on a narrow phone. The arrows are decorative for
-/// screen readers; the legend carries the numbered steps.
+/// for the goods (2). Three stations with one word under each icon, and the
+/// two numbered steps explained below. Above the default text size the
+/// stations stand one below the other so that word is not squeezed. The arrows
+/// are decorative for screen readers; the legend carries the numbered steps.
 class PayFlowDiagram extends StatelessWidget {
   const PayFlowDiagram({super.key});
 
@@ -81,6 +81,9 @@ class _Station extends StatelessWidget {
         Text(
           label,
           textAlign: .center,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: RealUnitColors.neutral900,
             fontWeight: FontWeight.w600,
