@@ -212,6 +212,12 @@ class SettingsRepository {
   set softwareTermsAccepted(bool accepted) =>
       _sharedPreferences.setBool('softwareTermsAccepted', accepted);
 
+  /// Software-wallet pay disclosure. A hardware wallet never sets this:
+  /// its unavailable notice is not the disclosure.
+  bool get payIntroSeen => _sharedPreferences.getBool('payIntroSeen') ?? false;
+
+  set payIntroSeen(bool seen) => _sharedPreferences.setBool('payIntroSeen', seen);
+
   bool get insiderFeaturesUnlocked =>
       _sharedPreferences.getBool('insiderFeaturesUnlocked') ?? false;
   set insiderFeaturesUnlocked(bool unlocked) =>

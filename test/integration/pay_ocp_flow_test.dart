@@ -278,10 +278,7 @@ void main() {
 
         await cubit.start();
 
-        expect(
-          (cubit.state as PayProcessFailure).reason,
-          PayProcessFailureReason.payUnavailable,
-        );
+        expect(cubit.state, isA<PayProcessNotOffered>());
         expect(cubit.swapCompleted, isFalse);
         await cubit.close();
       });
