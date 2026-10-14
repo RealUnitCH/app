@@ -213,6 +213,14 @@ lib/
 - Before adding a new key: search existing keys first — reuse where possible.
 - Avoid using `S.current` (no context) in cubits/blocs. Prefer emitting typed states and resolving localization in the UI via `S.of(context)`. When localization is needed in functions, pass `BuildContext` rather than `S`.
 
+### Shareholder wording
+
+German text in this repository that names the shareholders uses **Aktionärinnen und Aktionäre**. That is the only correct form, and it is the form to use every time. It applies to `assets/languages/strings_de.arb`, `docs/handbook/de/`, and any other German wording the app shows.
+
+Do not use **AktionärIn**, **Aktionär**, **Aktionäre**, or **Aktionärin** as a stand-in for the group, and do not use a gender star, colon, or underscore (`Aktionär:innen`, `Aktionär*innen`, `Aktionär_innen`). If a label is too short for the full form, rewrite the sentence so the full form fits. Do not shorten it.
+
+English stays **shareholder** or **shareholders**. A pull request that adds or changes German shareholder wording and uses another form is a blocking review finding.
+
 ## Release Versioning
 
 - Single source of truth for a published build: the git tag. Tags are plain SemVer `vX.Y.Z` — no pre-release suffix. The previous `vX.Y.Z-beta.N` schema has been retired and tags carrying any suffix are rejected by the generator.
