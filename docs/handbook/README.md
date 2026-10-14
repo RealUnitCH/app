@@ -261,10 +261,11 @@ Handbook-Build eingezogen: der Step "Stage web e2e baselines from web repo" in
 Ref bleibt — wie der api-Checkout — auf `develop` gepinnt (Integrations-Branch =
 aktuell akzeptierte Baselines), unabhängig vom Deploy-Branch `staging`.
 
-Kommt im web-Repo eine View hinzu oder weg, failt der Build am
-`EXPECTED_WEB_BASELINE_COUNT`-Guard des Steps — dann die Zahl in `handbook.yaml`
-**und** die Bild-Karten in `#spec-web` (`docs/handbook/de/index.html`) im selben
-Zug anpassen. Eine reine Website-Änderung im web-Repo löst hier **keinen**
+Kommt im web-Repo eine View hinzu oder weg, failt der Build: die Bild-Karten
+in `#spec-web` (`docs/handbook/de/index.html`) müssen dieselben Pfade sein wie
+die PNGs unter `tests/__screenshots__/`. Die Karte wird im selben Zug ergänzt
+oder entfernt. Die Anzahl steht nicht in `handbook.yaml`. Eine reine
+Website-Änderung im web-Repo löst hier **keinen**
 automatischen Rebuild aus — sie fliesst erst mit dem nächsten Handbook-Deploy
 rein (Push auf `staging` → PRD, oder manueller `workflow_dispatch --ref staging`
 auf `handbook-deploy.yaml`).
