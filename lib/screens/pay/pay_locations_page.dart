@@ -327,7 +327,16 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       separatorBuilder: (_, _) => const Divider(height: 1, color: RealUnitColors.neutral200),
       itemBuilder: (context, index) {
         final pin = visible[index];
-        final label = payLocationLabel(pin.name);
+        final String title;
+        final String? subtitle;
+        if (pin.addressLine.isNotEmpty) {
+          title = pin.name;
+          subtitle = pin.addressLine;
+        } else {
+          final label = payLocationLabel(pin.name);
+          title = label.place;
+          subtitle = label.street;
+        }
         final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
         return Material(
           color: selected ? RealUnitColors.brand200 : RealUnitColors.basic.white,
@@ -339,16 +348,16 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label.place,
+                    title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (label.street != null)
+                  if (subtitle != null)
                     Text(
-                      label.street!,
+                      subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -419,7 +428,8 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         initialCameraFit: CameraFit.bounds(bounds: _countryBounds, padding: const .all(28)),
         backgroundColor: RealUnitColors.brand200,
         interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.drag |
+          flags:
+              InteractiveFlag.drag |
               InteractiveFlag.pinchMove |
               InteractiveFlag.pinchZoom |
               InteractiveFlag.doubleTapZoom |
@@ -497,7 +507,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   List<Marker> _selectedMarkers(PayLocationPin pin) {
-    final town = payLocationLabel(pin.name).town;
+    final town = pin.city ?? payLocationLabel(pin.name).town;
     return [
       Marker(
         point: LatLng(pin.lat, pin.lon),
@@ -548,7 +558,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       final pin = cluster.pins.single;
       final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
       final size = selected ? 22.0 : 16.0;
-      final town = payLocationLabel(pin.name).town;
+      final town = pin.city ?? payLocationLabel(pin.name).town;
       return [
         Marker(
           point: LatLng(pin.lat, pin.lon),
