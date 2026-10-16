@@ -12,6 +12,8 @@ import '../../../helper/helper.dart';
 
 const _placesBody =
     '{"places":[{"name":"SPAR Zürich","category":"grocery","lat":47.37,"lon":8.54,'
+    '"shopType":"SPAR","street":"Bahnhofstrasse","houseNumber":"1",'
+    '"postalCode":"8001","city":"Zürich","country":"CH",'
     '"supports":[{"blockchain":"Ethereum","asset":"ZCHF"}]}]}';
 
 final String _publishedPlacesBody = File(

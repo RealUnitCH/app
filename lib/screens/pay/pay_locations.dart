@@ -11,13 +11,42 @@ class PayLocationPin {
   final String? category;
   final double lat;
   final double lon;
+  final String? street;
+  final String? houseNumber;
+  final String? postalCode;
+  final String? city;
+  final String? description;
 
   const PayLocationPin({
     required this.name,
     required this.category,
     required this.lat,
     required this.lon,
+    this.street,
+    this.houseNumber,
+    this.postalCode,
+    this.city,
+    this.description,
   });
+
+  String get addressLine {
+    final streetValue = street;
+    final houseNumberValue = houseNumber;
+    final postalCodeValue = postalCode;
+    final cityValue = city;
+    final streetLine = [
+      if (streetValue != null && streetValue.isNotEmpty) streetValue,
+      if (houseNumberValue != null && houseNumberValue.isNotEmpty) houseNumberValue,
+    ].join(' ');
+    final cityLine = [
+      if (postalCodeValue != null && postalCodeValue.isNotEmpty) postalCodeValue,
+      if (cityValue != null && cityValue.isNotEmpty) cityValue,
+    ].join(' ');
+    return [
+      if (streetLine.isNotEmpty) streetLine,
+      if (cityLine.isNotEmpty) cityLine,
+    ].join(', ');
+  }
 }
 
 bool payLocationsPlacesBodyIsList(Object? body) {
@@ -71,6 +100,11 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
         category: category is String ? category : null,
         lat: lat,
         lon: lon,
+        street: _optionalString(place['street']),
+        houseNumber: _optionalString(place['houseNumber']),
+        postalCode: _optionalString(place['postalCode']),
+        city: _optionalString(place['city']),
+        description: _optionalString(place['description']),
       ),
     );
   }
@@ -128,7 +162,14 @@ List<PayLocationPin> filterPayLocationPins(List<PayLocationPin> pins, String que
   if (needle.isEmpty) {
     return pins;
   }
-  return [for (final pin in pins) if (pin.name.toLowerCase().contains(needle)) pin];
+  return [
+    for (final pin in pins)
+      if (pin.name.toLowerCase().contains(needle) ||
+          (pin.city?.toLowerCase().contains(needle) ?? false) ||
+          (pin.street?.toLowerCase().contains(needle) ?? false) ||
+          (pin.postalCode?.toLowerCase().contains(needle) ?? false))
+        pin,
+  ];
 }
 
 class PayLocationLabel {
@@ -150,32 +191,56 @@ class PayLocationLabel {
 
 final RegExp _postalTown = RegExp(r'^\d{4}\s+(.+)$');
 
-PayLocationLabel payLocationLabel(String name) {
+PayLocationLabel payLocationLabel(
+  String name, {
+  String? city,
+  String? street,
+  String? houseNumber,
+}) {
+  final trimmedCity = city?.trim();
+  if (trimmedCity != null && trimmedCity.isNotEmpty) {
+    final streetLine = [
+      if (street != null && street.trim().isNotEmpty) street.trim(),
+      if (houseNumber != null && houseNumber.trim().isNotEmpty) houseNumber.trim(),
+    ].join(' ');
+    return PayLocationLabel(trimmedCity, streetLine.isEmpty ? null : streetLine);
+  }
+
   final trimmed = name.trim();
   final comma = trimmed.lastIndexOf(',');
   if (comma <= 0 || comma >= trimmed.length - 1) {
     return PayLocationLabel(trimmed, null);
   }
 
-  final street = trimmed.substring(0, comma).trim();
+  final parsedStreet = trimmed.substring(0, comma).trim();
   final place = trimmed.substring(comma + 1).trim();
-  if (street.isEmpty || place.isEmpty) {
+  if (parsedStreet.isEmpty || place.isEmpty) {
     return PayLocationLabel(trimmed, null);
   }
-  return PayLocationLabel(place, street);
+  return PayLocationLabel(place, parsedStreet);
 }
 
 List<PayLocationPin> sortPayLocationPins(List<PayLocationPin> pins) {
   final sorted = [...pins]..sort((a, b) {
-    final left = payLocationLabel(a.name);
-    final right = payLocationLabel(b.name);
-    final byTown = left.town.compareTo(right.town);
-    if (byTown != 0) {
-      return byTown;
+    final left = payLocationLabel(
+      a.name,
+      city: a.city,
+      street: a.street,
+      houseNumber: a.houseNumber,
+    );
+    final right = payLocationLabel(
+      b.name,
+      city: b.city,
+      street: b.street,
+      houseNumber: b.houseNumber,
+    );
+    final byCity = left.town.compareTo(right.town);
+    if (byCity != 0) {
+      return byCity;
     }
-    final byPlace = left.place.compareTo(right.place);
-    if (byPlace != 0) {
-      return byPlace;
+    final byName = a.name.compareTo(b.name);
+    if (byName != 0) {
+      return byName;
     }
     return (left.street ?? '').compareTo(right.street ?? '');
   });
@@ -227,4 +292,12 @@ double? _finiteDouble(Object? value) {
 
   final number = value.toDouble();
   return number.isFinite ? number : null;
+}
+
+String? _optionalString(Object? value) {
+  if (value is! String) {
+    return null;
+  }
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }

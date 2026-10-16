@@ -327,7 +327,13 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       separatorBuilder: (_, _) => const Divider(height: 1, color: RealUnitColors.neutral200),
       itemBuilder: (context, index) {
         final pin = visible[index];
-        final label = payLocationLabel(pin.name);
+        var address = pin.addressLine;
+        if (address.isEmpty) {
+          final label = payLocationLabel(pin.name);
+          if (label.street != null) {
+            address = '${label.street}, ${label.place}';
+          }
+        }
         final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
         return Material(
           color: selected ? RealUnitColors.brand200 : RealUnitColors.basic.white,
@@ -339,16 +345,16 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label.place,
+                    pin.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (label.street != null)
+                  if (address.isNotEmpty)
                     Text(
-                      label.street!,
+                      address,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -497,7 +503,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   List<Marker> _selectedMarkers(PayLocationPin pin) {
-    final town = payLocationLabel(pin.name).town;
+    final town = pin.city ?? payLocationLabel(pin.name).town;
     return [
       Marker(
         point: LatLng(pin.lat, pin.lon),
@@ -548,7 +554,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       final pin = cluster.pins.single;
       final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
       final size = selected ? 22.0 : 16.0;
-      final town = payLocationLabel(pin.name).town;
+      final town = pin.city ?? payLocationLabel(pin.name).town;
       return [
         Marker(
           point: LatLng(pin.lat, pin.lon),

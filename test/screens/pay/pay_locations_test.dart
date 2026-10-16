@@ -180,7 +180,32 @@ void main() {
     expect(samePayLocationPin(bern, zurich), isFalse);
   });
 
-  test('splits a published address into place and street', () {
+  test('joins a structured address into one line', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Triesen',
+      category: null,
+      lat: 47.116,
+      lon: 9.524,
+      street: 'Maschlinastrasse',
+      houseNumber: '4',
+      postalCode: '9495',
+      city: 'Triesen',
+    );
+    expect(pin.addressLine, 'Maschlinastrasse 4, 9495 Triesen');
+
+    const withoutHouse = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 47,
+      lon: 8,
+      street: 'Bahnhofstrasse',
+      postalCode: '8001',
+      city: 'Zürich',
+    );
+    expect(withoutHouse.addressLine, 'Bahnhofstrasse, 8001 Zürich');
+  });
+
+  test('falls back to splitting the name when city is missing', () {
     final label = payLocationLabel('SPAR Bahnhofstrasse 1, 9403 Goldach');
 
     expect(label.place, '9403 Goldach');
@@ -195,26 +220,65 @@ void main() {
     final dashed = payLocationLabel('SPAR Seestrasse 1–3, 8640 Rapperswil');
     expect(dashed.street, 'SPAR Seestrasse 1–3');
     expect(dashed.town, 'Rapperswil');
+
+    final fromCity = payLocationLabel(
+      'SPAR Triesen',
+      city: 'Triesen',
+      street: 'Maschlinastrasse',
+      houseNumber: '4',
+    );
+    expect(fromCity.place, 'Triesen');
+    expect(fromCity.street, 'Maschlinastrasse 4');
+    expect(fromCity.town, 'Triesen');
   });
 
-  test('sorts published addresses by town', () {
+  test('sorts shops by city', () {
     const zurich = PayLocationPin(
-      name: 'SPAR Bahnhofstrasse 1, 8001 Zürich',
+      name: 'SPAR',
       category: null,
       lat: 47.37,
       lon: 8.54,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
     );
     const bern = PayLocationPin(
-      name: 'SPAR Marktgasse 1, 3011 Bern',
+      name: 'SPAR',
       category: null,
       lat: 46.95,
       lon: 7.45,
+      city: 'Bern',
+      street: 'Marktgasse',
     );
 
-    expect(sortPayLocationPins(const [zurich, bern]).map((pin) => pin.name), [
-      bern.name,
-      zurich.name,
+    expect(sortPayLocationPins(const [zurich, bern]).map((pin) => pin.city), [
+      'Bern',
+      'Zürich',
     ]);
+  });
+
+  test('filters shops by city', () {
+    const zurich = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 47,
+      lon: 8,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
+      postalCode: '8001',
+    );
+    const bern = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 46.9,
+      lon: 7.4,
+      city: 'Bern',
+      street: 'Marktgasse',
+      postalCode: '3011',
+    );
+
+    expect(filterPayLocationPins(const [zurich, bern], 'bern'), [bern]);
+    expect(filterPayLocationPins(const [zurich, bern], 'marktgasse'), [bern]);
+    expect(filterPayLocationPins(const [zurich, bern], '8001'), [zurich]);
   });
 
   test('spreads the published shops across the country view', () {
