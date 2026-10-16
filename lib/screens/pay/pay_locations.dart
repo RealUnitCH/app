@@ -15,7 +15,6 @@ class PayLocationPin {
   final String? houseNumber;
   final String? postalCode;
   final String? city;
-  final String? description;
 
   const PayLocationPin({
     required this.name,
@@ -26,7 +25,6 @@ class PayLocationPin {
     this.houseNumber,
     this.postalCode,
     this.city,
-    this.description,
   });
 
   String get addressLine {
@@ -75,18 +73,23 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
       continue;
     }
 
-    // The published list omits supports. Keep those places. A present
-    // supports list must include ZCHF on Ethereum.
+    // Absent supports, and [] for "not stated", keep the place: the API
+    // already filtered the request by blockchain/asset. A non-empty list
+    // must include ZCHF on Ethereum. Any other supports value is dropped.
     final supports = place['supports'];
-    if (supports != null &&
-        (supports is! List ||
-            !supports.any(
-              (support) =>
-                  support is Map &&
-                  support['blockchain'] == payLocationsBlockchain &&
-                  support['asset'] == payLocationsAsset,
-            ))) {
-      continue;
+    if (supports != null) {
+      if (supports is! List) {
+        continue;
+      }
+      if (supports.isNotEmpty &&
+          !supports.any(
+            (support) =>
+                support is Map &&
+                support['blockchain'] == payLocationsBlockchain &&
+                support['asset'] == payLocationsAsset,
+          )) {
+        continue;
+      }
     }
 
     final name = place['name'];
@@ -104,7 +107,6 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
         houseNumber: _optionalString(place['houseNumber']),
         postalCode: _optionalString(place['postalCode']),
         city: _optionalString(place['city']),
-        description: _optionalString(place['description']),
       ),
     );
   }
@@ -167,7 +169,8 @@ List<PayLocationPin> filterPayLocationPins(List<PayLocationPin> pins, String que
       if (pin.name.toLowerCase().contains(needle) ||
           (pin.city?.toLowerCase().contains(needle) ?? false) ||
           (pin.street?.toLowerCase().contains(needle) ?? false) ||
-          (pin.postalCode?.toLowerCase().contains(needle) ?? false))
+          (pin.postalCode?.toLowerCase().contains(needle) ?? false) ||
+          pin.addressLine.toLowerCase().contains(needle))
         pin,
   ];
 }
@@ -221,30 +224,80 @@ PayLocationLabel payLocationLabel(
 }
 
 List<PayLocationPin> sortPayLocationPins(List<PayLocationPin> pins) {
-  final sorted = [...pins]..sort((a, b) {
-    final left = payLocationLabel(
-      a.name,
-      city: a.city,
-      street: a.street,
-      houseNumber: a.houseNumber,
-    );
-    final right = payLocationLabel(
-      b.name,
-      city: b.city,
-      street: b.street,
-      houseNumber: b.houseNumber,
-    );
-    final byCity = left.town.compareTo(right.town);
-    if (byCity != 0) {
-      return byCity;
-    }
-    final byName = a.name.compareTo(b.name);
-    if (byName != 0) {
-      return byName;
-    }
-    return (left.street ?? '').compareTo(right.street ?? '');
-  });
+  final sorted = [...pins]
+    ..sort((a, b) {
+      final left = payLocationLabel(
+        a.name,
+        city: a.city,
+        street: a.street,
+        houseNumber: a.houseNumber,
+      );
+      final right = payLocationLabel(
+        b.name,
+        city: b.city,
+        street: b.street,
+        houseNumber: b.houseNumber,
+      );
+      final byCity = left.town.compareTo(right.town);
+      if (byCity != 0) {
+        return byCity;
+      }
+      final byName = a.name.compareTo(b.name);
+      if (byName != 0) {
+        return byName;
+      }
+      final leftStreet = _streetSortKey(a, left);
+      final rightStreet = _streetSortKey(b, right);
+      final byStreet = leftStreet.compareTo(rightStreet);
+      if (byStreet != 0) {
+        return byStreet;
+      }
+      final leftNumber = _leadingInt(a.houseNumber);
+      final rightNumber = _leadingInt(b.houseNumber);
+      if (leftNumber != null && rightNumber != null) {
+        final byNumber = leftNumber.compareTo(rightNumber);
+        if (byNumber != 0) {
+          return byNumber;
+        }
+      } else if (leftNumber != null) {
+        return -1;
+      } else if (rightNumber != null) {
+        return 1;
+      }
+      final byHouse = (a.houseNumber ?? '').compareTo(b.houseNumber ?? '');
+      if (byHouse != 0) {
+        return byHouse;
+      }
+      final byPostal = (a.postalCode ?? '').compareTo(b.postalCode ?? '');
+      if (byPostal != 0) {
+        return byPostal;
+      }
+      final byLat = a.lat.compareTo(b.lat);
+      if (byLat != 0) {
+        return byLat;
+      }
+      return a.lon.compareTo(b.lon);
+    });
   return sorted;
+}
+
+String _streetSortKey(PayLocationPin pin, PayLocationLabel label) {
+  final street = pin.street;
+  if (street != null && street.isNotEmpty) {
+    return street;
+  }
+  return label.street ?? '';
+}
+
+int? _leadingInt(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  final match = RegExp(r'^\d+').firstMatch(value);
+  if (match == null) {
+    return null;
+  }
+  return int.tryParse(match.group(0)!);
 }
 
 bool samePayLocationPin(PayLocationPin a, PayLocationPin b) {

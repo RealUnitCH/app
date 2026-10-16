@@ -327,12 +327,15 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       separatorBuilder: (_, _) => const Divider(height: 1, color: RealUnitColors.neutral200),
       itemBuilder: (context, index) {
         final pin = visible[index];
-        var address = pin.addressLine;
-        if (address.isEmpty) {
+        final String title;
+        final String? subtitle;
+        if (pin.addressLine.isNotEmpty) {
+          title = pin.name;
+          subtitle = pin.addressLine;
+        } else {
           final label = payLocationLabel(pin.name);
-          if (label.street != null) {
-            address = '${label.street}, ${label.place}';
-          }
+          title = label.place;
+          subtitle = label.street;
         }
         final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
         return Material(
@@ -345,16 +348,16 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    pin.name,
+                    title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (address.isNotEmpty)
+                  if (subtitle != null)
                     Text(
-                      address,
+                      subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -425,7 +428,8 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         initialCameraFit: CameraFit.bounds(bounds: _countryBounds, padding: const .all(28)),
         backgroundColor: RealUnitColors.brand200,
         interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.drag |
+          flags:
+              InteractiveFlag.drag |
               InteractiveFlag.pinchMove |
               InteractiveFlag.pinchZoom |
               InteractiveFlag.doubleTapZoom |
