@@ -2,8 +2,10 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -13,6 +15,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart'
 import 'package:realunit_wallet/screens/pay/cubits/pay_scan/pay_scan_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_page.dart';
 import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 import '../../helper/helper.dart';
 
@@ -66,7 +69,42 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.text(S.current.payScanTitle), findsOne);
+      expect(find.text(S.current.payInfoLocationsLink), findsOne);
       expect(find.byType(MobileScanner), findsOne);
+    });
+
+    testWidgets('the locations link opens the shop map', (tester) async {
+      final router = GoRouter(
+        initialLocation: '/scan',
+        routes: [
+          GoRoute(path: '/scan', builder: (_, _) => buildSubject()),
+          GoRoute(
+            path: '/payLocations',
+            name: AppRoutes.payLocations,
+            builder: (_, _) => const Text('shop-map'),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text(S.current.payInfoLocationsLink));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('shop-map'), findsOneWidget);
     });
 
     testWidgets('onDetect forwards a scanned raw value to the cubit', (tester) async {

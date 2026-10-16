@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 413 handbook screenshots from the visual-regression Golden
+# Assemble one handbook screenshot per mapping row from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -20,6 +20,8 @@
 # extended to cover every Golden baseline. When a new
 # handbook page is added, append a row here AND add the corresponding
 # Golden test — never source a screenshot from anywhere else.
+# Do not edit a workflow file to record the new total; this script fails
+# unless the PNG count equals the number of mapping rows.
 
 set -euo pipefail
 
@@ -383,7 +385,6 @@ MAPPING=(
   "330-kyc-registration-referral-step-unavailable=screens/kyc/goldens/macos/kyc_registration_referral_step_unavailable.png"
   "331-kyc-unsupported-step-page-default=screens/kyc/goldens/macos/kyc_unsupported_step_page_default.png"
   "332-pay-process-page-awaiting-settlement=screens/pay/goldens/macos/pay_process_page_awaiting_settlement.png"
-  "333-pay-process-page-pay-retry=screens/pay/goldens/macos/pay_process_page_pay_retry.png"
   "334-pay-process-page-swapping=screens/pay/goldens/macos/pay_process_page_swapping.png"
   "335-pay-quote-page-expired=screens/pay/goldens/macos/pay_quote_page_expired.png"
   "336-pay-quote-page-loading=screens/pay/goldens/macos/pay_quote_page_loading.png"
@@ -455,6 +456,25 @@ MAPPING=(
   "402-transaction-detail-sent=screens/transaction_history/goldens/macos/transaction_detail_sent.png"
   "403-transaction-detail-referral=screens/transaction_history/goldens/macos/transaction_detail_referral.png"
   "404-send-process-recipient-not-registered=screens/send/goldens/macos/send_process_recipient_not_registered.png"
+  "405-referral-create-impersonal=screens/referral/goldens/macos/referral_create_page_impersonal.png"
+  "406-referral-create-impersonal-creating=screens/referral/goldens/macos/referral_create_page_impersonal_creating.png"
+  "407-referral-create-impersonal-error=screens/referral/goldens/macos/referral_create_page_impersonal_error.png"
+  "408-referral-overview-impersonal=screens/referral/goldens/macos/referral_overview_page_impersonal.png"
+  "409-referral-overview-impersonal-one=screens/referral/goldens/macos/referral_overview_page_impersonal_one.png"
+  "410-pay-locations-loading=screens/pay/goldens/macos/pay_locations_page_loading.png"
+  "411-pay-locations-error=screens/pay/goldens/macos/pay_locations_page_error.png"
+  "412-pay-locations-empty=screens/pay/goldens/macos/pay_locations_page_empty.png"
+  "413-pay-locations-places=screens/pay/goldens/macos/pay_locations_page_places.png"
+  "414-pay-locations-no-match=screens/pay/goldens/macos/pay_locations_page_no_match.png"
+  "415-pay-locations-unpublished=screens/pay/goldens/macos/pay_locations_page_unpublished.png"
+  "416-transaction-detail-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_back_to_main.png"
+  "417-transaction-detail-sent-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_back_to_main.png"
+  "418-transaction-detail-sale-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png"
+  "419-transaction-detail-sent-no-receipt-back-to-main=screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png"
+  "420-pay-result-sheet-failure=screens/pay/goldens/macos/pay_result_sheet_failure.png"
+  "421-pending-transaction-detail-waiting-for-payment=screens/dashboard/goldens/macos/pending_transaction_detail_waiting_for_payment.png"
+  "422-transaction-detail-payment=screens/transaction_history/goldens/macos/transaction_detail_payment.png"
+  "425-pay-info-pay-unavailable=screens/pay/goldens/macos/pay_info_page_pay_unavailable.png"
 )
 
 missing=()
@@ -479,4 +499,9 @@ if [ "${#missing[@]}" -gt 0 ]; then
 fi
 
 count=$(ls -1 "$OUT"/*.png | wc -l | tr -d ' ')
+expected=${#MAPPING[@]}
+if [ "$count" != "$expected" ]; then
+  echo "expected ${expected} screenshots, one per mapping row, got ${count}" >&2
+  exit 1
+fi
 echo "assembled $count handbook screenshots into $OUT"

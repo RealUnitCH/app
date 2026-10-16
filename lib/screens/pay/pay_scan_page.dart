@@ -8,10 +8,12 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_scan/pay_scan_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/scanner/push_then_rearm.dart';
 import 'package:realunit_wallet/widgets/scanner/qr_scanner_view.dart';
@@ -97,28 +99,53 @@ class _PayScanViewState extends State<PayScanView> {
         }
       },
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(title: Text(S.of(context).payScanTitle)),
-          body: _awaitingInitialDecode
-              ? const Center(child: CupertinoActivityIndicator())
-              : QrScannerView(
-                  onDetect: (raw) => context.read<PayScanCubit>().onCodeDetected(raw),
-                  errorBuilder: (context, error) {
-                    final message = error.errorCode == MobileScannerErrorCode.permissionDenied
-                        ? S.of(context).payScanCameraPermissionDenied
-                        : S.of(context).payScanCameraUnavailable;
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: RealUnitColors.neutral500),
+        final preview = _awaitingInitialDecode
+            ? const Center(child: CupertinoActivityIndicator())
+            : QrScannerView(
+                onDetect: (raw) => context.read<PayScanCubit>().onCodeDetected(raw),
+                errorBuilder: (context, error) {
+                  final message = error.errorCode == MobileScannerErrorCode.permissionDenied
+                      ? S.of(context).payScanCameraPermissionDenied
+                      : S.of(context).payScanCameraUnavailable;
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  );
+                },
+              );
+        return Scaffold(
+          appBar: AppBar(title: Text(S.of(context).payScanTitle)),
+          body: Column(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (!context.mounted) return;
+                  context.pushNamed(AppRoutes.payLocations);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  child: Text(
+                    S.of(context).payInfoLocationsLink,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: RealUnitColors.realUnitBlue,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
                 ),
+              ),
+              Expanded(child: preview),
+            ],
+          ),
         );
       },
     );

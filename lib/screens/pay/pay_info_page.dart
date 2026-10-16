@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
+import 'package:realunit_wallet/screens/pay/widgets/pay_flow_diagram.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
-import 'package:realunit_wallet/widgets/text_link_span.dart';
 
 class PayInfoPage extends StatelessWidget {
   final String? initialPayload;
@@ -46,24 +48,25 @@ class PayInfoPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 12,
               children: [
+                const PayFlowDiagram(),
                 Text(
                   S.of(context).payInfoBody,
                   textAlign: .center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                Text.rich(
-                  TextLinkSpan.link(
-                    context,
-                    text: S.of(context).payInfoLocationsLink,
-                    uri: Uri.parse(
-                      'https://app.dfx.swiss/pl?merchant=SPAR&showAssets&showMap',
-                    ),
+                GestureDetector(
+                  onTap: () {
+                    if (!context.mounted) return;
+                    context.pushNamed(AppRoutes.payLocations);
+                  },
+                  child: Text(
+                    S.of(context).payInfoLocationsLink,
+                    textAlign: .center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: RealUnitColors.realUnitBlue,
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  textAlign: .center,
                 ),
               ],
             ),

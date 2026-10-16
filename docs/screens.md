@@ -17,7 +17,7 @@ Column meaning:
   still have Visual-Regression Goldens). Each slot is a
   Visual-Regression Golden under `test/goldens/`, mapped to its handbook
   position by `scripts/assemble-handbook-screenshots.sh`. The handbook now
-  has a slot for every macOS golden, 413 of them — screens plus their
+  has a slot for every macOS golden — screens plus their
   state variants (Default / Loading / Error / Snackbar / Dropdown /
   Validation / Confirm / Success / Failure …), including Support (email
   capture, tickets, chat), Settings User-Data and its edit sub-pages,
@@ -33,7 +33,11 @@ Column meaning:
   `268` is `PhoneNumberField` under `test/goldens/widgets/form/`, and slot
   `393` is `ImageSourceSheet`. `WebViewPage` is slots `394` and `395` (the
   chrome; the page body is the website and is not part of the picture).
-  `PayScanPage` is `338`. `PayProcessPage` is `332`–`334`. `KycPageManager`
+  `PayScanPage` is `338`. `PayInfoPage` is `300` and `425`. `/pay` shows
+  `PayInfoPage` until a software wallet has seen that intro, then
+  `PayScanPage`. The shop-map link stays on the scanner.
+  `PayProcessPage` is `332` and `334`.
+  `PayResultSheet` is `420`. `KycPageManager`
   (the orchestrator has no Golden of its own — its states are the
   individual KYC pages) carries `—`. Slot ↔ Golden mapping in
   `scripts/assemble-handbook-screenshots.sh`, slot ↔ HTML block in
@@ -55,15 +59,16 @@ Column meaning:
 | PIN & lock | `VerifyPinPage` | `verifyPin` | `/verifyPin` | `86`, `87`, `339` |
 | Dashboard & trading | `DashboardPage` | `dashboard` | `/dashboard` | `35`, `89`, `90`, `91`, `92`, `93`, `94`, `269`, `289`, `291`, `292`, `308`, `309`, `310`, `311`, `312`, `313`, `314`, `315`, `316`, `317`, `318`, `319`, `320`, `321`, `322`, `340`, `341`, `342`, `387`, `388`, `396` |
 | Dashboard & trading | `TransactionHistoryPage` | `transactionHistory` | `/dashboard/transactionHistory` | `36`, `95`, `96`, `97`, `98`, `99`, `100`, `288`, `384`, `385`, `386` |
-| Dashboard & trading | `PendingTransactionDetailPage` | `transactionDetail` | `/dashboard/transactionDetail` | `397`, `398` |
-| Dashboard & trading | `TransactionDetailPage` | `transactionDetail` | `/dashboard/transactionDetail` | `399`, `400`, `401`, `402`, `403` |
+| Dashboard & trading | `PendingTransactionDetailPage` | `transactionDetail` | `/dashboard/transactionDetail` | `397`, `398`, `421` |
+| Dashboard & trading | `TransactionDetailPage` | `transactionDetail` | `/dashboard/transactionDetail` | `399`, `400`, `401`, `402`, `403`, `416`, `417`, `418`, `419`, `422` |
 | Dashboard & trading | `BuyPage` | `buy` | `/buy` | `44`, `45`, `46`, `47`, `48`, `103`, `104`, `105`, `106`, `107`, `108`, `109`, `110`, `111`, `112`, `113`, `304`, `305`, `306`, `307` |
 | Dashboard & trading | `BuyPaymentDetailsPage` | `buyPaymentDetails` | `/buyPaymentDetails` | `53`, `114`, `115`, `116`, `117` |
 | Dashboard & trading | `SellPage` | `sell` | `/sell` | `49`, `50`, `51`, `52`, `118`, `119`, `120`, `123`, `124`, `125`, `359`, `360`, `361`, `362` |
 | Dashboard & trading | `SellBitboxPage` | `sellBitbox` | `/sellBitbox` | `126`, `127`, `128`, `129`, `130`, `131`, `132`, `133`, `134`, `135`, `136`, `363`, `364`, `365`, `366` |
 | Dashboard & trading | `SellBankAccountSelectionPage` | — | — | `121`, `122` |
 | Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102`, `296`, `297` |
-| Dashboard & trading | `PayInfoPage` | `pay` | `/pay` | `300` |
+| Dashboard & trading | `PayInfoPage` | `pay` | `/pay` | `300`, `425` |
+| Dashboard & trading | `PayLocationsPage` | `payLocations` | `/payLocations` | `410`, `411`, `412`, `413`, `414`, `415` |
 | Dashboard & trading | `SendInfoPage` | `send` | `/send` | `373` |
 | Dashboard & trading | `SendRecipientPage` | — | — | `375` |
 | Dashboard & trading | `SendAmountPage` | — | — | `367`, `368`, `370`, `371`, `372` |
@@ -71,7 +76,8 @@ Column meaning:
 | Dashboard & trading | `SendProcessPage` | — | — | `374`, `404` |
 | Dashboard & trading | `PayScanPage` | — | — | `338` |
 | Dashboard & trading | `PayQuotePage` | — | — | `301`, `302`, `335`, `336`, `337` |
-| Dashboard & trading | `PayProcessPage` | — | — | `332`, `333`, `334` |
+| Dashboard & trading | `PayProcessPage` | — | — | `332`, `334` |
+| Dashboard & trading | `PayResultSheet` | — | — | `420` |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | `394`, `395` |
@@ -96,8 +102,8 @@ Column meaning:
 | Settings | `SettingsWalletAddressPage` | `settingsWalletAddress` | `/settings/walletAddress` | `16`, `298` |
 | Settings | `SettingsInsiderPage` | `settingsInsider` | `/settings/insider` | `294`, `295` |
 | Settings | `ReferralPage` | `settingsReferral` | `/settings/referral` | `279`, `348`, `349`, `350` |
-| Settings | `ReferralCreatePage` | `settingsReferralCreate` | `/settings/referral/create` | `280`, `284`, `343`, `344`, `345`, `346`, `347` |
-| Settings | `ReferralOverviewPage` | — | — | `276`, `351`, `352`, `353`, `354`, `355` |
+| Settings | `ReferralCreatePage` | `settingsReferralCreate` | `/settings/referral/create` | `280`, `284`, `343`, `344`, `345`, `346`, `347`, `405`, `406`, `407` |
+| Settings | `ReferralOverviewPage` | — | — | `276`, `351`, `352`, `353`, `354`, `355`, `408`, `409` |
 | Settings | `ReferralTermsPage` | `referralTerms` | `/referralTerms` | `281`, `283`, `358` |
 | Settings | `SettingsUserDataPage` | `settingsUserData` | `/settings/userData` | `227`, `228`, `229`, `230`, `231`, `232`, `233`, `234`, `235` |
 | Settings | `SettingsEditNamePage` | `settingsEditName` | `/settings/userData/editName` | `236` |
@@ -168,7 +174,7 @@ row. OpenCryptoPay pay rounding cards `300`–`302` are documented in
   `243`–`245`. `SetupPinPage` also backs the `settingsChangePin` route
   (`/settings/security/changePin`) via a second constructor; that reuse has no
   separate Golden and is not given its own row.
-- **Handbook numbering.** Each of the 413 handbook slots is a Visual-Regression
+- **Handbook numbering.** Each handbook slot is a Visual-Regression
   Golden under `test/goldens/`, mapped to its handbook position by
   `scripts/assemble-handbook-screenshots.sh`. A parallel Tier-3 Maestro flow
   (`.maestro/handbook/NN-*.yaml`) covers navigation/tap-routing smoke for the
