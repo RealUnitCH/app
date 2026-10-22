@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/service/dfx/delegation_caveat_check.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
@@ -282,5 +283,12 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
         'EIP-7702 amount mismatch: expected $expectedWei, got ${data.amountWei}',
       );
     }
+    checkDelegationCaveats(
+      caveats: data.message.caveats,
+      kind: DelegationCaveatKind.brokerbotSell,
+      tokenAddress: data.tokenAddress,
+      amountWei: expectedWei,
+      testnet: appStore.apiConfig.networkMode.isTestnet,
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:eip7702/eip7702.dart' as eip7702;
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/service/dfx/delegation_caveat_check.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
@@ -134,20 +135,9 @@ class RealUnitTransferService extends DFXAuthService {
     }
   }
 
-  /// Fail-closed blind-sign guard: the prepare response must echo the recipient
-  /// and amount the user just confirmed on-screen before any signature is
-  /// produced.
-  ///
-  /// Honesty note — the actually-signed EIP-712 struct (`Eip7702Message`:
-  /// delegate/delegator/authority/caveats/salt) carries no recipient/amount
-  /// field of its own. `recipient` / `amountWei` / `tokenAddress` are unsigned
-  /// metadata sitting alongside the signed message. This check only closes the
-  /// gap of "did the backend's prepare response echo something different than
-  /// what the user just confirmed on-screen" before signing. It is NOT a
-  /// decode/validation of the delegation framework's `caveats` payload (the
-  /// actual on-chain enforcement mechanism), which remains unparsed exactly as
-  /// before. This change alone does NOT establish a full on-chain
-  /// recipient/amount cryptographic binding.
+  /// The prepare response must echo the recipient and amount just confirmed
+  /// on screen. The signed caveats are checked separately, before signing,
+  /// and must bind this token, that recipient and that amount.
   void _validateAgainstUserConfirmation(
     RealUnitTransferPaymentInfoDto info,
     String confirmedRecipient,
@@ -214,8 +204,7 @@ class RealUnitTransferService extends DFXAuthService {
 
   /// Pins the signed contract addresses + cross-checks the signed/unsigned
   /// fields against known values before signing, mirroring the sell flow. The
-  /// recipient is server-bound (the backend supplies the ERC20 transfer call at
-  /// execute time), so it is validated for amount/token/chain consistency here.
+  /// signed caveats must bind the same token, recipient and amount.
   void _validateEip7702Data(
     RealUnitTransferEip7702DataDto data,
     String walletAddress,
@@ -257,5 +246,13 @@ class RealUnitTransferService extends DFXAuthService {
     if (actualWei == null || actualWei != expectedWei) {
       throw Exception('EIP-7702 amount mismatch: expected $expectedWei, got ${data.amountWei}');
     }
+    checkDelegationCaveats(
+      caveats: data.message.caveats,
+      kind: DelegationCaveatKind.tokenTransfer,
+      tokenAddress: data.tokenAddress,
+      amountWei: expectedWei,
+      recipient: data.recipient,
+      testnet: appStore.apiConfig.networkMode.isTestnet,
+    );
   }
 }
