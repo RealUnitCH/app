@@ -341,6 +341,47 @@ void main() {
         settings: const SettingsState(language: Language.de, currency: Currency.eur),
       ),
     );
+
+    // The listener fires on a change, so the cubit starts idle and then emits
+    // the caveat failure. The sheet stays in the body: a bottomSheet slot
+    // paints over the snackbar and would hide this surface.
+    Future<void> settleCaveatSnackBar(WidgetTester tester) async {
+      await tester.pump();
+      await tester.pumpAndSettle();
+    }
+
+    goldenTest(
+      'caveat rejection shows the existing failure sentence',
+      fileName: 'sell_confirm_caveat_snackbar',
+      constraints: phoneConstraints,
+      pumpBeforeTest: settleCaveatSnackBar,
+      builder: () {
+        whenListen(
+          confirmCubit,
+          Stream<SellConfirmState>.value(
+            SellConfirmFailure('Exception: EIP-7702 caveats: rejected'),
+          ),
+          initialState: SellConfirmInitial(),
+        );
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(const SettingsState());
+        return wrapForGolden(
+          Scaffold(
+            backgroundColor: Colors.black54,
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: BlocProvider<SellConfirmCubit>.value(
+                value: confirmCubit,
+                child: BlocProvider<SettingsBloc>.value(
+                  value: settingsBloc,
+                  child: SellConfirmSheetView(paymentInfo: _paymentInfo()),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   });
 
   // ---- SellExecutedSheet (success sheet after a confirmed sell) ----
