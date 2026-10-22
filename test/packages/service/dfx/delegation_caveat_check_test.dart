@@ -416,6 +416,21 @@ void main() {
     );
   });
 
+  test('rejects a timestamp with no upper bound', () {
+    _expectRejected(
+      caveats: _withTerms(
+        _transferCaveats('transferAmount100Recipient9f57'),
+        2,
+        '0x${'0' * 64}',
+      ),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
   test('rejects a timestamp 1801 seconds ahead', () {
     _expectRejected(
       caveats: _transferCaveats('transferAmount100Recipient9f57'),

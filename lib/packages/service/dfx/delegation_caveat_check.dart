@@ -238,6 +238,10 @@ void _checkTimestamp(Uint8List terms, int nowSeconds) {
     }
   }
   final validUntil = _unsigned(terms, 16, 16);
+  // Zero disables the upper bound in the timestamp enforcer. It is not an expiry.
+  if (validUntil == BigInt.zero) {
+    _reject('timestamp validUntil is unset');
+  }
   final latest = BigInt.from(nowSeconds) + BigInt.from(delegationValiditySeconds);
   if (validUntil > latest) {
     _reject('timestamp validUntil is later than $delegationValiditySeconds seconds from now');
