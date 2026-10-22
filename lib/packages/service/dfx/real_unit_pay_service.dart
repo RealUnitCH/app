@@ -18,6 +18,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/delegation_caveat_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
@@ -310,7 +311,7 @@ class RealUnitPayService extends DFXAuthService {
     }
     try {
       checkDelegationCaveats(
-        caveats: data.message.caveats,
+        caveats: DelegationCaveatDto.listFrom(data.message.caveats),
         kind: DelegationCaveatKind.brokerbotSell,
         tokenAddress: data.tokenAddress,
         amountWei: expectedWei,

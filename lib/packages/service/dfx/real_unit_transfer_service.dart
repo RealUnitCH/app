@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/delegation_caveat_check.dar
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/delegation_caveat_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_transfer_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_transfer_eip7702_data_dto.dart';
@@ -247,7 +248,7 @@ class RealUnitTransferService extends DFXAuthService {
       throw Exception('EIP-7702 amount mismatch: expected $expectedWei, got ${data.amountWei}');
     }
     checkDelegationCaveats(
-      caveats: data.message.caveats,
+      caveats: DelegationCaveatDto.listFrom(data.message.caveats),
       kind: DelegationCaveatKind.tokenTransfer,
       tokenAddress: data.tokenAddress,
       amountWei: expectedWei,

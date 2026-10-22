@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/delegation_caveat_check.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/delegation_caveat_dto.dart';
 
 const _token = '0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B';
 const _recipient100 = '0x9f5713deacb8e9cab6c2d3fae1afc2715f8d2d71';
@@ -91,6 +92,26 @@ List<dynamic> _withEnforcer(List<dynamic> caveats, int index, String enforcer) {
   return copy;
 }
 
+void _check({
+  required List<dynamic> caveats,
+  required DelegationCaveatKind kind,
+  required String tokenAddress,
+  required BigInt amountWei,
+  String? recipient,
+  required bool testnet,
+  DateTime? now,
+}) {
+  checkDelegationCaveats(
+    caveats: DelegationCaveatDto.listFrom(caveats),
+    kind: kind,
+    tokenAddress: tokenAddress,
+    amountWei: amountWei,
+    recipient: recipient,
+    testnet: testnet,
+    now: now,
+  );
+}
+
 void _expectRejected({
   required List<dynamic> caveats,
   required DelegationCaveatKind kind,
@@ -100,7 +121,7 @@ void _expectRejected({
   DateTime? now,
 }) {
   expect(
-    () => checkDelegationCaveats(
+    () => _check(
       caveats: caveats,
       kind: kind,
       tokenAddress: _token,
@@ -121,7 +142,7 @@ void _expectRejected({
 
 void main() {
   test('accepts the amount-100 transfer at the 1800 second boundary', () {
-    checkDelegationCaveats(
+    _check(
       caveats: _transferCaveats('transferAmount100Recipient9f57'),
       kind: DelegationCaveatKind.tokenTransfer,
       tokenAddress: _token,
@@ -133,7 +154,7 @@ void main() {
   });
 
   test('accepts the amount-5 transfer vector', () {
-    checkDelegationCaveats(
+    _check(
       caveats: _transferCaveats('transferAmount5Recipient2222'),
       kind: DelegationCaveatKind.tokenTransfer,
       tokenAddress: _token,
@@ -145,7 +166,7 @@ void main() {
   });
 
   test('accepts the amount-100 sell wrapper at the 1800 second boundary', () {
-    checkDelegationCaveats(
+    _check(
       caveats: _sellCaveats('sellWrapperAmount100'),
       kind: DelegationCaveatKind.brokerbotSell,
       tokenAddress: _token,
@@ -156,7 +177,7 @@ void main() {
   });
 
   test('accepts the amount-2 sell wrapper', () {
-    checkDelegationCaveats(
+    _check(
       caveats: _sellCaveats('sellWrapperAmount2'),
       kind: DelegationCaveatKind.brokerbotSell,
       tokenAddress: _token,
@@ -180,6 +201,19 @@ void main() {
   test('rejects a non-map caveat', () {
     _expectRejected(
       caveats: <dynamic>['not-a-map'],
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects a caveat field that is not a string', () {
+    _expectRejected(
+      caveats: <dynamic>[
+        <String, dynamic>{'enforcer': 1, 'terms': '0x'},
+      ],
       kind: DelegationCaveatKind.tokenTransfer,
       amountWei: BigInt.from(100),
       recipient: _recipient100,

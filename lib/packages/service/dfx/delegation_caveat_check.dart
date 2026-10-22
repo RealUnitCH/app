@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:convert/convert.dart' as convert;
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/delegation_caveat_dto.dart';
 
 /// Which signed delegation the caveat list must match.
 enum DelegationCaveatKind { tokenTransfer, brokerbotSell }
@@ -61,7 +62,7 @@ class _Caveat {
 /// [now] null uses `DateTime.now().toUtc()`. Comparison is in unix seconds.
 /// An empty list is rejected. Hex case does not matter.
 void checkDelegationCaveats({
-  required List<dynamic> caveats,
+  required List<DelegationCaveatDto> caveats,
   required DelegationCaveatKind kind,
   required String tokenAddress,
   required BigInt amountWei,
@@ -104,25 +105,17 @@ Never _reject(String reason) {
   throw Exception('EIP-7702 caveats: $reason');
 }
 
-List<_Caveat> _parseCaveats(List<dynamic> caveats) {
+List<_Caveat> _parseCaveats(List<DelegationCaveatDto> caveats) {
   if (caveats.isEmpty) {
     _reject('the caveat list is empty');
   }
   final parsed = <_Caveat>[];
-  for (final element in caveats) {
-    if (element is! Map) {
-      _reject('a caveat is not an object');
-    }
-    final enforcerValue = element['enforcer'];
-    final termsValue = element['terms'];
-    if (enforcerValue is! String || termsValue is! String) {
-      _reject('a caveat is missing string enforcer or terms');
-    }
-    final terms = _decodeHex(termsValue);
+  for (final caveat in caveats) {
+    final terms = _decodeHex(caveat.terms);
     if (terms == null) {
       _reject('terms are not 0x hex');
     }
-    final enforcer = _decodeHex(enforcerValue);
+    final enforcer = _decodeHex(caveat.enforcer);
     if (enforcer == null || enforcer.length != 20 || !_isPinnedEnforcer(enforcer)) {
       _reject('enforcer is not one of the six pinned enforcers');
     }
