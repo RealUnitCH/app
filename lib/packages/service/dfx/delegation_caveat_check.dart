@@ -296,7 +296,8 @@ Uint8List _pad32(Uint8List data) {
 
 Uint8List _addressWord(Uint8List address) {
   if (address.length != 20) {
-    _reject('address is not 20 bytes');
+    // Callers pass a checked 20-byte address. This throw has no test path.
+    _reject('address is not 20 bytes'); // coverage:ignore-line
   }
   final out = Uint8List(32);
   out.setRange(12, 32, address);
@@ -305,7 +306,8 @@ Uint8List _addressWord(Uint8List address) {
 
 Uint8List _word(BigInt value) {
   if (value.isNegative || value.bitLength > 256) {
-    _reject('value does not fit in a 32-byte word');
+    // The public check rejects a bad amount. Every other word is a small constant.
+    _reject('value does not fit in a 32-byte word'); // coverage:ignore-line
   }
   final out = Uint8List(32);
   var remaining = value;
@@ -336,7 +338,8 @@ Uint8List _requireAddress(String value, String label) {
 Uint8List _pinnedAddress(String hex) {
   final bytes = _decodeHex(hex);
   if (bytes == null || bytes.length != 20) {
-    throw StateError('pinned address is not 20 bytes');
+    // Pin constants are valid addresses. A bad constant fails while the library loads.
+    throw StateError('pinned address is not 20 bytes'); // coverage:ignore-line
   }
   return bytes;
 }
@@ -344,7 +347,8 @@ Uint8List _pinnedAddress(String hex) {
 Uint8List _pinnedBytes(String hex) {
   final bytes = _decodeHex(hex);
   if (bytes == null || bytes.isEmpty) {
-    throw StateError('pinned hex is empty');
+    // Pin constants are non-empty hex. A bad constant fails while the library loads.
+    throw StateError('pinned hex is empty'); // coverage:ignore-line
   }
   return bytes;
 }

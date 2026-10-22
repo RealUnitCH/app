@@ -116,6 +116,7 @@ void _expectRejected({
   required List<dynamic> caveats,
   required DelegationCaveatKind kind,
   required BigInt amountWei,
+  String tokenAddress = _token,
   String? recipient,
   required bool testnet,
   DateTime? now,
@@ -124,7 +125,7 @@ void _expectRejected({
     () => _check(
       caveats: caveats,
       kind: kind,
-      tokenAddress: _token,
+      tokenAddress: tokenAddress,
       amountWei: amountWei,
       recipient: recipient,
       testnet: testnet,
@@ -473,6 +474,147 @@ void main() {
       recipient: _recipient100,
       testnet: false,
       now: DateTime.fromMillisecondsSinceEpoch(1699999999 * 1000, isUtc: true),
+    );
+  });
+
+  test('rejects a negative amount', () {
+    _expectRejected(
+      caveats: _transferCaveats('transferAmount100Recipient9f57'),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(-1),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects an amount wider than 256 bits', () {
+    _expectRejected(
+      caveats: _transferCaveats('transferAmount100Recipient9f57'),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.one << 256,
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects a transfer without a recipient', () {
+    _expectRejected(
+      caveats: _transferCaveats('transferAmount100Recipient9f57'),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects transfer caveats in the wrong order', () {
+    _expectRejected(
+      caveats: _withEnforcer(
+        _transferCaveats('transferAmount100Recipient9f57'),
+        0,
+        _timestampEnforcer,
+      ),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects LimitedCalls that is not one', () {
+    _expectRejected(
+      caveats: _withTerms(
+        _transferCaveats('transferAmount100Recipient9f57'),
+        1,
+        '0x${'0' * 62}02',
+      ),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects two sell caveats that are not the wrapper and a timestamp', () {
+    final caveats = _transferCaveats('transferAmount100Recipient9f57')..removeLast();
+    _expectRejected(
+      caveats: caveats,
+      kind: DelegationCaveatKind.brokerbotSell,
+      amountWei: BigInt.from(100),
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects timestamp terms that are not 32 bytes', () {
+    _expectRejected(
+      caveats: _withTerms(
+        _transferCaveats('transferAmount100Recipient9f57'),
+        2,
+        '0x01',
+      ),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects a timestamp whose validAfter is not zero', () {
+    _expectRejected(
+      caveats: _withTerms(
+        _transferCaveats('transferAmount100Recipient9f57'),
+        2,
+        '0x01${'0' * 62}',
+      ),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('rejects a token address that is not 20 bytes', () {
+    _expectRejected(
+      caveats: _transferCaveats('transferAmount100Recipient9f57'),
+      kind: DelegationCaveatKind.tokenTransfer,
+      tokenAddress: '0x1234',
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
+    );
+  });
+
+  test('reads the clock when no instant is passed', () {
+    _expectRejected(
+      caveats: <dynamic>[],
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: null,
+    );
+  });
+
+  test('rejects empty hex terms', () {
+    _expectRejected(
+      caveats: _withTerms(
+        _transferCaveats('transferAmount100Recipient9f57'),
+        0,
+        '0x',
+      ),
+      kind: DelegationCaveatKind.tokenTransfer,
+      amountWei: BigInt.from(100),
+      recipient: _recipient100,
+      testnet: false,
+      now: _boundary,
     );
   });
 }
