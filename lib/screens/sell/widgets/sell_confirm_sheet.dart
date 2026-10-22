@@ -17,6 +17,16 @@ import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 String _money(double amount) => amount.toStringAsFixed(2);
 
+/// Caveat rejections stay diagnostic in the service. The snackbar reuses an
+/// existing localized sentence so this path does not add a new visible wording.
+String visibleSellConfirmError({
+  required String error,
+  required String caveatFallback,
+}) {
+  if (error.contains('EIP-7702 caveats')) return caveatFallback;
+  return error;
+}
+
 class SellConfirmSheet extends StatelessWidget {
   final SellPaymentInfo paymentInfo;
 
@@ -44,7 +54,12 @@ class SellConfirmSheetView extends StatelessWidget {
         if (state is SellConfirmFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.error),
+              content: Text(
+                visibleSellConfirmError(
+                  error: state.error,
+                  caveatFallback: S.of(context).startupFailureActionFailed,
+                ),
+              ),
               backgroundColor: RealUnitColors.status.red600,
             ),
           );
