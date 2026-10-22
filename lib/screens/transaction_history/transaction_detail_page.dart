@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/transaction_history/completed_transaction.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
@@ -15,14 +15,18 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/frozen_chf_label.dart';
 import 'package:realunit_wallet/widgets/hide_amount_text.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
+import 'package:realunit_wallet/widgets/transaction_date_label.dart';
 import 'package:realunit_wallet/widgets/transaction_title_label.dart';
 
 class TransactionDetailArgs {
   final Transaction transaction;
   final String walletAddress;
+  final bool returnToDashboard;
   const TransactionDetailArgs({
     required this.transaction,
     required this.walletAddress,
+    this.returnToDashboard = false,
   });
 }
 
@@ -55,7 +59,7 @@ class TransactionDetailPage extends StatelessWidget {
   }
 }
 
-enum _PendingReceipt { realunit, exchange }
+enum _PendingReceipt { realunit, exchange, payment }
 
 class TransactionDetailView extends StatefulWidget {
   const TransactionDetailView({super.key, required this.args});
@@ -90,72 +94,95 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
       builder: (context, state) {
         final transaction = widget.args.transaction;
         final fieldRows = _fieldRows(context);
-        return Scaffold(
-          appBar: AppBar(title: Text(_title(context))),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 0.0),
-                child: Column(
-                  crossAxisAlignment: .start,
-                  spacing: 16.0,
-                  children: [
-                    Column(
-                      crossAxisAlignment: .start,
-                      children: [
-                        HideAmountText(
-                          leadingSymbol: _leadingSymbol(),
-                          amount: transaction.amount,
-                          decimals: transaction.asset.decimals,
-                          fractionalDigits: _fractionalDigits(),
-                          trimZeros: false,
-                          trailingSymbol: transaction.asset.symbol,
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          _formattedDate(),
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: RealUnitColors.neutral500,
-                          ),
-                        ),
-                      ],
+        final content = Padding(
+          padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 0.0),
+          child: Column(
+            crossAxisAlignment: .start,
+            spacing: 16.0,
+            children: [
+              Column(
+                crossAxisAlignment: .start,
+                children: [
+                  HideAmountText(
+                    leadingSymbol: _leadingSymbol(),
+                    amount: transaction.amount,
+                    decimals: transaction.asset.decimals,
+                    fractionalDigits: _fractionalDigits(),
+                    trimZeros: false,
+                    trailingSymbol: transaction.asset.symbol,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                    if (fieldRows.isNotEmpty)
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: RealUnitColors.basic.white,
-                          border: Border.all(
-                            width: 1,
-                            color: RealUnitColors.neutral200,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: .start,
-                          children: fieldRows,
-                        ),
-                      ),
-                    if (transaction.type !=
-                        TransactionTypes.referralPayout) ...[
-                      Text(
-                        S.of(context).saleReceiptSheetTitle,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Column(
-                        spacing: 12,
-                        children: _receiptButtons(context, state),
-                      ),
-                    ],
-                  ],
+                  ),
+                  Text(
+                    transactionDateLabel(transaction.timestamp),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: RealUnitColors.neutral500,
+                    ),
+                  ),
+                ],
+              ),
+              if (fieldRows.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: RealUnitColors.basic.white,
+                    border: Border.all(
+                      width: 1,
+                      color: RealUnitColors.neutral200,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: .start,
+                    children: fieldRows,
+                  ),
                 ),
+              if (transaction.type != TransactionTypes.referralPayout &&
+                  usableTxHash(transaction.txId) != null) ...[
+                Text(
+                  S.of(context).saleReceiptSheetTitle,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Column(
+                  spacing: 12,
+                  children: _receiptButtons(context, state),
+                ),
+              ],
+            ],
+          ),
+        );
+        if (widget.args.returnToDashboard) {
+          return Scaffold(
+            appBar: AppBar(title: Text(_title(context))),
+            body: SafeArea(
+              child: ScrollableActionsLayout(
+                body: content,
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                    child: AppFilledButton(
+                      label: S.of(context).transactionDetailBackToMain,
+                      onPressed: () =>
+                          context.goNamed(AppRoutes.dashboard),
+                    ),
+                  ),
+                ],
               ),
             ),
+          );
+        }
+
+        final scrollView = SafeArea(
+          child: SingleChildScrollView(
+            child: content,
           ),
+        );
+        return Scaffold(
+          appBar: AppBar(title: Text(_title(context))),
+          body: scrollView,
         );
       },
     );
@@ -184,15 +211,6 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     return 0;
   }
 
-  String _formattedDate() {
-    final transaction = widget.args.transaction;
-    final local = transaction.timestamp.toLocal();
-    if (transaction.type == TransactionTypes.referralPayout) {
-      return DateFormat('dd.MM.yyyy | H:mm').format(local);
-    }
-    return DateFormat('MMM dd, yyyy | H:mm').format(local);
-  }
-
   List<Widget> _fieldRows(BuildContext context) {
     final transaction = widget.args.transaction;
     final s = S.of(context);
@@ -205,17 +223,22 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
 
     if (transaction is DfxTransaction) {
       final hideAmounts = context.watch<SettingsBloc>().state.hideAmounts;
-      void addLeg(double? amount, String? asset) {
+      // A sale has two different amounts: the proceeds of the share sale and what DFX pays out
+      // after its fee. Naming them keeps them apart from each other and from the two receipts.
+      final isSale = transaction.category == TransferCategory.sale;
+      final inputLabel = isSale ? s.saleProceedsIn : s.amountIn;
+      final outputLabel = isSale ? s.payoutIn : s.amountIn;
+      void addLeg(String label, double? amount, String? asset) {
         if (amount == null || asset == null || asset.isEmpty) return;
         if (asset == transaction.asset.symbol) return;
         addField(
-          '${s.amountIn} $asset',
+          '$label $asset',
           hideAmounts ? '***.**' : amount.toStringAsFixed(2),
         );
       }
 
-      addLeg(transaction.inputAmount, transaction.inputAsset);
-      addLeg(transaction.outputAmount, transaction.outputAsset);
+      addLeg(inputLabel, transaction.inputAmount, transaction.inputAsset);
+      addLeg(outputLabel, transaction.outputAmount, transaction.outputAsset);
     }
 
     addField(s.transactionDetailNote, transaction.note);
@@ -268,6 +291,26 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
         ),
       ];
     }
+    // A payment is two acts with a receipt each: the sale of the shares (the regular sale
+    // receipt) and the payment of the merchant's bill. Nothing is paid out, so no DFX payout.
+    if (transaction.category == TransferCategory.payment) {
+      return [
+        AppFilledButton(
+          variant: .primary,
+          icon: Icons.file_download_outlined,
+          label: S.of(context).saleReceiptRealunit,
+          state: isLoading && _pending == .realunit ? .loading : .idle,
+          onPressed: isLoading ? null : _onRealunitPressed,
+        ),
+        AppFilledButton(
+          variant: .secondary,
+          icon: Icons.file_download_outlined,
+          label: S.of(context).paymentReceiptPayment,
+          state: isLoading && _pending == .payment ? .loading : .idle,
+          onPressed: isLoading ? null : _onPaymentPressed,
+        ),
+      ];
+    }
     return [
       AppFilledButton(
         variant: .primary,
@@ -285,6 +328,15 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     context.read<TransactionHistoryReceiptCubit>().generateReceipt(
       widget.args.transaction.txId,
       currency: settings.currency,
+      language: settings.language,
+    );
+  }
+
+  void _onPaymentPressed() {
+    final settings = context.read<SettingsBloc>().state;
+    setState(() => _pending = .payment);
+    context.read<TransactionHistoryReceiptCubit>().generatePaymentReceipt(
+      widget.args.transaction.txId,
       language: settings.language,
     );
   }

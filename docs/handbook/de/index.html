@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 413 Visual-Regression Goldens (413 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 429 Visual-Regression Goldens (429 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 413 App-Screenshots dieser Seite sind Goldens aus
+            Die 429 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 413 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 429 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -1685,9 +1685,9 @@
               <div class="desc">
                 Vollständige Settings-Liste: Sprachen, Währung, Netzwerk (nur in
                 Entwickler-Builds sichtbar, siehe Spec 58), Steuerbericht, Nutzerdaten,
-                Rechtsdokumente, Kontakt, Sicherheit, Wallet-Adresse, Wallet-Sicherung,
-                Wallet zurücksetzen. Aktive Auswahlen (Sprache, Währung, Netzwerk)
-                werden inline als trailing Text rechts angezeigt.
+                Rechtsdokumente, Kontakt / Support, Sicherheit, Wallet-Adresse,
+                Wallet-Sicherung, Wallet zurücksetzen. Aktive Auswahlen (Sprache, Währung,
+                Netzwerk) werden inline als trailing Text rechts angezeigt.
                 Die Kachel <b>Wallet-Sicherung</b> erscheint nur bei einer Software-Wallet
                 (Re-Display der BIP-39-Recovery-Phrase) — bei einer BitBox ist sie
                 ausgeblendet, weil dort das Backup auf dem Hardware-Device selbst liegt.
@@ -1854,14 +1854,14 @@
               <div class="img">
                 <img
                   src="../screenshots/23-settings-contact.png"
-                  alt="Kontakt"
+                  alt="Kontakt / Support"
                 />
               </div>
               <div class="desc">
-                Die <b>Kontakt</b>-Seite in den Einstellungen bündelt die Support- und
-                Kontaktwege: der Eintrag <b>Support kontaktieren</b> (FAQ, Tickets &amp; Chat)
-                sowie Telefonnummer, E-Mail und Website des Anbieters. Darunter steht das
-                <b>Impressum</b> mit Firmenname und Adresse.
+                Die Seite <b>Kontakt / Support</b> in den Einstellungen bündelt die Support-
+                und Kontaktwege: der Eintrag <b>Support kontaktieren</b> (Tickets &amp; Chat),
+                der Eintrag <b>FAQ</b> (Häufige Fragen) sowie Telefonnummer, E-Mail und Website
+                des Anbieters. Darunter steht das <b>Impressum</b> mit Firmenname und Adresse.
               </div>
             </div>
             <div class="test" id="24-settings-delete-wallet">
@@ -4091,7 +4091,7 @@
                 <div class="file">test/goldens/screens/dashboard/</div>
               </div>
               <div class="rhs">
-                <b>12 Screens</b>
+                <b>13 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/dashboard"
@@ -4119,7 +4119,7 @@
                 />
               </div>
               <div class="desc">
-                Unter dem Kurschart erscheint die Karte <b>Ausstehende Transaktionen</b> mit noch laufenden DFX-Aufträgen: <b>Kauf / In Bearbeitung / 500 CHF</b> und <b>Verkauf / Warte auf Zahlung / 30 REALU</b>, jeweils mit Datum und drehendem Ladeindikator. Der Nutzer sieht dies, solange ein Kauf oder Verkauf beim Zahlungsdienst noch nicht abgeschlossen ist; da hier noch kein Guthaben vorliegt, folgen darunter Token-Illustration und Kaufen-Button. Ein Tipp auf eine Zeile öffnet diesen Auftrag auf einer eigenen Seite, mit dem Betrag und dem Status, und ohne Beleg-Button.
+                Unter dem Kurschart erscheint die Karte <b>Ausstehende Transaktionen</b> mit noch laufenden DFX-Aufträgen: <b>Kauf / In Bearbeitung / 500 CHF</b>, <b>Verkauf / Warte auf REALU / 30 REALU</b> und <b>Kauf / Warte auf Zahlung / 1000 CHF</b>, jeweils mit Datum und drehendem Ladeindikator. Der Nutzer sieht dies, solange ein Kauf oder Verkauf beim Zahlungsdienst noch nicht abgeschlossen ist; da hier noch kein Guthaben vorliegt, folgen darunter Token-Illustration und Kaufen-Button. Ein Tipp auf eine Zeile öffnet diesen Auftrag auf einer eigenen Seite, mit dem Betrag und dem Status, und ohne Beleg-Button.
               </div>
             </div>
             <div class="test" id="397-pending-transaction-detail">
@@ -4135,7 +4135,7 @@
                 />
               </div>
               <div class="desc">
-                Die Seite eines noch offenen Kaufs zeigt den Titel <b>Kauf</b>, den Betrag <b>5000.00 CHF</b> und den Status <b>In Bearbeitung</b>. Es gibt keinen IBAN und keinen Beleg-Button.
+                Die Seite eines noch offenen Kaufs zeigt den Titel <b>Kauf</b>, den Betrag <b>5000.00 CHF</b>, den Status <b>In Bearbeitung</b> und das Feld <b>Betrag in REALU</b> mit <b>ca. 50.00</b>. Das «ca.» steht dort, weil die Stückzahl erst bei der Ausführung feststeht. Es gibt keinen IBAN und keinen Beleg-Button.
               </div>
             </div>
             <div class="test" id="398-pending-transaction-detail-sell">
@@ -4151,7 +4151,23 @@
                 />
               </div>
               <div class="desc">
-                Die Seite eines noch offenen Verkaufs zeigt den Titel <b>Verkauf</b>, den Betrag <b>30.00 REALU</b>, den Status <b>Warte auf Zahlung</b> und das Feld <b>Betrag in CHF</b> mit <b>2970.00</b>. Es gibt keinen Button <b>Beleg</b> und keinen Button <b>RealUnit-Verkauf</b>.
+                Die Seite eines noch offenen Verkaufs zeigt den Titel <b>Verkauf</b>, den Betrag <b>30.00 REALU</b>, den Status <b>Warte auf REALU</b> und das Feld <b>Auszahlung in CHF</b> mit <b>ca. 2970.00</b>, benannt wie auf der Detailseite des abgeschlossenen Verkaufs. Es gibt keinen Button <b>Beleg</b> und keinen Button <b>RealUnit-Verkauf</b>.
+              </div>
+            </div>
+            <div class="test" id="421-pending-transaction-detail-waiting-for-payment">
+              <div class="head">
+                <a class="name permalink" href="#421-pending-transaction-detail-waiting-for-payment">421-pending-transaction-detail-waiting-for-payment</a>
+                <button class="copy-link" type="button" data-target="421-pending-transaction-detail-waiting-for-payment" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/dashboard/goldens/macos/pending_transaction_detail_waiting_for_payment.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/421-pending-transaction-detail-waiting-for-payment.png"
+                  alt="Offener Kauf, der auf die Zahlung wartet"
+                />
+              </div>
+              <div class="desc">
+                Die Seite eines offenen Kaufs, dessen Banküberweisung noch nicht eingegangen ist, zeigt den Titel <b>Kauf</b>, den Betrag <b>5000.00 CHF</b>, den Status <b>Warte auf Zahlung</b> und das Feld <b>Betrag in REALU</b> mit <b>ca. 50.00</b>. Bei einem offenen Verkauf steht an derselben Stelle <b>Warte auf REALU</b>.
               </div>
             </div>
             <div class="test" id="93-dashboard-recent-transactions">
@@ -4430,11 +4446,11 @@
               <div class="img">
                 <img
                   src="../screenshots/386-transaction-history-transfer-labels.png"
-                  alt="Verlauf mit Kauf, Empfangen, Gesendet, Verkauf"
+                  alt="Verlauf mit Kauf, Empfangen, Gesendet, Verkauf, Verkauf und Zahlung"
                 />
               </div>
               <div class="desc">
-                Verlauf mit den sichtbaren Labels <b>Kauf</b>, <b>Empfangen</b>, <b>Gesendet</b> und <b>Verkauf</b>.
+                Verlauf mit den sichtbaren Labels <b>Kauf</b>, <b>Empfangen</b>, <b>Gesendet</b>, <b>Verkauf</b> und <b>Verkauf und Zahlung</b>. Die Kategorie kommt von der API: ein Verkauf, den DFX für eine Zahlung mit der Bezahlfunktion ausgeführt hat, heisst <b>Verkauf und Zahlung</b>.
               </div>
             </div>
           </div>
@@ -4450,7 +4466,7 @@
                 <div class="file">test/goldens/screens/transaction_history/</div>
               </div>
               <div class="rhs">
-                <b>8 Screens</b>
+                <b>13 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/transaction_history"
@@ -4461,7 +4477,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Ein Tippen auf eine Buchung öffnet ihre Detailseite. Die Seite zeigt Betrag, Datum und eine Notiz nur, wenn eine vorhanden ist. Hat die Buchung einen Betrag in CHF, EUR oder ZCHF, zeigt sie diesen. Sie zeigt keine Wallet-Adresse und keine Transaktions-ID. Ausser bei einer Empfehlungsprämie liegen dort die Beleg-Buttons. Ein Verkauf hat zwei Buttons: RealUnit-Verkauf und Tausch ZCHF in CHF/EUR. Jede andere Buchung ausser der Empfehlungsprämie hat einen Button Beleg. Der Sammelbeleg über den grossen PDF-Button bleibt unverändert. Die folgenden Zustände zeigen die Beleg-Erzeugung und den Fehlerfall auf der Detailseite.
+            Ein Tippen auf eine Buchung öffnet ihre Detailseite. Die Seite zeigt Betrag, Datum und eine Notiz nur, wenn eine vorhanden ist. Hat die Buchung einen Betrag in CHF, EUR oder ZCHF, zeigt sie diesen; bei einem Verkauf heissen die Felder Verkaufserlös und Auszahlung. Sie zeigt keine Wallet-Adresse und keine Transaktions-ID. Ausser bei einer Empfehlungsprämie liegen dort die Beleg-Buttons. Ein Verkauf hat zwei Buttons: RealUnit-Verkauf und Auszahlung (DFX AG). Eine Buchung Verkauf und Zahlung (Bezahlfunktion) hat zwei Buttons: RealUnit-Verkauf (derselbe Beleg wie beim Verkauf) und Zahlungsbeleg; es gibt keine Auszahlung von DFX. Jede andere Buchung ausser der Empfehlungsprämie hat einen Button Beleg. Der Sammelbeleg über den grossen PDF-Button bleibt unverändert. Die folgenden Zustände zeigen die Beleg-Erzeugung und den Fehlerfall auf der Detailseite.
           </p>
 
           <div class="tests cols-2">
@@ -4478,7 +4494,7 @@
                 />
               </div>
               <div class="desc">
-                Die Detailseite eines Verkaufs zeigt den Titel <b>Verkauf</b>, den Abschnitt <b>Belege</b>, die Buttons <b>RealUnit-Verkauf</b> und <b>Tausch ZCHF in CHF/EUR</b> und das Feld <b>Betrag in CHF</b> mit <b>1980.00</b>. Sie zeigt keine Transaktions-ID und keine Zeile <b>Absender</b> oder <b>Empfänger</b>.
+                Die Detailseite eines Verkaufs zeigt den Titel <b>Verkauf</b>, den Abschnitt <b>Belege</b>, die Buttons <b>RealUnit-Verkauf</b> und <b>Auszahlung (DFX AG)</b> und die Felder <b>Verkaufserlös in ZCHF</b> mit <b>2000.00</b> und <b>Auszahlung in CHF</b> mit <b>1980.20</b>. Der Verkaufserlös entspricht dem RealUnit-Beleg, die Auszahlung dem Auszahlungsbetrag des DFX-Belegs nach Abzug der DFX-Gebühren. Sie zeigt keine Transaktions-ID und keine Zeile <b>Absender</b> oder <b>Empfänger</b>.
               </div>
             </div>
             <div class="test" id="400-transaction-detail-purchase">
@@ -4494,7 +4510,7 @@
                 />
               </div>
               <div class="desc">
-                Die Detailseite eines Kaufs zeigt den Titel <b>Kauf</b>, den Betrag <b>+ 50 REALU</b>, den Abschnitt <b>Belege</b>, den Button <b>Beleg</b> und das Feld <b>Betrag in CHF</b> mit <b>5000.00</b>. Sie zeigt nicht <b>RealUnit-Verkauf</b> und nicht <b>Tausch ZCHF in CHF/EUR</b>.
+                Die Detailseite eines Kaufs zeigt den Titel <b>Kauf</b>, den Betrag <b>+ 50 REALU</b>, den Abschnitt <b>Belege</b>, den Button <b>Beleg</b> und das Feld <b>Betrag in CHF</b> mit <b>5000.00</b>. Sie zeigt nicht <b>RealUnit-Verkauf</b> und nicht <b>Auszahlung (DFX AG)</b>.
               </div>
             </div>
             <div class="test" id="401-transaction-detail-received">
@@ -4529,6 +4545,22 @@
                 Die Detailseite einer gesendeten Buchung zeigt den Titel <b>Gesendet</b>, den Betrag <b>- 10 REALU</b>, den Abschnitt <b>Belege</b> und den Button <b>Beleg</b>. Sie zeigt kein Feld <b>Betrag in CHF</b>.
               </div>
             </div>
+            <div class="test" id="422-transaction-detail-payment">
+              <div class="head">
+                <a class="name permalink" href="#422-transaction-detail-payment">422-transaction-detail-payment</a>
+                <button class="copy-link" type="button" data-target="422-transaction-detail-payment" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_payment.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/422-transaction-detail-payment.png"
+                  alt="Verkauf und Zahlung mit RealUnit-Verkauf und Zahlungsbeleg"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite einer Zahlung mit der Bezahlfunktion zeigt den Titel <b>Verkauf und Zahlung</b>, den Betrag <b>- 3 REALU</b>, den Abschnitt <b>Belege</b> und zwei Buttons. <b>RealUnit-Verkauf</b> öffnet die RealUnit-Transaktionsbestätigung des Verkaufs, denselben Beleg wie bei einem Verkauf. <b>Zahlungsbeleg</b> öffnet die Zahlungsbestätigung: Zahlung an den Händler, Netzwerkgebühr und Aufrundung auf ganze Aktien, Zahlungsempfänger und Rechnungsbetrag sowie der Vermerk, dass die Kontoinhaberin bzw. der Kontoinhaber die Token eigenverantwortlich aus einer selbst verwahrten Wallet übertragen hat. Es gibt keinen Button <b>Auszahlung (DFX AG)</b>, weil DFX dem Kunden nichts auszahlt: der Erlös hat die Rechnung bezahlt.
+              </div>
+            </div>
             <div class="test" id="403-transaction-detail-referral">
               <div class="head">
                 <a class="name permalink" href="#403-transaction-detail-referral">403-transaction-detail-referral</a>
@@ -4543,6 +4575,70 @@
               </div>
               <div class="desc">
                 Die Detailseite einer Empfehlungsprämie zeigt den Titel <b>Empfehlungsprämie</b>, den Betrag <b>+ 20 REALU</b> und die Gutschrift <b>246.50</b>. Sie zeigt weder den Abschnitt <b>Belege</b> noch einen Button <b>Beleg</b>.
+              </div>
+            </div>
+            <div class="test" id="416-transaction-detail-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#416-transaction-detail-back-to-main">416-transaction-detail-back-to-main</a>
+                <button class="copy-link" type="button" data-target="416-transaction-detail-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/416-transaction-detail-back-to-main.png"
+                  alt="Verkauf und Zahlung mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Bezahlen mit Transaktions-Hash zeigt den Titel <b>Verkauf und Zahlung</b>, den Betrag <b>- 3 REALU</b>, den Abschnitt <b>Belege</b>, die Buttons <b>RealUnit-Verkauf</b> und <b>Zahlungsbeleg</b> und den Button <b>Zurück zum Hauptscreen</b>. Sie zeigt keinen Button <b>Auszahlung (DFX AG)</b>.
+              </div>
+            </div>
+            <div class="test" id="417-transaction-detail-sent-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#417-transaction-detail-sent-back-to-main">417-transaction-detail-sent-back-to-main</a>
+                <button class="copy-link" type="button" data-target="417-transaction-detail-sent-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sent_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/417-transaction-detail-sent-back-to-main.png"
+                  alt="Gesendet mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Überweisen mit Transaktions-Hash zeigt den Titel <b>Gesendet</b>, den Betrag <b>- 10 REALU</b>, den Abschnitt <b>Belege</b>, den Button <b>Beleg</b> und den Button <b>Zurück zum Hauptscreen</b>. Sie zeigt weder <b>Verkauf</b> noch <b>RealUnit-Verkauf</b>.
+              </div>
+            </div>
+            <div class="test" id="418-transaction-detail-sale-no-receipt-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#418-transaction-detail-sale-no-receipt-back-to-main">418-transaction-detail-sale-no-receipt-back-to-main</a>
+                <button class="copy-link" type="button" data-target="418-transaction-detail-sale-no-receipt-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/418-transaction-detail-sale-no-receipt-back-to-main.png"
+                  alt="Verkauf und Zahlung ohne Beleg mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Bezahlen ohne Transaktions-Hash zeigt den Titel <b>Verkauf und Zahlung</b>, den Betrag <b>- 3 REALU</b> und den Button <b>Zurück zum Hauptscreen</b>. Sie zeigt keinen Abschnitt <b>Belege</b>.
+              </div>
+            </div>
+            <div class="test" id="419-transaction-detail-sent-no-receipt-back-to-main">
+              <div class="head">
+                <a class="name permalink" href="#419-transaction-detail-sent-no-receipt-back-to-main">419-transaction-detail-sent-no-receipt-back-to-main</a>
+                <button class="copy-link" type="button" data-target="419-transaction-detail-sent-no-receipt-back-to-main" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/transaction_history/goldens/macos/transaction_detail_sent_no_receipt_back_to_main.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/419-transaction-detail-sent-no-receipt-back-to-main.png"
+                  alt="Gesendet ohne Beleg mit Button Zurück zum Hauptscreen"
+                />
+              </div>
+              <div class="desc">
+                Die Detailseite nach dem Überweisen ohne Transaktions-Hash zeigt den Titel <b>Gesendet</b>, den Betrag <b>- 10 REALU</b> und den Button <b>Zurück zum Hauptscreen</b>. Sie zeigt keinen Abschnitt <b>Belege</b> und keinen Button <b>Beleg</b>.
               </div>
             </div>
             <div class="test" id="98-transaction-history-row-receipt-loading">
@@ -9309,7 +9405,7 @@
                 <div class="file">test/goldens/screens/pay/</div>
               </div>
               <div class="rhs">
-                <b>10 Screens</b>
+                <b>18 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
@@ -9337,18 +9433,51 @@
               <div class="img">
                 <img
                   src="../screenshots/300-pay-info.png"
-                  alt="Bevor Sie bezahlen — Hinweis auf Verkauf und Aufrundung"
+                  alt="Bevor Sie bezahlen — Hinweis, dass nicht mit den Aktien, sondern mit ZCHF bezahlt wird"
                 />
               </div>
               <div class="desc">
-                Intro-Seite <b>Bevor Sie bezahlen</b> mit dem von RealUnit Legal
-                freigegebenen Text (28.09.2026): Bezahlen in Geschäften mit
+                Intro-Seite <b>Bevor Sie bezahlen</b>. Erster Absatz: Bezahlen in Geschäften mit
                 OpenCryptoPay, derzeit insbesondere ausgewählte SPAR-Filialen der
-                Deutschschweiz; für jede Zahlung wird REALU verkauft und aus dem
-                Erlös der Händler bezahlt; Aufrundung auf ganze REALU, der
-                Aufrundungsbetrag wird nicht gutgeschrieben.
-                Die Seite zeigt auch den Link «Standorte anzeigen» zur SPAR-Filialkarte.
+                Deutschschweiz. Dazwischen die Grafik zum Zahlungsablauf, wie RealUnit sie
+                vorgegeben hat: die drei Stationen <b>AktionärIn</b>, <b>ZCHF</b> (Münze wie in der
+                Vorlage: Kreis mit dem Tauschsymbol aus zwei Strichen mit halber
+                Spitze) und <b>Händler</b> mit den zwei nummerierten Schritten
+                <b>Sie verkaufen REALU gegen ZCHF</b> und <b>Mit den ZCHF wird der Händler
+                bezahlt</b>; bei grosser Schrift stehen die drei Stationen untereinander.
+                Zweiter Absatz: Bezahlt wird nicht mit den Aktien. Für jede
+                Zahlung wird REALU verkauft; den Erlös abzüglich der Gebühr
+                erhält man in ZCHF, einem Stablecoin in Schweizer Franken, und
+                mit diesem ZCHF wird bezahlt. Weil nur ganze Aktien verkauft
+                werden können, wird auf ganze REALU aufgerundet. Der
+                Aufrundungsbetrag wird nicht gutgeschrieben und fällt bei
+                kleinen Beträgen stärker ins Gewicht. Vor der
+                Bestätigung sieht man Anzahl, Preis und Gebühr. Jede Zahlung
+                erscheint in der Historie als «Verkauf und Zahlung».
+                Der Link «Standorte anzeigen» öffnet die In-App-Karte der Geschäfte, in denen OpenCryptoPay ZCHF auf Ethereum akzeptiert. Eine andere Chain oder ein anderes Asset ist nicht wählbar.
+                Bei einer Software-Wallet erscheint diese Seite nur einmal; danach öffnet Bezahlen direkt den Scanner. Dort bleibt derselbe Link, und die Grafik bleibt klein sichtbar (338, 426).
                 Golden-Quelle: <code>pay_info_page.png</code>.
+              </div>
+            </div>
+            <div class="test" id="425-pay-info-pay-unavailable">
+              <div class="head">
+                <a class="name permalink" href="#425-pay-info-pay-unavailable">425-pay-info-pay-unavailable</a>
+                <button class="copy-link" type="button" data-target="425-pay-info-pay-unavailable" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">pay_info_golden_test.dart</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/425-pay-info-pay-unavailable.png"
+                  alt="Bevor Sie bezahlen — nur Software-Wallet"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Intro-Seite <b>Bevor Sie bezahlen</b>, wenn die geöffnete
+                Wallet keine Software-Wallet ist. Sichtbar ist nur der Satz
+                <b>Bezahlen gibt es nur mit der Software-Wallet.</b>
+                Es gibt kein Weiter, keinen Scanner und kein Fehler-Sheet.
+                Das ist keine fehlgeschlagene Zahlung.
+                Golden-Quelle: <code>pay_info_page_pay_unavailable.png</code>.
               </div>
             </div>
             <div class="test" id="301-pay-quote-ready">
@@ -9456,21 +9585,22 @@
                 <b>Zahlung wird abgeschlossen</b>.
               </div>
             </div>
-            <div class="test" id="333-pay-process-page-pay-retry">
+            <div class="test" id="420-pay-result-sheet-failure">
               <div class="head">
-                <a class="name permalink" href="#333-pay-process-page-pay-retry">333-pay-process-page-pay-retry</a>
-                <button class="copy-link" type="button" data-target="333-pay-process-page-pay-retry" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">pay_process_golden_test.dart</span>
+                <a class="name permalink" href="#420-pay-result-sheet-failure">420-pay-result-sheet-failure</a>
+                <button class="copy-link" type="button" data-target="420-pay-result-sheet-failure" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">pay_result_sheet_golden_test.dart</span>
               </div>
               <div class="img">
                 <img
-                  src="../screenshots/333-pay-process-page-pay-retry.png"
-                  alt="Bezahlen, erneuter Zahlungsversuch"
+                  src="../screenshots/420-pay-result-sheet-failure.png"
+                  alt="Zahlung fehlgeschlagen"
                 />
               </div>
               <div class="desc">
-                Zahlungsablauf mit der Beschriftung für den erneuten
-                Zahlungsversuch. Titel <b>Schließen Sie Ihre Zahlung ab</b>.
+                Fehlersheet. Titel <b>Zahlung fehlgeschlagen</b> und der Satz
+                <b>Bei der Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.</b>
+                Die graue Schaltfläche lautet <b>Schließen</b>.
               </div>
             </div>
             <div class="test" id="334-pay-process-page-swapping">
@@ -9504,7 +9634,147 @@
               </div>
               <div class="desc">
                 Scan-Seite im Scan-Zustand mit Platzhalter für die Kamera. Titel
-                <b>Zahlungscode scannen</b>.
+                <b>Zahlungscode scannen</b>. Oben die Grafik zum Zahlungsablauf
+                klein (drei Stationen ohne Legende) in einem Rahmen mit
+                Vergrössern-Symbol; Antippen öffnet die vollständige Erklärung
+                (426). Darunter der Link <b>Standorte anzeigen</b>, der dieselbe
+                Karte wie auf der Intro-Seite öffnet.
+              </div>
+            </div>
+            <div class="test" id="426-pay-flow-sheet">
+              <div class="head">
+                <a class="name permalink" href="#426-pay-flow-sheet">426-pay-flow-sheet</a>
+                <button class="copy-link" type="button" data-target="426-pay-flow-sheet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">pay_flow_sheet_golden_test.dart</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/426-pay-flow-sheet.png"
+                  alt="Bevor Sie bezahlen als Sheet, mit der Grafik zum Zahlungsablauf"
+                />
+              </div>
+              <div class="desc">
+                Sheet, das die kleine Grafik auf der Scan-Seite beim Antippen
+                öffnet. Gleicher Inhalt und gleiche Reihenfolge wie die
+                Intro-Seite <b>Bevor Sie bezahlen</b>: erster Absatz, Grafik mit
+                den nummerierten Schritten, zweiter Absatz. Einzige Aktion ist
+                <b>Schließen</b>; der Scanner bleibt darunter offen und
+                ignoriert Codes, solange das Sheet offen ist.
+                Golden-Quelle: <code>pay_flow_sheet.png</code>.
+              </div>
+            </div>
+            <div class="test" id="410-pay-locations-loading">
+              <div class="head">
+                <a class="name permalink" href="#410-pay-locations-loading">410-pay-locations-loading</a>
+                <button class="copy-link" type="button" data-target="410-pay-locations-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/410-pay-locations-loading.png"
+                  alt="Standorte werden geladen"
+                />
+              </div>
+              <div class="desc">
+                Standortkarte während des Ladens. Titel <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_loading.png</code>.
+              </div>
+            </div>
+            <div class="test" id="411-pay-locations-error">
+              <div class="head">
+                <a class="name permalink" href="#411-pay-locations-error">411-pay-locations-error</a>
+                <button class="copy-link" type="button" data-target="411-pay-locations-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/411-pay-locations-error.png"
+                  alt="Standortliste konnte nicht geladen werden"
+                />
+              </div>
+              <div class="desc">
+                Fehlerzustand der Standortkarte. Sichtbarer Text:
+                <b>Die Standortliste konnte nicht geladen werden.</b>
+                Golden-Quelle: <code>pay_locations_page_error.png</code>.
+              </div>
+            </div>
+            <div class="test" id="412-pay-locations-empty">
+              <div class="head">
+                <a class="name permalink" href="#412-pay-locations-empty">412-pay-locations-empty</a>
+                <button class="copy-link" type="button" data-target="412-pay-locations-empty" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_empty.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/412-pay-locations-empty.png"
+                  alt="Veröffentlichte SPAR-Standorte"
+                />
+              </div>
+              <div class="desc">
+                Standortkarte der veröffentlichten SPAR-Filialen auf dem
+                Umriss der Schweiz und Liechtensteins, mit Seen, Ortsnamen,
+                gruppierten Markern und der Adressliste. Keine Blockchain- oder
+                Asset-Auswahl und keine Kartenkacheln. Titel
+                <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_empty.png</code>.
+              </div>
+            </div>
+            <div class="test" id="413-pay-locations-places">
+              <div class="head">
+                <a class="name permalink" href="#413-pay-locations-places">413-pay-locations-places</a>
+                <button class="copy-link" type="button" data-target="413-pay-locations-places" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_places.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/413-pay-locations-places.png"
+                  alt="Standorte mit einem Geschäft"
+                />
+              </div>
+              <div class="desc">
+                Standortkarte mit einem Geschäft für ZCHF auf Ethereum, auf dem
+                lokalen Landesumriss und mit der Geschäftsliste. Titel
+                <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_places.png</code>.
+              </div>
+            </div>
+            <div class="test" id="414-pay-locations-no-match">
+              <div class="head">
+                <a class="name permalink" href="#414-pay-locations-no-match">414-pay-locations-no-match</a>
+                <button class="copy-link" type="button" data-target="414-pay-locations-no-match" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_no_match.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/414-pay-locations-no-match.png"
+                  alt="Kein Standort passt"
+                />
+              </div>
+              <div class="desc">
+                Standortsuche ohne Treffer. Sichtbarer Text:
+                <b>Kein Standort passt.</b>
+                Die Karte zeigt weiter den Landesumriss, ohne Marker.
+                Golden-Quelle: <code>pay_locations_page_no_match.png</code>.
+              </div>
+            </div>
+            <div class="test" id="415-pay-locations-unpublished">
+              <div class="head">
+                <a class="name permalink" href="#415-pay-locations-unpublished">415-pay-locations-unpublished</a>
+                <button class="copy-link" type="button" data-target="415-pay-locations-unpublished" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_unpublished.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/415-pay-locations-unpublished.png"
+                  alt="Noch keine Standorte veröffentlicht"
+                />
+              </div>
+              <div class="desc">
+                Keine veröffentlichten Standorte. Die Hinweis-Karte sitzt auf dem
+                lokalen Landesumriss, ohne Geschäfts-Marker. Sichtbarer Text:
+                <b>Noch keine Standorte veröffentlicht.</b>
+                Titel <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_unpublished.png</code>.
               </div>
             </div>
           </div>
@@ -10044,7 +10314,8 @@
           <p class="spec-intro">
             Die öffentliche Website <a href="https://realunit.app">realunit.app</a>
             (Landingpage plus Empfehlung unter <code>/invite/</code>, Kampagne unter
-            <code>/promo/</code>, der Aktionariat-Adressbestätigungs-Flow unter
+            <code>/promo/</code>, Zahlungsorte unter <code>/pay/</code>, der
+            Aktionariat-Adressbestätigungs-Flow unter
             <code>/confirm-aktionariat/</code> und der Adresse-hinzufügen-Flow unter
             <code>/account-merge/</code>) hat ihre eigene Visual-Regression-Suite.
             Jedes Bild hier ist eine <b>Playwright-Baseline</b> aus dem
@@ -12470,6 +12741,143 @@
             </div>
           </div>
 
+          <h3>Zahlungsorte <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-pay-places-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-places-desktop">web-pay-places-desktop</a>
+                <button class="copy-link" type="button" data-target="web-pay-places-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/pay-places.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/pay-places.png"
+                  alt="Zahlungsorte mit Karte — Desktop"
+                />
+              </div>
+              <div class="desc">
+                <code>/pay/</code>, Desktop. Die Karte zeigt die veröffentlichten Geschäfte.
+                Titel: «Mit der RealUnit Wallet bezahlen». Kein Punkt ist ausgewählt.
+              </div>
+            </div>
+            <div class="test" id="web-pay-places-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-places-tablet">web-pay-places-tablet</a>
+                <button class="copy-link" type="button" data-target="web-pay-places-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/pay-places.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/pay-places.png"
+                  alt="Zahlungsorte mit Karte — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Karte im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-pay-places-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-places-mobile">web-pay-places-mobile</a>
+                <button class="copy-link" type="button" data-target="web-pay-places-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/pay-places.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/pay-places.png"
+                  alt="Zahlungsorte mit Karte — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Karte in der Mobile-Ansicht.
+              </div>
+            </div>
+            <div class="test" id="web-pay-places-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-places-desktop-en">web-pay-places-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-pay-places-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/pay-places-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/pay-places-en.png"
+                  alt="Pay locations map — Desktop, English"
+                />
+              </div>
+              <div class="desc">
+                <code>/pay/en/</code>, nur Desktop. Titel: «Pay with the RealUnit Wallet».
+              </div>
+            </div>
+            <div class="test" id="web-pay-place-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-place-desktop">web-pay-place-desktop</a>
+                <button class="copy-link" type="button" data-target="web-pay-place-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/pay-place.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/pay-place.png"
+                  alt="Ausgewählter Zahlungsort — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Desktop. Der erste veröffentlichte Punkt ist ausgewählt. Name und
+                Kategorie stehen im Popup, nicht als Liste auf der Karte.
+              </div>
+            </div>
+            <div class="test" id="web-pay-empty-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-empty-desktop">web-pay-empty-desktop</a>
+                <button class="copy-link" type="button" data-target="web-pay-empty-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/pay-empty.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/pay-empty.png"
+                  alt="Keine Zahlungsorte — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Desktop. Titel: «Noch keine Zahlungsorte veröffentlicht». Die Karte
+                und der Hinweis zur Zahlungsart fehlen.
+              </div>
+            </div>
+            <div class="test" id="web-pay-empty-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-empty-mobile">web-pay-empty-mobile</a>
+                <button class="copy-link" type="button" data-target="web-pay-empty-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/pay-empty.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/pay-empty.png"
+                  alt="Keine Zahlungsorte — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Derselbe leere Zustand in der Mobile-Ansicht. Ein Tablet-Bild gibt
+                es für diesen Zustand nicht.
+              </div>
+            </div>
+            <div class="test" id="web-pay-error-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-pay-error-desktop">web-pay-error-desktop</a>
+                <button class="copy-link" type="button" data-target="web-pay-error-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/pay-error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/pay-error.png"
+                  alt="Zahlungsorte nicht erreichbar — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Nur Desktop. Titel: «Zahlungsorte gerade nicht erreichbar», mit
+                «Erneut versuchen».
+              </div>
+            </div>
+          </div>
+
           <h3>404 — Seite nicht gefunden <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
           <div class="tests cols-2">
             <div class="test" id="web-notfound-desktop">
@@ -12529,9 +12937,9 @@
             mit dem nächsten Handbook-Deploy (Push auf <code>staging</code> → PRD,
             oder manueller <code>workflow_dispatch --ref staging</code> auf
             <code>handbook-deploy.yaml</code> im realunit-app-Repo) reingezogen.
-            Kommt im web-Repo eine View hinzu oder weg, failt der Handbook-Build am
-            <code>EXPECTED_WEB_BASELINE_COUNT</code>-Guard, bis Zahl und Karten hier
-            im selben Zug nachgezogen sind.
+            Kommt im web-Repo eine View hinzu oder weg, failt der Handbook-Build,
+            bis die Karte hier denselben Pfad trägt. Die Anzahl steht nicht im
+            Deploy-Workflow.
           </p>
         </details>
 
@@ -12570,9 +12978,7 @@
             gepollt.
           </p>
           <p>
-            Einladung erstellen: Name der eingeladenen Person (eine Zeile,
-            Zeilenumbrüche werden zu Leerzeichen, höchstens 80 Zeichen;
-            Absenden räumt den Feldtext auf; Autofokus), Checkbox
+            Einladung erstellen: oben die Wahl Persönlich oder Unpersönlich. Persönlich: Vorname der eingeladenen Person (eine Zeile, Zeilenumbrüche werden zu Leerzeichen, höchstens 80 Zeichen; Absenden räumt den Feldtext auf; Autofokus), einmal einlösbarer Code. Unpersönlich: kein Name, ein wiederverwendbarer Code; die Übersicht zeigt dafür nur die Anzahl der eigenen Prämien, keine Angaben zur eingeladenen Person. Checkbox
             <b>Ich habe die Teilnahmebedingungen gelesen und akzeptiert</b>
             (Checkbox erst nach geladenem TB-Text; Button erst danach aktiv;
             der TB-Text ist markierbar), persönlicher Link von der API.
@@ -12582,17 +12988,17 @@
             <code>www.realunit.app</code> werden auf den Apex gefaltet;
             ein API-Pfad <code>/promo/…</code> bleibt Promo).
             Nach dem Erstellen und in der Übersicht erscheint der personalisierte
-            Share-Text unter <b>Persönlicher Einladungslink</b>; Kopieren und
-            Versenden schicken denselben Text.
+            Share-Text unter <b>Persönlicher Einladungslink</b>; Versenden schickt
+            diesen Text, Kopieren nur den Einladungslink.
             Nach der Annahme bleiben die Teilnahmebedingungen über den
             Übersichtstitel und Einstellungen → Rechtliche Dokumente
             (letzter Eintrag) lesbar. Kopieren bestätigt mit
             <b>Kopiert</b> für zwei Sekunden nur nach erfolgreichem Schreiben
-            in die Zwischenablage und liest den Share-Text vor; ein erneutes
+            in die Zwischenablage und liest den Einladungslink vor; ein erneutes
             Tippen kopiert wieder.
             Versenden setzt Titel und Betreff <b>Persönlicher Einladungslink</b>
             und verankert das iPad/Mac-Share-Popover am Button (sonst am
-            Bildschirm). Kopiert-Status fällt zurück, wenn der Share-Text
+            Bildschirm). Kopiert-Status fällt zurück, wenn der Einladungslink
             wechselt. Übersicht zeigt Anzahl offen /
             gutgeschrieben (vorgelesen «3 Offen») sowie Summe REALU und Frankenwert; offene Einladungen
             lassen sich erneut kopieren und versenden, ohne den Status der
@@ -12749,7 +13155,8 @@
               Kachel <b>Insgesamt erhalten</b> mit ganzen REALU, Gegenwert zum
               aktuellen Aktienkurs (≈ CHF) und Beschriftung <b>Aktienkurs</b>;
               Zähler Offen / Gutgeschrieben;
-              offene Einladung mit Kopieren und Versenden.
+              offene Einladung mit dem freigegebenen Einladungstext; darunter folgen die Buttons
+              Kopieren (im Bild angeschnitten) und Versenden (ausserhalb des Bildes).
             </div>
           </div>
           <div class="test" id="351-referral-overview-page-empty">
@@ -12950,8 +13357,9 @@
               />
             </div>
             <div class="desc">
-              Nach dem Erstellen: personalisierter Share-Text, Kopieren, Versenden
-              und Erledigt.
+              Nach dem Erstellen: personalisierter Share-Text <b>Hallo Alice</b> mit dem
+              freigegebenen Einladungstext, Code <b>AB12CD</b>, Link und Werbehinweis;
+              Kopieren, Versenden und Erledigt.
             </div>
           </div>
           <div class="test" id="281-referral-terms">
@@ -13072,8 +13480,102 @@
               />
             </div>
             <div class="desc">
-              Einladung erstellen: Vorname der eingeladenen Person, Button
-              «Einladungslink erstellen».
+              Einladung erstellen: Wahl Persönlich oder Unpersönlich, Vorname der eingeladenen Person, Button «Einladungslink erstellen».
+            </div>
+          </div>
+          <div class="test" id="405-referral-create-impersonal">
+            <div class="head">
+              <a class="name permalink" href="#405-referral-create-impersonal">405-referral-create-impersonal</a>
+              <button class="copy-link" type="button" data-target="405-referral-create-impersonal" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_surfaces_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/405-referral-create-impersonal.png"
+                alt="Einladung erstellen, unpersönlich, nach dem Anlegen"
+              />
+            </div>
+            <div class="desc">
+              Einladung erstellen, Modus Unpersönlich, nach dem Anlegen. Titel
+              <b>Einladungslink erstellen</b>. Wahl <b>Persönlich</b> oder
+              <b>Unpersönlich</b>. Titel <b>Unpersönlicher Einladungslink</b>.
+              Text <b>Verwenden Sie den nachfolgenden Code für mehrfache, unpersönliche Weiterempfehlungen.</b>
+              Share-Text <b>Hallo</b> mit dem freigegebenen Einladungstext, Code <b>IMP1</b>,
+              Link <b>https://realunit.app/invite/IMP1</b> und Werbehinweis.
+              Kein Namensfeld.
+            </div>
+          </div>
+          <div class="test" id="406-referral-create-impersonal-creating">
+            <div class="head">
+              <a class="name permalink" href="#406-referral-create-impersonal-creating">406-referral-create-impersonal-creating</a>
+              <button class="copy-link" type="button" data-target="406-referral-create-impersonal-creating" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_surfaces_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/406-referral-create-impersonal-creating.png"
+                alt="Einladung erstellen, unpersönlich, wird angelegt"
+              />
+            </div>
+            <div class="desc">
+              Einladung erstellen, Modus Unpersönlich, während des Anlegens. Titel
+              <b>Einladungslink erstellen</b>. Text <b>Einladung wird erstellt…</b>
+              Aktivitätsanzeige sichtbar. Kein Namensfeld, kein Share-Text.
+            </div>
+          </div>
+          <div class="test" id="407-referral-create-impersonal-error">
+            <div class="head">
+              <a class="name permalink" href="#407-referral-create-impersonal-error">407-referral-create-impersonal-error</a>
+              <button class="copy-link" type="button" data-target="407-referral-create-impersonal-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_surfaces_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/407-referral-create-impersonal-error.png"
+                alt="Einladung erstellen, unpersönlich, Fehler"
+              />
+            </div>
+            <div class="desc">
+              Einladung erstellen, Modus Unpersönlich, Fehler. Titel
+              <b>Einladungslink erstellen</b>. Text
+              <b>Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.</b>
+              Button <b>Wiederholen</b>.
+            </div>
+          </div>
+          <div class="test" id="408-referral-overview-impersonal">
+            <div class="head">
+              <a class="name permalink" href="#408-referral-overview-impersonal">408-referral-overview-impersonal</a>
+              <button class="copy-link" type="button" data-target="408-referral-overview-impersonal" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_overview_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/408-referral-overview-impersonal.png"
+                alt="Übersicht mit offener unpersönlicher Einladung"
+              />
+            </div>
+            <div class="desc">
+              Übersicht mit offener unpersönlicher Einladung. Titel
+              <b>Unpersönlicher Einladungslink</b>. Text <b>0 Prämien</b>.
+              Der Name Hidden ist nicht sichtbar.
+            </div>
+          </div>
+          <div class="test" id="409-referral-overview-impersonal-one">
+            <div class="head">
+              <a class="name permalink" href="#409-referral-overview-impersonal-one">409-referral-overview-impersonal-one</a>
+              <button class="copy-link" type="button" data-target="409-referral-overview-impersonal-one" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_overview_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/409-referral-overview-impersonal-one.png"
+                alt="Übersicht mit einer unpersönlichen Prämie"
+              />
+            </div>
+            <div class="desc">
+              Übersicht mit offener unpersönlicher Einladung und genau einer Prämie. Titel
+              <b>Unpersönlicher Einladungslink</b>. Text <b>1 Prämie</b>.
+              Der Name Hidden ist nicht sichtbar.
             </div>
           </div>
           <div class="test" id="343-referral-create-page-creating">
@@ -13625,7 +14127,8 @@
             die <b>Verkauf-Bestätigung</b> (Einzelbeleg für eine
             Verkaufstransaktion) und die <b>Übertragung</b> (Einzelbeleg für eine
             Wallet-zu-Wallet-Übertragung). Ein Verkauf hat zusätzlich den
-            <b>DFX-Beleg</b> für den Tausch von ZCHF in CHF oder EUR. Der
+            <b>DFX-Beleg</b> «Auszahlung (DFX AG)» für den Tausch von ZCHF in CHF
+            oder EUR. Der
             Renderer lebt im
             <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo;
             die verlinkten Muster-PDFs liegen dort als
@@ -13714,7 +14217,7 @@
             </div>
           </div>
 
-          <h3>Tausch von ZCHF in CHF oder EUR <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <h3>Auszahlung (DFX AG): Tausch von ZCHF in CHF oder EUR <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
           <div class="tests cols-2">
             <div class="test legal-doc" id="receipt-exchange-chf-de">
               <div class="head">
@@ -13723,7 +14226,7 @@
                 <span class="src">de</span>
               </div>
               <div class="downloads">
-                <span class="doc-title">Tausch ZCHF in CHF (Einzelbeleg)</span>
+                <span class="doc-title">Auszahlung (DFX AG), ZCHF in CHF (Einzelbeleg)</span>
                 <a class="dl-btn" href="../receipts/exchange-zchf-chf-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/exchange-zchf-chf-de.pdf" download>PDF</a>
               </div>
@@ -13735,7 +14238,7 @@
                 <span class="src">en</span>
               </div>
               <div class="downloads">
-                <span class="doc-title">ZCHF to CHF Exchange</span>
+                <span class="doc-title">Payout (DFX AG), ZCHF to CHF</span>
                 <a class="dl-btn" href="../receipts/exchange-zchf-chf-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/exchange-zchf-chf-en.pdf" download>PDF</a>
               </div>
@@ -13747,7 +14250,7 @@
                 <span class="src">de</span>
               </div>
               <div class="downloads">
-                <span class="doc-title">Tausch ZCHF in EUR (Einzelbeleg)</span>
+                <span class="doc-title">Auszahlung (DFX AG), ZCHF in EUR (Einzelbeleg)</span>
                 <a class="dl-btn" href="../receipts/exchange-zchf-eur-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/exchange-zchf-eur-de.pdf" download>PDF</a>
               </div>
@@ -13759,7 +14262,7 @@
                 <span class="src">en</span>
               </div>
               <div class="downloads">
-                <span class="doc-title">ZCHF to EUR Exchange</span>
+                <span class="doc-title">Payout (DFX AG), ZCHF to EUR</span>
                 <a class="dl-btn" href="../receipts/exchange-zchf-eur-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/exchange-zchf-eur-en.pdf" download>PDF</a>
               </div>
@@ -13905,7 +14408,7 @@ Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche 
 
 Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.
 
-Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/ueber-uns/downloads/ (Schweiz) | https://realunit.de/ueber-uns/downloads/ (Deutschland/EU). Vergangene Wertentwicklung ist kein verlässlicher Indikator für zukünftige Ergebnisse.</pre></dd>
+Dieser Inhalt ist Werbung. Die genehmigten Prospekte zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/ueber-uns/downloads/ (Schweiz) | https://realunit.de/ueber-uns/downloads/ (Deutschland/EU). Ihre Genehmigung ist keine Befürwortung der Wertpapiere. Anlegern wird empfohlen, vor einer Anlageentscheidung den Prospekt zu lesen, um Risiken und Chancen zu verstehen. Frühere Wertentwicklung ist kein zuverlässiger Indikator für die künftige Wertentwicklung.</pre></dd>
     <dt>Schlagwörter (max 100, kommasepariert)</dt><dd><code>RealUnit,Wallet,Token,Aktien,Vermögen,Schweiz,Bitbox,Krypto,Investment,bankenunabhängig</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/keywords.txt" title="Quelle: keywords.txt">↗</a></dd>
     <dt>Marketing-URL</dt><dd><a href="https://realunit.ch">https://realunit.ch</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/marketing_url.txt" title="Quelle: marketing_url.txt">↗</a></dd>
     <dt>Privacy-URL</dt><dd><a href="https://realunit.ch/datenschutz/">https://realunit.ch/datenschutz/</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/privacy_url.txt" title="Quelle: privacy_url.txt">↗</a></dd>
@@ -13961,7 +14464,7 @@ Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche 
 
 Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.
 
-Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/ueber-uns/downloads/ (Schweiz) | https://realunit.de/ueber-uns/downloads/ (Deutschland/EU). Vergangene Wertentwicklung ist kein verlässlicher Indikator für zukünftige Ergebnisse.</div></dd>
+Dieser Inhalt ist Werbung. Die genehmigten Prospekte zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/ueber-uns/downloads/ (Schweiz) | https://realunit.de/ueber-uns/downloads/ (Deutschland/EU). Ihre Genehmigung ist keine Befürwortung der Wertpapiere. Anlegern wird empfohlen, vor einer Anlageentscheidung den Prospekt zu lesen, um Risiken und Chancen zu verstehen. Frühere Wertentwicklung ist kein zuverlässiger Indikator für die künftige Wertentwicklung.</div></dd>
     <dt>Changelog</dt><dd>Verbesserte Nutzerführung im Bereich der Registrierung. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/changelogs/default.txt" title="Quelle: changelogs/default.txt">↗</a></dd>
   </dl>
 
