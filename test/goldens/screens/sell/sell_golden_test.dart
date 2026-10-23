@@ -288,5 +288,26 @@ void main() {
         return wrapForGolden(buildSubject());
       },
     );
+
+    goldenTest(
+      'share count in the quote does not match the request',
+      fileName: 'sell_share_count_mismatch',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(1000000000000000000),
+            asset: realUnitAsset,
+          ),
+        );
+        when(() => paymentInfoCubit.state).thenReturn(
+          const SellPaymentInfoFailure(PaymentInfoError.shareCountMismatch),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
   });
 }
