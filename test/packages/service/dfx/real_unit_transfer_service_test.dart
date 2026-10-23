@@ -42,6 +42,8 @@ final _walletAddress = _privKey.address.hexEip55;
 
 const _metaMaskDelegator = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
 const _delegationManager = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
+const _relayerAddress = '0x1111111111111111111111111111111111111111';
+const _authority = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
 const _confirmedRecipient = '0x2222222222222222222222222222222222222222';
 const _confirmedAmount = 5;
@@ -93,7 +95,7 @@ Map<String, dynamic> _eip7702Json({
   int chainId = 1,
   String recipient = _confirmedRecipient,
 }) => {
-  'relayerAddress': '0xrelay',
+  'relayerAddress': _relayerAddress,
   'delegationManagerAddress': _delegationManager,
   'delegatorAddress': _metaMaskDelegator,
   'userNonce': 7,
@@ -108,9 +110,9 @@ Map<String, dynamic> _eip7702Json({
     'Caveat': <Map<String, dynamic>>[],
   },
   'message': {
-    'delegate': '0xrelay',
+    'delegate': _relayerAddress,
     'delegator': _walletAddress,
-    'authority': '0xauth',
+    'authority': _authority,
     'caveats': _transferCaveats(),
     'salt': 0,
   },
@@ -314,9 +316,9 @@ void main() {
         expect(envelope.containsKey('authorization'), isTrue);
 
         final delegation = envelope['delegation'] as Map<String, dynamic>;
-        expect(delegation['delegate'], '0xrelay');
+        expect(delegation['delegate'], _relayerAddress);
         expect(delegation['delegator'], _walletAddress);
-        expect(delegation['authority'], '0xauth');
+        expect(delegation['authority'], _authority);
         expect(delegation['salt'], '0');
         expect((delegation['signature'] as String).length, 132);
 

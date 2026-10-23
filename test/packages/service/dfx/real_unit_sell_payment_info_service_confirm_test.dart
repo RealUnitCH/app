@@ -44,6 +44,8 @@ final _walletAddress = _privKey.address.hexEip55.toLowerCase();
 
 const _metaMaskDelegator = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
 const _delegationManager = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
+const _relayerAddress = '0x1111111111111111111111111111111111111111';
+const _authority = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
 final Map<String, dynamic> _caveatVectors = _loadCaveatVectors();
 
@@ -77,7 +79,7 @@ List<Map<String, dynamic>> _sellCaveats(String wrapperKey) => <Map<String, dynam
 ];
 
 Map<String, dynamic> _validEip7702Json() => {
-  'relayerAddress': '0xrelay',
+  'relayerAddress': _relayerAddress,
   'delegationManagerAddress': _delegationManager,
   'delegatorAddress': _metaMaskDelegator,
   'userNonce': 7,
@@ -92,9 +94,9 @@ Map<String, dynamic> _validEip7702Json() => {
     'Caveat': <Map<String, dynamic>>[],
   },
   'message': {
-    'delegate': '0xrelay',
+    'delegate': _relayerAddress,
     'delegator': _walletAddress,
-    'authority': '0xauth',
+    'authority': _authority,
     'caveats': _sellCaveats('sellWrapperAmount100'),
     'salt': 0,
   },
@@ -183,9 +185,9 @@ void main() {
       final authorization = envelope['authorization'] as Map<String, dynamic>;
 
       // Delegation block mirrors the eip7702 data + carries a real signature.
-      expect(delegation['delegate'], '0xrelay');
+      expect(delegation['delegate'], _relayerAddress);
       expect(delegation['delegator'], _walletAddress);
-      expect(delegation['authority'], '0xauth');
+      expect(delegation['authority'], _authority);
       expect(delegation['salt'], '0');
       expect((delegation['signature'] as String).startsWith('0x'), isTrue);
       // 65-byte EIP-712 signature → 0x + 130 hex chars.
