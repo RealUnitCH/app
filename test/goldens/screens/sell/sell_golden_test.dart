@@ -294,6 +294,22 @@ void main() {
       fileName: 'sell_share_count_mismatch',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () {
+        whenListen(
+          converterCubit,
+          Stream<SellConverterState>.value(
+            const SellConverterState(sharesText: '100', fiatText: '100'),
+          ),
+          initialState: const SellConverterState(loading: true),
+        );
+        when(() => selectedBankAccountCubit.state).thenReturn(
+          const BankAccount(
+            id: 1,
+            iban: 'CH9300762011623852957',
+            name: 'Raiffeisen',
+            isActive: true,
+            isDefault: true,
+          ),
+        );
         when(() => balanceCubit.state).thenReturn(
           Balance(
             chainId: 1,
