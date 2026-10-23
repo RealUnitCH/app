@@ -1,6 +1,10 @@
 /// The quote the server returned is not the share count this app requested.
 class SellShareCountMismatchException implements Exception {
   const SellShareCountMismatchException();
+
+  @override
+  String toString() =>
+      'SellShareCountMismatchException: returned share count does not match the request';
 }
 
 /// A sell quote may open only when the returned share count and the signed
