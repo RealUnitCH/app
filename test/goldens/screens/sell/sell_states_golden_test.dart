@@ -342,51 +342,15 @@ void main() {
       ),
     );
 
-    // The listener fires on a change, so the cubit starts idle and then emits
-    // the caveat failure. A Scaffold bottomSheet slot paints over the snackbar.
-    // The body still uses BottomSheet, so this frame keeps the white surface
-    // and the 32 px top radius of the other confirm goldens.
-    Future<void> settleCaveatSnackBar(WidgetTester tester) async {
-      await tester.pump();
-      await tester.pumpAndSettle();
-    }
-
+    // Same sheet slot as the idle confirm golden. The refusal sits in the
+    // sheet, above Bestätigen, instead of a bar across the button.
     goldenTest(
       'caveat rejection shows the existing failure sentence',
       fileName: 'sell_confirm_caveat_snackbar',
       constraints: phoneConstraints,
-      pumpBeforeTest: settleCaveatSnackBar,
-      builder: () {
-        whenListen(
-          confirmCubit,
-          Stream<SellConfirmState>.value(
-            SellConfirmFailure('Exception: EIP-7702 caveats: rejected'),
-          ),
-          initialState: SellConfirmInitial(),
-        );
-        final settingsBloc = MockSettingsBloc();
-        when(() => settingsBloc.state).thenReturn(const SettingsState());
-        return wrapForGolden(
-          Scaffold(
-            backgroundColor: Colors.black54,
-            body: Align(
-              alignment: Alignment.bottomCenter,
-              child: BlocProvider<SellConfirmCubit>.value(
-                value: confirmCubit,
-                child: BlocProvider<SettingsBloc>.value(
-                  value: settingsBloc,
-                  child: BottomSheet(
-                    onClosing: () {},
-                    enableDrag: false,
-                    builder: (context) =>
-                        SellConfirmSheetView(paymentInfo: _paymentInfo()),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+      builder: () => sheetFor(
+        SellConfirmFailure('Exception: EIP-7702 caveats: rejected'),
+      ),
     );
   });
 

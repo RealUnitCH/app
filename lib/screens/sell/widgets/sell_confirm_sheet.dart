@@ -51,19 +51,6 @@ class SellConfirmSheetView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<SellConfirmCubit, SellConfirmState>(
       listener: (context, state) async {
-        if (state is SellConfirmFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                visibleSellConfirmError(
-                  error: state.error,
-                  caveatFallback: S.of(context).sellConfirmAuthorizationRejected,
-                ),
-              ),
-              backgroundColor: RealUnitColors.status.red600,
-            ),
-          );
-        }
         if (state is SellConfirmSuccess) {
           context.pop(true);
         }
@@ -156,12 +143,31 @@ class SellConfirmSheetView extends StatelessWidget {
                         child: BlocBuilder<SellConfirmCubit, SellConfirmState>(
                           builder: (context, state) {
                             final isLoading = state is SellConfirmLoading;
-                            return AppFilledButton(
-                              label: S.of(context).confirm,
-                              onPressed: () => context
-                                  .read<SellConfirmCubit>()
-                                  .confirmPayment(paymentInfo),
-                              state: isLoading ? .loading : .idle,
+                            final failure = state is SellConfirmFailure
+                                ? state
+                                : null;
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (failure != null) ...[
+                                  _confirmFailureNotice(
+                                    visibleSellConfirmError(
+                                      error: failure.error,
+                                      caveatFallback: S
+                                          .of(context)
+                                          .sellConfirmAuthorizationRejected,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                AppFilledButton(
+                                  label: S.of(context).confirm,
+                                  onPressed: () => context
+                                      .read<SellConfirmCubit>()
+                                      .confirmPayment(paymentInfo),
+                                  state: isLoading ? .loading : .idle,
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -173,6 +179,43 @@ class SellConfirmSheetView extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Notice above the confirm button. The first sentence is the outcome.
+  Widget _confirmFailureNotice(String message) {
+    final breakAt = message.indexOf('. ');
+    final title = breakAt == -1 ? message : message.substring(0, breakAt + 1);
+    final detail = breakAt == -1 ? null : message.substring(breakAt + 2);
+    final color = RealUnitColors.status.red600;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: RealUnitColors.status.red100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              height: 20 / 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (detail != null && detail.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              detail,
+              style: TextStyle(color: color, fontSize: 14, height: 20 / 14),
+            ),
+          ],
+        ],
       ),
     );
   }
