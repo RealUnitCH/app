@@ -343,8 +343,9 @@ void main() {
     );
 
     // The listener fires on a change, so the cubit starts idle and then emits
-    // the caveat failure. The sheet stays in the body: a bottomSheet slot
-    // paints over the snackbar and would hide this surface.
+    // the caveat failure. A Scaffold bottomSheet slot paints over the snackbar.
+    // The body still uses BottomSheet, so this frame keeps the white surface
+    // and the 32 px top radius of the other confirm goldens.
     Future<void> settleCaveatSnackBar(WidgetTester tester) async {
       await tester.pump();
       await tester.pumpAndSettle();
@@ -374,7 +375,12 @@ void main() {
                 value: confirmCubit,
                 child: BlocProvider<SettingsBloc>.value(
                   value: settingsBloc,
-                  child: SellConfirmSheetView(paymentInfo: _paymentInfo()),
+                  child: BottomSheet(
+                    onClosing: () {},
+                    enableDrag: false,
+                    builder: (context) =>
+                        SellConfirmSheetView(paymentInfo: _paymentInfo()),
+                  ),
                 ),
               ),
             ),
