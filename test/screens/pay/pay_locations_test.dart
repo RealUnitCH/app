@@ -24,7 +24,12 @@ void main() {
 
   test('a places body must be a map whose places field is a list', () {
     expect(payLocationsPlacesBodyIsList({'places': []}), isTrue);
-    expect(payLocationsPlacesBodyIsList({'places': <Object?>[{}]}), isTrue);
+    expect(
+      payLocationsPlacesBodyIsList({
+        'places': <Object?>[{}],
+      }),
+      isTrue,
+    );
     expect(payLocationsPlacesBodyIsList([]), isFalse);
     expect(payLocationsPlacesBodyIsList(null), isFalse);
     expect(payLocationsPlacesBodyIsList(1), isFalse);
@@ -83,21 +88,36 @@ void main() {
     expect(pins.single.name, 'SPAR');
   });
 
-  test('keeps a published place that omits supports', () {
-    final pins = keepPayLocationPins({
-      'places': [
-        {'name': 'SPAR', 'category': 'shopping', 'lat': 47.1, 'lon': 8.2},
-        {'name': 'Null', 'lat': 47.2, 'lon': 8.3, 'supports': null},
-        {
-          'name': 'Empty',
-          'lat': 47.3,
-          'lon': 8.4,
-          'supports': <Object?>[],
-        },
-      ],
-    });
+  test('keeps or drops a place by its supports field', () {
+    List<String> namesOf(Object? supports, {bool includeSupports = true}) {
+      return keepPayLocationPins({
+        'places': [
+          {
+            'name': 'Shop',
+            'lat': 47,
+            'lon': 8,
+            if (includeSupports) 'supports': supports,
+          },
+        ],
+      }).map((pin) => pin.name).toList();
+    }
 
-    expect(pins.map((pin) => pin.name), ['SPAR', 'Null']);
+    expect(namesOf(null, includeSupports: false), ['Shop']);
+    expect(namesOf(null), ['Shop']);
+    expect(namesOf(<Object?>[]), ['Shop']);
+    expect(
+      namesOf([
+        {'blockchain': 'Ethereum', 'asset': 'ZCHF'},
+      ]),
+      ['Shop'],
+    );
+    expect(
+      namesOf([
+        {'blockchain': 'Bitcoin', 'asset': 'BTC'},
+      ]),
+      isEmpty,
+    );
+    expect(namesOf('x'), isEmpty);
   });
 
   test('keeps the published dev place list', () {
@@ -134,6 +154,60 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Noch keine Standorte veröffentlicht.'), findsOneWidget);
+  });
+
+  testWidgets('list row uses parsed place for old names and addressLine for new pins', (
+    tester,
+  ) async {
+    const oldName = 'SPAR Bahnhofstrasse 1, 8001 Zürich';
+    final oldLabel = payLocationLabel(oldName);
+    const newPin = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.38,
+      lon: 8.55,
+      street: 'Bahnhofstrasse',
+      houseNumber: '1',
+      postalCode: '8001',
+      city: 'Zürich',
+    );
+
+    await tester.pumpWidget(
+      wrapForGolden(
+        PayLocationsPage(
+          httpClient: MockClient(
+            (request) async => http.Response.bytes(
+              utf8.encode(
+                jsonEncode({
+                  'places': [
+                    {'name': oldName, 'lat': 47.37, 'lon': 8.54},
+                    {
+                      'name': newPin.name,
+                      'lat': newPin.lat,
+                      'lon': newPin.lon,
+                      'street': newPin.street,
+                      'houseNumber': newPin.houseNumber,
+                      'postalCode': newPin.postalCode,
+                      'city': newPin.city,
+                    },
+                  ],
+                }),
+              ),
+              200,
+              headers: const {'content-type': 'application/json; charset=utf-8'},
+            ),
+          ),
+          mapBuilder: (_) => const SizedBox.shrink(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(oldLabel.place), findsOneWidget);
+    expect(find.text(oldLabel.street!), findsOneWidget);
+    expect(find.text(oldName), findsNothing);
+    expect(find.text(newPin.name), findsOneWidget);
+    expect(find.text(newPin.addressLine), findsOneWidget);
   });
 
   test('keeps a decoded place that accepts ZCHF on Ethereum', () {
@@ -180,7 +254,32 @@ void main() {
     expect(samePayLocationPin(bern, zurich), isFalse);
   });
 
-  test('splits a published address into place and street', () {
+  test('joins a structured address into one line', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Triesen',
+      category: null,
+      lat: 47.116,
+      lon: 9.524,
+      street: 'Maschlinastrasse',
+      houseNumber: '4',
+      postalCode: '9495',
+      city: 'Triesen',
+    );
+    expect(pin.addressLine, 'Maschlinastrasse 4, 9495 Triesen');
+
+    const withoutHouse = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 47,
+      lon: 8,
+      street: 'Bahnhofstrasse',
+      postalCode: '8001',
+      city: 'Zürich',
+    );
+    expect(withoutHouse.addressLine, 'Bahnhofstrasse, 8001 Zürich');
+  });
+
+  test('falls back to splitting the name when city is missing', () {
     final label = payLocationLabel('SPAR Bahnhofstrasse 1, 9403 Goldach');
 
     expect(label.place, '9403 Goldach');
@@ -195,9 +294,43 @@ void main() {
     final dashed = payLocationLabel('SPAR Seestrasse 1–3, 8640 Rapperswil');
     expect(dashed.street, 'SPAR Seestrasse 1–3');
     expect(dashed.town, 'Rapperswil');
+
+    final fromCity = payLocationLabel(
+      'SPAR Triesen',
+      city: 'Triesen',
+      street: 'Maschlinastrasse',
+      houseNumber: '4',
+    );
+    expect(fromCity.place, 'Triesen');
+    expect(fromCity.street, 'Maschlinastrasse 4');
+    expect(fromCity.town, 'Triesen');
   });
 
-  test('sorts published addresses by town', () {
+  test('sorts shops by city', () {
+    const zurich = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 47.37,
+      lon: 8.54,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
+    );
+    const bern = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 46.95,
+      lon: 7.45,
+      city: 'Bern',
+      street: 'Marktgasse',
+    );
+
+    expect(sortPayLocationPins(const [zurich, bern]).map((pin) => pin.city), [
+      'Bern',
+      'Zürich',
+    ]);
+  });
+
+  test('sorts legacy names by town then street', () {
     const zurich = PayLocationPin(
       name: 'SPAR Bahnhofstrasse 1, 8001 Zürich',
       category: null,
@@ -210,11 +343,156 @@ void main() {
       lat: 46.95,
       lon: 7.45,
     );
+    const zurichAlbis = PayLocationPin(
+      name: 'SPAR Albisriederstrasse 5, 8004 Zürich',
+      category: null,
+      lat: 47.37,
+      lon: 8.51,
+    );
 
-    expect(sortPayLocationPins(const [zurich, bern]).map((pin) => pin.name), [
-      bern.name,
-      zurich.name,
-    ]);
+    expect(
+      sortPayLocationPins(const [zurich, bern, zurichAlbis]).map((pin) => pin.name),
+      [bern.name, zurichAlbis.name, zurich.name],
+    );
+  });
+
+  test('sorts shops on the same street by house number', () {
+    const bahnhof10 = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.37,
+      lon: 8.54,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
+      houseNumber: '10',
+    );
+    const bahnhof2 = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.37,
+      lon: 8.53,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
+      houseNumber: '2',
+    );
+    const albis = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.37,
+      lon: 8.51,
+      city: 'Zürich',
+      street: 'Albisriederstrasse',
+      houseNumber: '5',
+    );
+
+    expect(
+      sortPayLocationPins(const [bahnhof10, bahnhof2, albis]).map(
+        (pin) => '${pin.street} ${pin.houseNumber}',
+      ),
+      ['Albisriederstrasse 5', 'Bahnhofstrasse 2', 'Bahnhofstrasse 10'],
+    );
+  });
+
+  test('sorts equal shops by latitude regardless of input order', () {
+    const south = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.1,
+      lon: 8.54,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
+      houseNumber: '1',
+      postalCode: '8001',
+    );
+    const north = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.2,
+      lon: 8.54,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
+      houseNumber: '1',
+      postalCode: '8001',
+    );
+
+    expect(sortPayLocationPins(const [south, north]).map((pin) => pin.lat), [47.1, 47.2]);
+    expect(sortPayLocationPins(const [north, south]).map((pin) => pin.lat), [47.1, 47.2]);
+  });
+
+  test('trims structured address fields and drops empty ones', () {
+    final pins = keepPayLocationPins({
+      'places': [
+        {
+          'name': 'Trimmed',
+          'lat': 47,
+          'lon': 8,
+          'street': '  Foo ',
+          'houseNumber': '  Foo ',
+          'postalCode': '  Foo ',
+          'city': '  Foo ',
+        },
+        {
+          'name': 'Empty',
+          'lat': 47.1,
+          'lon': 8.1,
+          'street': '',
+          'houseNumber': '  ',
+          'postalCode': 1,
+          'city': '',
+        },
+      ],
+    });
+
+    expect(pins, hasLength(2));
+    expect(pins[0].street, 'Foo');
+    expect(pins[0].houseNumber, 'Foo');
+    expect(pins[0].postalCode, 'Foo');
+    expect(pins[0].city, 'Foo');
+    expect(pins[1].street, isNull);
+    expect(pins[1].houseNumber, isNull);
+    expect(pins[1].postalCode, isNull);
+    expect(pins[1].city, isNull);
+  });
+
+  test('filters shops by city', () {
+    const zurich = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 47,
+      lon: 8,
+      city: 'Zürich',
+      street: 'Bahnhofstrasse',
+      postalCode: '8001',
+    );
+    const bern = PayLocationPin(
+      name: 'SPAR',
+      category: null,
+      lat: 46.9,
+      lon: 7.4,
+      city: 'Bern',
+      street: 'Marktgasse',
+      postalCode: '3011',
+    );
+
+    expect(filterPayLocationPins(const [zurich, bern], 'bern'), [bern]);
+    expect(filterPayLocationPins(const [zurich, bern], 'marktgasse'), [bern]);
+    expect(filterPayLocationPins(const [zurich, bern], '8001'), [zurich]);
+  });
+
+  test('filters shops by house number and postal city line', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.39,
+      lon: 8.52,
+      street: 'Hardturmstrasse',
+      houseNumber: '126',
+      postalCode: '8005',
+      city: 'Zürich',
+    );
+
+    expect(filterPayLocationPins(const [pin], 'hardturmstrasse 126'), [pin]);
+    expect(filterPayLocationPins(const [pin], '8005 zürich'), [pin]);
   });
 
   test('spreads the published shops across the country view', () {
