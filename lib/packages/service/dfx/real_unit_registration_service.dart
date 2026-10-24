@@ -75,7 +75,22 @@ class RealUnitRegistrationService extends DFXAuthService {
         message: 'Missing registration date in API response',
       );
     }
+    if (!_isCalendarDate(date)) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        code: 'UNKNOWN',
+        message: 'Invalid registration date in API response',
+      );
+    }
     return date;
+  }
+
+  /// A `YYYY-MM-DD` string naming a real calendar day.
+  static bool _isCalendarDate(String value) {
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return false;
+    final parsed = DateTime.parse(value);
+    final parts = value.split('-').map(int.parse).toList();
+    return parsed.year == parts[0] && parsed.month == parts[1] && parsed.day == parts[2];
   }
 
   /// registers an email on the wallet. Should always be called first when registering

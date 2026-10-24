@@ -224,6 +224,11 @@ class RealUnitTransferService extends DFXAuthService {
     if (data.domain.verifyingContract.toLowerCase() != _delegationManagerAddress) {
       throw Exception('EIP-7702 verifying contract does not match expected DelegationManager');
     }
+    checkDelegationEnvelope(
+      domainName: data.domain.name,
+      domainVersion: data.domain.version,
+      authority: data.message.authority,
+    );
     if (data.message.delegator.toLowerCase() != walletAddress.toLowerCase()) {
       throw Exception('EIP-7702 message delegator does not match wallet address');
     }

@@ -478,6 +478,7 @@ MAPPING=(
   "426-pay-flow-sheet=screens/pay/goldens/macos/pay_flow_sheet.png"
   "427-sell-confirm-caveat-snackbar=screens/sell/goldens/macos/sell_confirm_caveat_snackbar.png"
   "428-sell-share-count-mismatch=screens/sell/goldens/macos/sell_share_count_mismatch.png"
+  "429-sell-bitbox-transaction-mismatch=screens/sell_bitbox/goldens/macos/sell_bitbox_transaction_mismatch.png"
 )
 
 missing=()

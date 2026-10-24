@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/sell_quote_amount.dart';
+import 'package:realunit_wallet/packages/service/dfx/sell_unsigned_tx_check.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/setup/startup/startup_exceptions.dart';
@@ -40,6 +41,7 @@ void main() {
       const SeedDecryptionException('test'),
       const AlreadyConfirmedException(code: 'TEST', message: 'test'),
       const SellShareCountMismatchException(),
+      const SellUnsignedTxMismatchException('test'),
       const InvalidPaymentLinkException('test'),
       const PayConfirmNotSubmittedException('test'),
       const PaySignatureUnsupportedException(),

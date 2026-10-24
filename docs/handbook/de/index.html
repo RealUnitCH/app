@@ -5604,7 +5604,7 @@
                 <div class="file">test/goldens/screens/sell_bitbox/</div>
               </div>
               <div class="rhs">
-                <b>5 Screens</b>
+                <b>6 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/sell_bitbox"
@@ -5699,6 +5699,23 @@
               </div>
               <div class="desc">
                 Während der Tausch signiert und übertragen wird, zeigt Schritt 2 einen Ladeindikator mit dem Text <b>Tausch on-chain. Bestätigen Sie auf der Bitbox.</b> Der Nutzer muss die Transaktion jetzt auf dem Gerät freigeben.
+              </div>
+            </div>
+            <div class="test" id="429-sell-bitbox-transaction-mismatch">
+              <div class="head">
+                <a class="name permalink" href="#429-sell-bitbox-transaction-mismatch">429-sell-bitbox-transaction-mismatch</a>
+                <button class="copy-link" type="button" data-target="429-sell-bitbox-transaction-mismatch" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/sell_bitbox/goldens/macos/sell_bitbox_transaction_mismatch.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/429-sell-bitbox-transaction-mismatch.png"
+                  alt="Transaktionen passen nicht zum bestätigten Verkauf"
+                />
+              </div>
+              <div class="desc">
+                Schritt Tausch, wenn die vorbereiteten Transaktionen nicht zum bestätigten Verkauf passen. Die App signiert nichts, und unten erscheint die rote Meldung.
+                Text: <b>Diese Transaktionen entsprechen nicht dem bestätigten Verkauf. Es wurde nichts signiert. Bitte starten Sie den Verkauf erneut.</b>
               </div>
             </div>
           </div>
@@ -7160,6 +7177,7 @@
               </div>
               <div class="desc">
                 Die Seite <b>Wallet hinzufügen</b> im bereitstehenden Zustand: der als Aktionär eingetragene Nutzer bestätigt hier die aktuelle Wallet, um sie seinem Konto hinzuzufügen.
+                Über dem Button stehen die Profilangaben, die beim Hinzufügen signiert werden: Kontotyp, Name, Geburtstag, Staatsangehörigkeit, E-Mail, Telefonnummer, Residenz, Steuerwohnsitz Schweiz und Wallet-Adresse. Das Registrierungsdatum ergänzt die App erst beim Signieren.
               </div>
             </div>
             <div class="test" id="198-kyc-link-wallet-page-bitbox-required">

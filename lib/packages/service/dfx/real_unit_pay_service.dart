@@ -310,6 +310,11 @@ class RealUnitPayService extends DFXAuthService {
       );
     }
     try {
+      checkDelegationEnvelope(
+        domainName: data.domain.name,
+        domainVersion: data.domain.version,
+        authority: data.message.authority,
+      );
       checkDelegationCaveats(
         caveats: DelegationCaveatDto.listFrom(data.message.caveats),
         kind: DelegationCaveatKind.brokerbotSell,

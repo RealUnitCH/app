@@ -377,6 +377,53 @@ void main() {
         throwsA(isA<BitboxNotConnectedException>()),
       );
     });
+
+    group('registration date', () {
+      late FakeBitboxCredentials creds;
+      late List<String> paths;
+
+      http.Client clientReturningDate(String date) => MockClient((request) async {
+        paths.add(request.url.path);
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response(jsonEncode({'date': date}), 200);
+        }
+        return http.Response(jsonEncode({'status': 'completed'}), 201);
+      });
+
+      setUp(() {
+        creds = FakeBitboxCredentials(signDelay: Duration.zero);
+        paths = [];
+        when(() => account.primaryAddress).thenReturn(creds);
+      });
+
+      test('signs and submits a well-formed YYYY-MM-DD date', () async {
+        await build(clientReturningDate('2026-07-13')).registerWallet(buildUserData());
+
+        expect(creds.signCallCount, 1);
+        expect(paths, contains('/v1/realunit/register/wallet'));
+      });
+
+      for (final date in const [
+        '2026/07/13',
+        '13.07.2026',
+        '2026-7-13',
+        '2026-07-13T00:00:00Z',
+        '2026-02-30',
+      ]) {
+        test('refuses to sign the registration date "$date"', () async {
+          Object? error;
+          try {
+            await build(clientReturningDate(date)).registerWallet(buildUserData());
+          } catch (e) {
+            error = e;
+          }
+
+          expect(creds.signCallCount, 0, reason: 'expected 0 sign calls');
+          expect(paths, isNot(contains('/v1/realunit/register/wallet')));
+          expect(error, isNotNull, reason: 'expected registerWallet to throw');
+        });
+      }
+    });
   });
 
   group('malformed JSON responses', () {

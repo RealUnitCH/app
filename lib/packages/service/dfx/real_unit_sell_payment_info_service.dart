@@ -257,6 +257,12 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
       );
     }
 
+    checkDelegationEnvelope(
+      domainName: data.domain.name,
+      domainVersion: data.domain.version,
+      authority: data.message.authority,
+    );
+
     // Validate signed fields against known values
     if (data.message.delegator.toLowerCase() != walletAddress.toLowerCase()) {
       throw Exception(

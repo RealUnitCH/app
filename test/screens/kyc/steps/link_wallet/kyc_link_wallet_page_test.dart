@@ -329,4 +329,86 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
     });
   });
+
+  group('$KycLinkWalletPage shows every signed field before the sign action', () {
+    // Distinct values per field so one field cannot satisfy another's finder.
+    RealUnitUserDataDto signedUserData({bool swissTaxResidence = true}) => RealUnitUserDataDto(
+      email: 'ada@example.com',
+      name: 'Ada Lovelace',
+      type: 'HUMAN',
+      phoneNumber: '+41790000000',
+      birthday: '1815-12-10',
+      nationality: 'DE',
+      addressStreet: 'Bahnhofstrasse 1',
+      addressPostalCode: '8001',
+      addressCity: 'Zurich',
+      addressCountry: 'CH',
+      swissTaxResidence: swissTaxResidence,
+      lang: 'de',
+      kycData: _kycData,
+    );
+
+    // Each field is satisfied by its raw value or a common display form of it.
+    final fields = <String, List<Pattern>>{
+      'name': ['Ada Lovelace'],
+      'email': ['ada@example.com'],
+      'phone number': ['+41790000000', '+41 79 000 00 00'],
+      'birthday': [
+        '1815-12-10',
+        '10.12.1815',
+        '10/12/1815',
+        '12/10/1815',
+        RegExp(r'Dec(ember)? 10, 1815'),
+        RegExp(r'10 Dec(ember)? 1815'),
+      ],
+      'nationality': [RegExp(r'\bDE\b'), 'Germany', 'German'],
+      'street': ['Bahnhofstrasse 1'],
+      'postal code': ['8001'],
+      'city': ['Zurich'],
+      'country': [RegExp(r'\bCH\b'), 'Switzerland'],
+      'Swiss tax residence': [RegExp(r'^Yes$')],
+      'account type': [
+        'HUMAN',
+        RegExp('individual person|natural person', caseSensitive: false),
+      ],
+    };
+
+    for (final MapEntry(key: field, value: patterns) in fields.entries) {
+      testWidgets('shows the $field', (tester) async {
+        await tester.pumpApp(
+          BlocProvider<KycCubit>.value(
+            value: kycCubit,
+            child: KycLinkWalletPage(userData: signedUserData()),
+          ),
+          locale: const Locale('en'),
+        );
+
+        final shown = find.byWidgetPredicate((widget) {
+          final String? text = switch (widget) {
+            Text(:final data, :final textSpan) => data ?? textSpan?.toPlainText(),
+            RichText(:final text) => text.toPlainText(),
+            _ => null,
+          };
+          return text != null && patterns.any((p) => p.allMatches(text).isNotEmpty);
+        });
+        expect(shown, findsAtLeastNWidgets(1), reason: 'the signed $field must be shown');
+        verifyNever(
+          () => GetIt.instance<RealUnitRegistrationService>().registerWallet(any()),
+        );
+      });
+    }
+
+    testWidgets('shows a Swiss tax residence that is not set as No', (tester) async {
+      await tester.pumpApp(
+        BlocProvider<KycCubit>.value(
+          value: kycCubit,
+          child: KycLinkWalletPage(userData: signedUserData(swissTaxResidence: false)),
+        ),
+        locale: const Locale('en'),
+      );
+
+      expect(find.text('No'), findsOneWidget);
+      expect(find.text('Yes'), findsNothing);
+    });
+  });
 }
