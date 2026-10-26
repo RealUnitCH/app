@@ -482,6 +482,7 @@ MAPPING=(
   "430-kyc-link-wallet-page-registration-date-unavailable=screens/kyc/goldens/macos/kyc_link_wallet_page_registration_date_unavailable.png"
   "431-kyc-registration-page-registration-date-unavailable-snackbar=screens/kyc/goldens/macos/kyc_registration_page_registration_date_unavailable_snackbar.png"
   "432-sell-confirm-envelope-notice=screens/sell/goldens/macos/sell_confirm_envelope_notice.png"
+  "433-pay-quote-page-country-not-allowed=screens/pay/goldens/macos/pay_quote_page_country_not_allowed.png"
 )
 
 missing=()
