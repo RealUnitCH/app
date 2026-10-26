@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/service/dfx/delegation_caveat_check.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/delegation_caveat_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_confirm_dto.dart';
@@ -13,8 +15,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/rea
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_unsigned_transactions_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
-import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
-import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
+import 'package:realunit_wallet/packages/service/dfx/sell_quote_amount.dart';
+import 'package:realunit_wallet/packages/wallet/delegation_signer.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitSellPaymentInfoService extends DFXAuthService {
@@ -30,7 +32,13 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
   static const _delegationManagerAddress =
       '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
-  RealUnitSellPaymentInfoService(super.appStore, super.walletService);
+  final DelegationSigner _signer;
+
+  RealUnitSellPaymentInfoService(
+    super.appStore,
+    super.walletService, {
+    DelegationSigner signer = const DelegationSigner(),
+  }) : _signer = signer;
 
   Future<SellPaymentInfo> getPaymentInfo(
     int amount,
@@ -53,6 +61,12 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
       final responseDto = RealUnitSellPaymentInfoDto.fromJson(json);
+      requireSellQuoteMatchesRequestedShares(
+        requestedShares: amount,
+        returnedAmount: responseDto.amount,
+        amountWei: responseDto.eip7702.amountWei,
+        decimals: appStore.apiConfig.asset.decimals,
+      );
 
       return SellPaymentInfo(
         id: responseDto.id,
@@ -107,11 +121,11 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
         paymentInfo.amount,
       );
 
-      final delegationSignature = await Eip712Signer.signDelegation(
+      final delegationSignature = await _signer.signDelegation(
         credentials: credentials,
         eip7702Data: paymentInfo.eip7702,
       );
-      final authorizationSignature = Eip7702Signer.signAuthorization(
+      final authorizationSignature = _signer.signAuthorization(
         credentials: credentials,
         eip7702Data: paymentInfo.eip7702,
       );
@@ -248,6 +262,12 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
       );
     }
 
+    checkDelegationEnvelope(
+      domainName: data.domain.name,
+      domainVersion: data.domain.version,
+      authority: data.message.authority,
+    );
+
     // Validate signed fields against known values
     if (data.message.delegator.toLowerCase() != walletAddress.toLowerCase()) {
       throw Exception(
@@ -282,5 +302,12 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
         'EIP-7702 amount mismatch: expected $expectedWei, got ${data.amountWei}',
       );
     }
+    checkDelegationCaveats(
+      caveats: DelegationCaveatDto.listFrom(data.message.caveats),
+      kind: DelegationCaveatKind.brokerbotSell,
+      tokenAddress: data.tokenAddress,
+      amountWei: expectedWei,
+      testnet: appStore.apiConfig.networkMode.isTestnet,
+    );
   }
 }
