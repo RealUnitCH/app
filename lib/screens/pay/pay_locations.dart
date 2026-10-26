@@ -11,13 +11,40 @@ class PayLocationPin {
   final String? category;
   final double lat;
   final double lon;
+  final String? street;
+  final String? houseNumber;
+  final String? postalCode;
+  final String? city;
 
   const PayLocationPin({
     required this.name,
     required this.category,
     required this.lat,
     required this.lon,
+    this.street,
+    this.houseNumber,
+    this.postalCode,
+    this.city,
   });
+
+  String get addressLine {
+    final streetValue = street;
+    final houseNumberValue = houseNumber;
+    final postalCodeValue = postalCode;
+    final cityValue = city;
+    final streetLine = [
+      if (streetValue != null && streetValue.isNotEmpty) streetValue,
+      if (houseNumberValue != null && houseNumberValue.isNotEmpty) houseNumberValue,
+    ].join(' ');
+    final cityLine = [
+      if (postalCodeValue != null && postalCodeValue.isNotEmpty) postalCodeValue,
+      if (cityValue != null && cityValue.isNotEmpty) cityValue,
+    ].join(' ');
+    return [
+      if (streetLine.isNotEmpty) streetLine,
+      if (cityLine.isNotEmpty) cityLine,
+    ].join(', ');
+  }
 }
 
 bool payLocationsPlacesBodyIsList(Object? body) {
@@ -46,18 +73,23 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
       continue;
     }
 
-    // The published list omits supports. Keep those places. A present
-    // supports list must include ZCHF on Ethereum.
+    // Absent supports, and [] for "not stated", keep the place: the API
+    // already filtered the request by blockchain/asset. A non-empty list
+    // must include ZCHF on Ethereum. Any other supports value is dropped.
     final supports = place['supports'];
-    if (supports != null &&
-        (supports is! List ||
-            !supports.any(
-              (support) =>
-                  support is Map &&
-                  support['blockchain'] == payLocationsBlockchain &&
-                  support['asset'] == payLocationsAsset,
-            ))) {
-      continue;
+    if (supports != null) {
+      if (supports is! List) {
+        continue;
+      }
+      if (supports.isNotEmpty &&
+          !supports.any(
+            (support) =>
+                support is Map &&
+                support['blockchain'] == payLocationsBlockchain &&
+                support['asset'] == payLocationsAsset,
+          )) {
+        continue;
+      }
     }
 
     final name = place['name'];
@@ -71,6 +103,10 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
         category: category is String ? category : null,
         lat: lat,
         lon: lon,
+        street: _optionalString(place['street']),
+        houseNumber: _optionalString(place['houseNumber']),
+        postalCode: _optionalString(place['postalCode']),
+        city: _optionalString(place['city']),
       ),
     );
   }
@@ -128,7 +164,15 @@ List<PayLocationPin> filterPayLocationPins(List<PayLocationPin> pins, String que
   if (needle.isEmpty) {
     return pins;
   }
-  return [for (final pin in pins) if (pin.name.toLowerCase().contains(needle)) pin];
+  return [
+    for (final pin in pins)
+      if (pin.name.toLowerCase().contains(needle) ||
+          (pin.city?.toLowerCase().contains(needle) ?? false) ||
+          (pin.street?.toLowerCase().contains(needle) ?? false) ||
+          (pin.postalCode?.toLowerCase().contains(needle) ?? false) ||
+          pin.addressLine.toLowerCase().contains(needle))
+        pin,
+  ];
 }
 
 class PayLocationLabel {
@@ -150,36 +194,110 @@ class PayLocationLabel {
 
 final RegExp _postalTown = RegExp(r'^\d{4}\s+(.+)$');
 
-PayLocationLabel payLocationLabel(String name) {
+PayLocationLabel payLocationLabel(
+  String name, {
+  String? city,
+  String? street,
+  String? houseNumber,
+}) {
+  final trimmedCity = city?.trim();
+  if (trimmedCity != null && trimmedCity.isNotEmpty) {
+    final streetLine = [
+      if (street != null && street.trim().isNotEmpty) street.trim(),
+      if (houseNumber != null && houseNumber.trim().isNotEmpty) houseNumber.trim(),
+    ].join(' ');
+    return PayLocationLabel(trimmedCity, streetLine.isEmpty ? null : streetLine);
+  }
+
   final trimmed = name.trim();
   final comma = trimmed.lastIndexOf(',');
   if (comma <= 0 || comma >= trimmed.length - 1) {
     return PayLocationLabel(trimmed, null);
   }
 
-  final street = trimmed.substring(0, comma).trim();
+  final parsedStreet = trimmed.substring(0, comma).trim();
   final place = trimmed.substring(comma + 1).trim();
-  if (street.isEmpty || place.isEmpty) {
+  if (parsedStreet.isEmpty || place.isEmpty) {
     return PayLocationLabel(trimmed, null);
   }
-  return PayLocationLabel(place, street);
+  return PayLocationLabel(place, parsedStreet);
 }
 
 List<PayLocationPin> sortPayLocationPins(List<PayLocationPin> pins) {
-  final sorted = [...pins]..sort((a, b) {
-    final left = payLocationLabel(a.name);
-    final right = payLocationLabel(b.name);
-    final byTown = left.town.compareTo(right.town);
-    if (byTown != 0) {
-      return byTown;
-    }
-    final byPlace = left.place.compareTo(right.place);
-    if (byPlace != 0) {
-      return byPlace;
-    }
-    return (left.street ?? '').compareTo(right.street ?? '');
-  });
+  final sorted = [...pins]
+    ..sort((a, b) {
+      final left = payLocationLabel(
+        a.name,
+        city: a.city,
+        street: a.street,
+        houseNumber: a.houseNumber,
+      );
+      final right = payLocationLabel(
+        b.name,
+        city: b.city,
+        street: b.street,
+        houseNumber: b.houseNumber,
+      );
+      final byCity = left.town.compareTo(right.town);
+      if (byCity != 0) {
+        return byCity;
+      }
+      final byName = a.name.compareTo(b.name);
+      if (byName != 0) {
+        return byName;
+      }
+      final leftStreet = _streetSortKey(a, left);
+      final rightStreet = _streetSortKey(b, right);
+      final byStreet = leftStreet.compareTo(rightStreet);
+      if (byStreet != 0) {
+        return byStreet;
+      }
+      final leftNumber = _leadingInt(a.houseNumber);
+      final rightNumber = _leadingInt(b.houseNumber);
+      if (leftNumber != null && rightNumber != null) {
+        final byNumber = leftNumber.compareTo(rightNumber);
+        if (byNumber != 0) {
+          return byNumber;
+        }
+      } else if (leftNumber != null) {
+        return -1;
+      } else if (rightNumber != null) {
+        return 1;
+      }
+      final byHouse = (a.houseNumber ?? '').compareTo(b.houseNumber ?? '');
+      if (byHouse != 0) {
+        return byHouse;
+      }
+      final byPostal = (a.postalCode ?? '').compareTo(b.postalCode ?? '');
+      if (byPostal != 0) {
+        return byPostal;
+      }
+      final byLat = a.lat.compareTo(b.lat);
+      if (byLat != 0) {
+        return byLat;
+      }
+      return a.lon.compareTo(b.lon);
+    });
   return sorted;
+}
+
+String _streetSortKey(PayLocationPin pin, PayLocationLabel label) {
+  final street = pin.street;
+  if (street != null && street.isNotEmpty) {
+    return street;
+  }
+  return label.street ?? '';
+}
+
+int? _leadingInt(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  final match = RegExp(r'^\d+').firstMatch(value);
+  if (match == null) {
+    return null;
+  }
+  return int.tryParse(match.group(0)!);
 }
 
 bool samePayLocationPin(PayLocationPin a, PayLocationPin b) {
@@ -227,4 +345,12 @@ double? _finiteDouble(Object? value) {
 
   final number = value.toDouble();
   return number.isFinite ? number : null;
+}
+
+String? _optionalString(Object? value) {
+  if (value is! String) {
+    return null;
+  }
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
