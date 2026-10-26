@@ -12,6 +12,7 @@ import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
 import '../../../helper/helper.dart';
+import '../../../helper/referral_share_text_fixture.dart';
 
 class _MockReferralCubit extends MockCubit<ReferralState> implements ReferralCubit {}
 
@@ -81,8 +82,75 @@ void main() {
             guestName: 'Alice',
             status: 'Open',
             created: DateTime.utc(2026, 8, 1),
-            copyText:
-                'Hey Alice, Björn lädt dich ein zu RealUnit: https://realunit.app/invite/AB12CD',
+            copyText: personalShareTextAlice,
+          ),
+        ];
+        return buildOverview(
+          ReferralOverviewLoaded(summary: summary, invites: invites),
+        );
+      },
+    );
+
+    goldenTest(
+      'overview with open impersonal invite',
+      fileName: 'referral_overview_page_impersonal',
+      constraints: phoneConstraints,
+      builder: () {
+        const summary = ReferralSummaryDto(
+          eligible: true,
+          termsAccepted: true,
+          minHolding: 70,
+          openCount: 1,
+          creditedCount: 2,
+          realuSum: 40,
+          chfSum: 512.4,
+          sharePriceLabel: 'Aktienkurs',
+          sharePrice: 1.38,
+        );
+        final invites = [
+          ReferralInviteDto(
+            id: 1,
+            code: 'IMP1',
+            url: 'https://realunit.app/invite/IMP1',
+            guestName: 'Hidden',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            kind: 'Impersonal',
+            prizeCount: 0,
+          ),
+        ];
+        return buildOverview(
+          ReferralOverviewLoaded(summary: summary, invites: invites),
+        );
+      },
+    );
+
+    goldenTest(
+      'overview with one impersonal reward',
+      fileName: 'referral_overview_page_impersonal_one',
+      constraints: phoneConstraints,
+      builder: () {
+        const summary = ReferralSummaryDto(
+          eligible: true,
+          termsAccepted: true,
+          minHolding: 70,
+          openCount: 1,
+          creditedCount: 2,
+          realuSum: 40,
+          chfSum: 512.4,
+          sharePriceLabel: 'Aktienkurs',
+          sharePrice: 1.38,
+        );
+        final invites = [
+          ReferralInviteDto(
+            id: 1,
+            code: 'IMP1',
+            url: 'https://realunit.app/invite/IMP1',
+            guestName: 'Hidden',
+            status: 'Open',
+            created: DateTime.utc(2026, 8, 1),
+            kind: 'Impersonal',
+            prizeCount: 1,
           ),
         ];
         return buildOverview(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/service/dfx/delegation_caveat_check.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
@@ -17,10 +18,10 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/delegation_caveat_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
-import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
-import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
+import 'package:realunit_wallet/packages/wallet/delegation_signer.dart';
 
 /// Backend client for the Open CryptoPay pay flow (DFXswiss/api #3819, all under
 /// `/v1/realunit/...`). Subclasses [DFXAuthService] for the JWT handshake +
@@ -42,7 +43,13 @@ class RealUnitPayService extends DFXAuthService {
 
   static const _httpTimeout = Duration(seconds: 20);
 
-  RealUnitPayService(super.appStore, super.walletService);
+  final DelegationSigner _signer;
+
+  RealUnitPayService(
+    super.appStore,
+    super.walletService, {
+    DelegationSigner signer = const DelegationSigner(),
+  }) : _signer = signer;
 
   /// Public OCP payment-link read (no auth). Returns the requested fiat amount,
   /// the active quote (id + expiration) and the per-method transfer amounts.
@@ -171,11 +178,11 @@ class RealUnitPayService extends DFXAuthService {
     try {
       final credentials = appStore.wallet.currentAccount.primaryAddress;
       _validateEip7702Data(data, credentials.address.hexEip55, swap.amount);
-      final delegationSignature = await Eip712Signer.signDelegation(
+      final delegationSignature = await _signer.signDelegation(
         credentials: credentials,
         eip7702Data: data,
       );
-      final authorizationSignature = Eip7702Signer.signAuthorization(
+      final authorizationSignature = _signer.signAuthorization(
         credentials: credentials,
         eip7702Data: data,
       );
@@ -306,6 +313,22 @@ class RealUnitPayService extends DFXAuthService {
       throw PayConfirmNotSubmittedException(
         'EIP-7702 amount mismatch: expected $expectedWei, got ${data.amountWei}',
       );
+    }
+    try {
+      checkDelegationEnvelope(
+        domainName: data.domain.name,
+        domainVersion: data.domain.version,
+        authority: data.message.authority,
+      );
+      checkDelegationCaveats(
+        caveats: DelegationCaveatDto.listFrom(data.message.caveats),
+        kind: DelegationCaveatKind.brokerbotSell,
+        tokenAddress: data.tokenAddress,
+        amountWei: expectedWei,
+        testnet: appStore.apiConfig.networkMode.isTestnet,
+      );
+    } on Exception catch (e) {
+      throw PayConfirmNotSubmittedException(e.toString());
     }
   }
 
