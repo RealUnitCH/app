@@ -1,37 +1,15 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
-import 'package:latlong2/latlong.dart';
+import 'package:maplibre_gl/maplibre_gl.dart' as maplibre;
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
-import 'package:realunit_wallet/screens/pay/pay_locations_lakes.dart';
-import 'package:realunit_wallet/screens/pay/pay_locations_outline.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-
-class _CityLabel {
-  final String name;
-  final double lat;
-  final double lon;
-
-  const _CityLabel(this.name, this.lat, this.lon);
-}
-
-const List<_CityLabel> _cities = [
-  _CityLabel('Genf', 46.2044, 6.1432),
-  _CityLabel('Basel', 47.5596, 7.5886),
-  _CityLabel('Bern', 46.948, 7.4474),
-  _CityLabel('Luzern', 47.0502, 8.3093),
-  _CityLabel('Zürich', 47.3769, 8.5417),
-  _CityLabel('St. Gallen', 47.4245, 9.3767),
-  _CityLabel('Chur', 46.8499, 9.5329),
-  _CityLabel('Lugano', 46.0037, 8.9511),
-  _CityLabel('Liechtenstein', 47.141, 9.5209),
-];
 
 class PayLocationsPage extends StatefulWidget {
   const PayLocationsPage({
@@ -56,22 +34,29 @@ class PayLocationsPage extends StatefulWidget {
 }
 
 class _PayLocationsPageState extends State<PayLocationsPage> {
-  final MapController _mapController = MapController();
-  late final TextEditingController _searchController;
-  final LatLngBounds _countryBounds = LatLngBounds(
-    const LatLng(payLocationCountrySouth, payLocationCountryWest),
-    const LatLng(payLocationCountryNorth, payLocationCountryEast),
-  );
+  static const String _pinColor = '#E02523';
+  static const String _clusterColor = '#034C81';
+  static const String _white = '#FFFFFF';
+  static const String _townColor = '#0F172A';
 
+  late final TextEditingController _searchController;
+
+  maplibre.MapLibreMapController? _mapController;
   List<PayLocationPin> _pins = const [];
+  List<PayLocationMarker> _addedMarkers = const [];
   PayLocationPin? _selectedPin;
   late String _query;
   bool _loading = true;
   bool _error = false;
-  bool _mapReady = false;
+  bool _styleLoaded = false;
+  bool _countryFitDone = false;
+  bool _countryFitScheduled = false;
+  bool _drawingMarkers = false;
   double _zoom = 7;
-  LatLng _center = const LatLng(46.8, 8.23);
-  int _generation = 0;
+  maplibre.LatLng _center = const maplibre.LatLng(46.8, 8.23);
+  Size _mapSize = Size.zero;
+  int _loadGeneration = 0;
+  int _markerGeneration = 0;
 
   @override
   void initState() {
@@ -92,7 +77,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   Future<void> _loadPlaces() async {
-    final generation = ++_generation;
+    final generation = ++_loadGeneration;
     try {
       final response = await _get(
         Uri.parse(payLocationsPlacesUrl),
@@ -109,7 +94,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       }
 
       final pins = keepPayLocationPins(decoded);
-      if (!mounted || generation != _generation) {
+      if (!mounted || generation != _loadGeneration) {
         return;
       }
 
@@ -119,13 +104,14 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         _loading = false;
         _error = false;
       });
+      _redrawMarkers();
     } catch (_) {
       _showError(generation);
     }
   }
 
   void _showError(int generation) {
-    if (!mounted || generation != _generation) {
+    if (!mounted || generation != _loadGeneration) {
       return;
     }
 
@@ -137,38 +123,60 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
 
   @override
   void dispose() {
-    _generation++;
+    _loadGeneration++;
+    _markerGeneration++;
+    _styleLoaded = false;
     _searchController.dispose();
-    _mapController.dispose();
     super.dispose();
   }
 
-  void _onMapEvent(MapEvent event) {
+  void _onMapCreated(maplibre.MapLibreMapController controller) {
+    if (identical(_mapController, controller)) {
+      return;
+    }
+    _mapController = controller;
+    controller.onCircleTapped.add((circle) => _handleAnnotationTap(circle.data));
+    controller.onSymbolTapped.add((symbol) => _handleAnnotationTap(symbol.data));
+  }
+
+  void _onStyleLoaded() {
+    _styleLoaded = true;
+    if (!_fitCountryOnce()) {
+      _scheduleCountryFit();
+    }
+    _redrawMarkers();
+  }
+
+  void _onCameraMove(maplibre.CameraPosition position) {
     if (!mounted) {
       return;
     }
-    _center = event.camera.center;
-    _mapReady = true;
-    final zoom = event.camera.zoom;
+    _center = position.target;
+    final zoom = position.zoom;
     if ((zoom - _zoom).abs() <= 0.05) {
       return;
     }
     setState(() => _zoom = zoom);
+    _redrawMarkers();
   }
 
   void _zoomBy(double delta) {
-    if (!_mapReady) {
+    final controller = _mapController;
+    if (!_styleLoaded ||
+        controller == null ||
+        !_hasMapSize ||
+        !_center.latitude.isFinite ||
+        !_center.longitude.isFinite) {
       return;
     }
-    _mapController.move(_center, (_zoom + delta).clamp(5, 16).toDouble());
+    final zoom = (_zoom + delta).clamp(5, 16).toDouble();
+    unawaited(controller.animateCamera(maplibre.CameraUpdate.zoomTo(zoom)));
   }
 
   void _selectPin(PayLocationPin pin) {
     setState(() => _selectedPin = pin);
-    if (!_mapReady) {
-      return;
-    }
-    _mapController.move(LatLng(pin.lat, pin.lon), 13);
+    _redrawMarkers();
+    _moveTo(pin.lat, pin.lon, 13);
   }
 
   void _onQuery(String value) {
@@ -188,33 +196,28 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         _selectedPin = null;
       }
     });
+    _redrawMarkers();
     _frameQuery(visible, value);
   }
 
   void _frameQuery(List<PayLocationPin> visible, String value) {
-    if (!_mapReady) {
-      return;
-    }
     if (value.trim().isEmpty || visible.isEmpty) {
-      _mapController.fitCamera(
-        CameraFit.bounds(bounds: _countryBounds, padding: const .all(28)),
+      _fitSpan(
+        south: payLocationCountrySouth,
+        north: payLocationCountryNorth,
+        west: payLocationCountryWest,
+        east: payLocationCountryEast,
+        padding: 28,
+        maxZoom: 16,
       );
       return;
     }
     if (visible.length == 1) {
       final pin = visible.single;
-      _mapController.move(LatLng(pin.lat, pin.lon), 12);
+      _moveTo(pin.lat, pin.lon, 12);
       return;
     }
-    _mapController.fitCamera(
-      CameraFit.bounds(
-        bounds: LatLngBounds.fromPoints([
-          for (final pin in visible) LatLng(pin.lat, pin.lon),
-        ]),
-        padding: const .all(36),
-        maxZoom: 12,
-      ),
-    );
+    _fitPins(visible, padding: 36, maxZoom: 12);
   }
 
   @override
@@ -269,7 +272,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   Widget _emptyCard(BuildContext context) {
-    final map = widget.mapBuilder?.call(const []) ?? _buildMap(const []);
+    final map = widget.mapBuilder?.call(const []) ?? _buildMap();
     return Stack(
       children: [
         Positioned.fill(child: map),
@@ -365,7 +368,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   Widget _buildMapFrame(List<PayLocationPin> visible) {
-    final map = widget.mapBuilder?.call(visible) ?? _buildMap(visible);
+    final map = widget.mapBuilder?.call(visible) ?? _buildMap();
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Stack(
@@ -401,249 +404,293 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     );
   }
 
-  Widget _buildMap(List<PayLocationPin> visible) {
-    final selected = _selectedPin;
-    final clustered = [
-      for (final pin in visible)
-        if (selected == null || !samePayLocationPin(pin, selected)) pin,
-    ];
-    final cell = payLocationClusterCellDegrees(_zoom);
-    final clusters = clusterPayLocationPins(clustered, cellDegrees: cell);
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: const LatLng(46.8, 8.23),
-        initialZoom: 7,
-        minZoom: 5,
-        maxZoom: 16,
-        initialCameraFit: CameraFit.bounds(bounds: _countryBounds, padding: const .all(28)),
-        backgroundColor: RealUnitColors.brand200,
-        interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.drag |
-              InteractiveFlag.pinchMove |
-              InteractiveFlag.pinchZoom |
-              InteractiveFlag.doubleTapZoom |
-              InteractiveFlag.scrollWheelZoom,
-        ),
-        onMapEvent: _onMapEvent,
-      ),
-      children: [
-        PolygonLayer(
-          polygons: [
-            for (final ring in payLocationCountryRings)
-              Polygon(
-                points: ring,
-                color: RealUnitColors.basic.white,
-                borderColor: RealUnitColors.neutral600,
-                borderStrokeWidth: 1.2,
-              ),
-          ],
-        ),
-        PolygonLayer(
-          polygons: [
-            for (final ring in payLocationLakeRings)
-              Polygon(
-                points: ring,
-                color: RealUnitColors.brand200,
-                borderColor: RealUnitColors.realUnitBlue,
-                borderStrokeWidth: 0.8,
-              ),
-          ],
-        ),
-        if (_zoom <= 9)
-          MarkerLayer(
-            markers: [
-              for (final city in _cities)
-                if (!payLocationCityCovered(
-                  cityName: city.name,
-                  cityLat: city.lat,
-                  cityLon: city.lon,
-                  zoom: _zoom,
-                  clusters: clusters,
-                  selected: selected,
-                ))
-                  _cityMarker(city),
-            ],
-          ),
-        MarkerLayer(markers: [for (final cluster in clusters) ..._clusterMarkers(cluster)]),
-        if (selected != null && visible.any((pin) => samePayLocationPin(pin, selected)))
-          MarkerLayer(markers: _selectedMarkers(selected)),
-      ],
-    );
-  }
-
-  Marker _cityMarker(_CityLabel city) {
-    return Marker(
-      point: LatLng(city.lat, city.lon),
-      width: 110,
-      height: 16,
-      alignment: Alignment.bottomCenter,
-      child: IgnorePointer(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            city.name,
-            softWrap: false,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: RealUnitColors.neutral600,
-              fontWeight: FontWeight.w600,
-              height: 1,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<Marker> _selectedMarkers(PayLocationPin pin) {
-    final town = payLocationLabel(pin.name).town;
-    return [
-      Marker(
-        point: LatLng(pin.lat, pin.lon),
-        width: 18,
-        height: 18,
-        child: Semantics(
-          button: true,
-          selected: true,
-          label: pin.name,
-          child: GestureDetector(
-            onTap: () => _selectPin(pin),
-            child: Container(
-              decoration: BoxDecoration(
-                color: RealUnitColors.status.red600,
-                shape: BoxShape.circle,
-                border: Border.all(color: RealUnitColors.basic.white, width: 3),
-              ),
-            ),
-          ),
-        ),
-      ),
-      if (town.isNotEmpty) _townMarker(pin, town),
-    ];
-  }
-
-  Widget _townPlate(String town) {
-    return Material(
-      color: RealUnitColors.basic.white,
-      elevation: 1,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const .symmetric(horizontal: 8, vertical: 3),
-        child: Text(
-          town,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: RealUnitColors.neutral900,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<Marker> _clusterMarkers(PayLocationCluster cluster) {
-    if (cluster.isSingle) {
-      final pin = cluster.pins.single;
-      final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
-      final size = selected ? 22.0 : 16.0;
-      final town = payLocationLabel(pin.name).town;
-      return [
-        Marker(
-          point: LatLng(pin.lat, pin.lon),
-          width: size,
-          height: size,
-          child: Semantics(
-            button: true,
-            selected: selected,
-            label: pin.name,
-            child: GestureDetector(
-              onTap: () => _selectPin(pin),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: RealUnitColors.status.red600,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: RealUnitColors.basic.white,
-                    width: selected ? 3 : 2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        if (_zoom <= 7.5 && town.isNotEmpty) _townMarker(pin, town),
-      ];
+  Widget _buildMap() {
+    if (WidgetsBinding.instance.runtimeType.toString().contains('TestWidgetsFlutterBinding')) {
+      // A platform view breaks widget tests.
+      return const ColoredBox(color: RealUnitColors.brand200);
     }
-
-    final count = cluster.pins.length;
-    return [
-      Marker(
-        point: LatLng(cluster.lat, cluster.lon),
-        width: 34,
-        height: 34,
-        child: Semantics(
-          button: true,
-          label: _countLabel(context, count),
-          child: GestureDetector(
-            onTap: () => _openCluster(cluster),
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: RealUnitColors.darkBlue,
-                shape: BoxShape.circle,
-                border: Border.all(color: RealUnitColors.basic.white, width: 2),
-              ),
-              child: Padding(
-                padding: const .all(4),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '$count',
-                    softWrap: false,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: RealUnitColors.basic.white,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(
+          constraints.hasBoundedWidth ? constraints.maxWidth : 0,
+          constraints.hasBoundedHeight ? constraints.maxHeight : 0,
+        );
+        if (size != _mapSize) {
+          _mapSize = size;
+          if (_styleLoaded && !_countryFitDone) {
+            _scheduleCountryFit();
+          }
+        }
+        return maplibre.MapLibreMap(
+          styleString: payLocationsStyleUrl,
+          initialCameraPosition: const maplibre.CameraPosition(
+            target: maplibre.LatLng(46.8, 8.23),
+            zoom: 7,
           ),
-        ),
-      ),
-    ];
-  }
-
-  Marker _townMarker(PayLocationPin pin, String town) {
-    return Marker(
-      point: LatLng(pin.lat, pin.lon),
-      width: 168,
-      height: 36,
-      alignment: Alignment.bottomCenter,
-      child: IgnorePointer(
-        child: Padding(
-          padding: const .only(bottom: 14),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: _townPlate(town),
-          ),
-        ),
-      ),
+          onMapCreated: _onMapCreated,
+          onStyleLoadedCallback: _onStyleLoaded,
+          trackCameraPosition: true,
+          compassEnabled: false,
+          rotateGesturesEnabled: false,
+          tiltGesturesEnabled: false,
+          myLocationEnabled: false,
+          logoEnabled: false,
+          minMaxZoomPreference: const maplibre.MinMaxZoomPreference(5, 16),
+          annotationOrder: const [
+            maplibre.AnnotationType.circle,
+            maplibre.AnnotationType.symbol,
+          ],
+          annotationConsumeTapEvents: const [
+            maplibre.AnnotationType.circle,
+            maplibre.AnnotationType.symbol,
+          ],
+          foregroundLoadColor: RealUnitColors.brand200,
+          onCameraMove: _onCameraMove,
+        );
+      },
     );
   }
 
-  void _openCluster(PayLocationCluster cluster) {
-    if (!_mapReady) {
+  List<PayLocationPin> _visiblePins() {
+    return sortPayLocationPins(filterPayLocationPins(_pins, _query));
+  }
+
+  void _redrawMarkers() {
+    _markerGeneration++;
+    if (!_styleLoaded || _mapController == null || _drawingMarkers) {
       return;
     }
-    final bounds = LatLngBounds.fromPoints([
-      for (final pin in cluster.pins) LatLng(pin.lat, pin.lon),
-    ]);
-    _mapController.fitCamera(
-      CameraFit.bounds(bounds: bounds, padding: const .all(48), maxZoom: 14),
+    unawaited(_drawMarkers());
+  }
+
+  Future<void> _drawMarkers() async {
+    _drawingMarkers = true;
+    try {
+      while (mounted && _styleLoaded) {
+        final controller = _mapController;
+        if (controller == null) {
+          return;
+        }
+        final generation = _markerGeneration;
+        final markers = payLocationMarkers(
+          visible: _visiblePins(),
+          selected: _selectedPin,
+          zoom: _zoom,
+        );
+        await controller.clearCircles();
+        await controller.clearSymbols();
+        if (!_markerDrawIsCurrent(generation, controller)) {
+          continue;
+        }
+
+        final circleOptions = <maplibre.CircleOptions>[];
+        final circleData = <Map<String, dynamic>>[];
+        for (var index = 0; index < markers.length; index++) {
+          final marker = markers[index];
+          circleOptions.add(
+            maplibre.CircleOptions(
+              geometry: maplibre.LatLng(marker.lat, marker.lon),
+              circleRadius: marker.diameter / 2 - marker.strokeWidth, // Stroke is outside radius.
+              circleColor: marker.kind == PayLocationMarkerKind.pin ? _pinColor : _clusterColor,
+              circleStrokeWidth: marker.strokeWidth,
+              circleStrokeColor: _white,
+            ),
+          );
+          circleData.add(_markerData(marker, index));
+        }
+        if (circleOptions.isNotEmpty) {
+          await controller.addCircles(circleOptions, circleData);
+        }
+        if (!_markerDrawIsCurrent(generation, controller)) {
+          continue;
+        }
+
+        final symbolOptions = <maplibre.SymbolOptions>[];
+        final symbolData = <Map<String, dynamic>>[];
+        for (var index = 0; index < markers.length; index++) {
+          final marker = markers[index];
+          if (marker.count != null) {
+            symbolOptions.add(
+              maplibre.SymbolOptions(
+                geometry: maplibre.LatLng(marker.lat, marker.lon),
+                textField: '${marker.count}',
+                textSize: 13,
+                textColor: _white,
+                fontNames: const ['Noto Sans Bold'],
+              ),
+            );
+            symbolData.add(_markerData(marker, index));
+          }
+          if (marker.town != null) {
+            symbolOptions.add(
+              maplibre.SymbolOptions(
+                geometry: maplibre.LatLng(marker.lat, marker.lon),
+                textField: marker.town,
+                textSize: 12,
+                textColor: _townColor,
+                textHaloColor: _white,
+                textHaloWidth: 1.2,
+                fontNames: const ['Noto Sans Regular'],
+                textAnchor: 'bottom',
+                textOffset: const Offset(0, -0.9),
+                textMaxWidth: 10,
+              ),
+            );
+            symbolData.add(_markerData(marker, index));
+          }
+        }
+        if (symbolOptions.isNotEmpty) {
+          await controller.addSymbols(symbolOptions, symbolData);
+        }
+        if (!_markerDrawIsCurrent(generation, controller)) {
+          continue;
+        }
+        _addedMarkers = markers;
+        return;
+      }
+    } finally {
+      _drawingMarkers = false;
+    }
+  }
+
+  bool _markerDrawIsCurrent(int generation, maplibre.MapLibreMapController controller) {
+    return mounted &&
+        _styleLoaded &&
+        generation == _markerGeneration &&
+        identical(controller, _mapController);
+  }
+
+  Map<String, dynamic> _markerData(PayLocationMarker marker, int index) {
+    return {
+      'kind': marker.kind == PayLocationMarkerKind.pin ? 'pin' : 'cluster',
+      'index': index,
+    };
+  }
+
+  void _handleAnnotationTap(Object? data) {
+    if (data is! Map) {
+      return;
+    }
+    final index = data['index'];
+    if (index is! int || index < 0 || index >= _addedMarkers.length) {
+      return;
+    }
+    final marker = _addedMarkers[index];
+    final kind = marker.kind == PayLocationMarkerKind.pin ? 'pin' : 'cluster';
+    if (data['kind'] != kind) {
+      return;
+    }
+    if (marker.kind == PayLocationMarkerKind.pin) {
+      _selectPin(marker.pins.single);
+      return;
+    }
+    _openCluster(marker.pins);
+  }
+
+  bool get _hasMapSize => _mapSize.width > 0 && _mapSize.height > 0;
+
+  bool _fitCountryOnce() {
+    if (_countryFitDone) {
+      return true;
+    }
+    final moved = _fitSpan(
+      south: payLocationCountrySouth,
+      north: payLocationCountryNorth,
+      west: payLocationCountryWest,
+      east: payLocationCountryEast,
+      padding: 28,
+      maxZoom: 16,
     );
+    if (moved) {
+      _countryFitDone = true;
+    }
+    return moved;
+  }
+
+  void _scheduleCountryFit() {
+    if (_countryFitDone || _countryFitScheduled) {
+      return;
+    }
+    _countryFitScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _countryFitScheduled = false;
+      if (mounted) {
+        _fitCountryOnce();
+      }
+    });
+  }
+
+  bool _fitSpan({
+    required double south,
+    required double north,
+    required double west,
+    required double east,
+    required double padding,
+    required double maxZoom,
+  }) {
+    final controller = _mapController;
+    if (!_styleLoaded || controller == null || !_hasMapSize) {
+      return false;
+    }
+    final zoom = payLocationZoomForSpan(
+      south: south,
+      north: north,
+      west: west,
+      east: east,
+      width: _mapSize.width,
+      height: _mapSize.height,
+      padding: padding,
+      maxZoom: maxZoom,
+    );
+    final center = maplibre.LatLng((south + north) / 2, (west + east) / 2);
+    unawaited(
+      controller.animateCamera(maplibre.CameraUpdate.newLatLngZoom(center, zoom)),
+    );
+    return true;
+  }
+
+  void _fitPins(List<PayLocationPin> pins, {required double padding, required double maxZoom}) {
+    var south = pins.first.lat;
+    var north = pins.first.lat;
+    var west = pins.first.lon;
+    var east = pins.first.lon;
+    for (final pin in pins.skip(1)) {
+      if (pin.lat < south) {
+        south = pin.lat;
+      }
+      if (pin.lat > north) {
+        north = pin.lat;
+      }
+      if (pin.lon < west) {
+        west = pin.lon;
+      }
+      if (pin.lon > east) {
+        east = pin.lon;
+      }
+    }
+    _fitSpan(
+      south: south,
+      north: north,
+      west: west,
+      east: east,
+      padding: padding,
+      maxZoom: maxZoom,
+    );
+  }
+
+  void _moveTo(double lat, double lon, double zoom) {
+    final controller = _mapController;
+    if (!_styleLoaded || controller == null || !_hasMapSize) {
+      return;
+    }
+    unawaited(
+      controller.animateCamera(
+        maplibre.CameraUpdate.newLatLngZoom(maplibre.LatLng(lat, lon), zoom),
+      ),
+    );
+  }
+
+  void _openCluster(List<PayLocationPin> pins) {
+    _fitPins(pins, padding: 48, maxZoom: 14);
   }
 }

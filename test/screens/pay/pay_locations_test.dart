@@ -6,8 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
-import 'package:realunit_wallet/screens/pay/pay_locations_lakes.dart';
-import 'package:realunit_wallet/screens/pay/pay_locations_outline.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations_page.dart';
 
 import '../../helper/pump_golden_app.dart';
@@ -20,6 +18,14 @@ void main() {
     );
     expect(payLocationsBlockchain, 'Ethereum');
     expect(payLocationsAsset, 'ZCHF');
+  });
+
+  test('uses the OpenFreeMap Liberty style and country bounds', () {
+    expect(payLocationsStyleUrl, 'https://tiles.openfreemap.org/styles/liberty');
+    expect(payLocationCountrySouth, 45.83003);
+    expect(payLocationCountryNorth, 47.77564);
+    expect(payLocationCountryWest, 5.97002);
+    expect(payLocationCountryEast, 10.45459);
   });
 
   test('a places body must be a map whose places field is a list', () {
@@ -166,6 +172,132 @@ void main() {
     );
   });
 
+  test('creates an unselected pin marker without a town at zoom 10', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Bahnhofstrasse 1, 9403 Goldach',
+      category: null,
+      lat: 47.37,
+      lon: 8.54,
+    );
+
+    final markers = payLocationMarkers(visible: const [pin], selected: null, zoom: 10);
+
+    expect(markers, hasLength(1));
+    expect(markers.single.kind, PayLocationMarkerKind.pin);
+    expect(markers.single.diameter, 16);
+    expect(markers.single.strokeWidth, 2);
+    expect(markers.single.count, isNull);
+    expect(markers.single.town, isNull);
+    expect(markers.single.pins, [pin]);
+  });
+
+  test('creates a larger selected pin marker with its town', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Bahnhofstrasse 1, 9403 Goldach',
+      category: null,
+      lat: 47.37,
+      lon: 8.54,
+    );
+
+    final markers = payLocationMarkers(visible: const [pin], selected: pin, zoom: 10);
+
+    expect(markers, hasLength(1));
+    expect(markers.single.kind, PayLocationMarkerKind.pin);
+    expect(markers.single.diameter, 18);
+    expect(markers.single.strokeWidth, 3);
+    expect(markers.single.count, isNull);
+    expect(markers.single.town, 'Goldach');
+    expect(markers.single.pins, [pin]);
+  });
+
+  test('creates a cluster and a single marker at country zoom', () {
+    const near = PayLocationPin(name: 'A', category: null, lat: 47.37, lon: 8.54);
+    const close = PayLocationPin(name: 'B', category: null, lat: 47.4, lon: 8.56);
+    const far = PayLocationPin(name: 'C', category: null, lat: 46.2, lon: 6.14);
+
+    final markers = payLocationMarkers(
+      visible: const [near, close, far],
+      selected: null,
+      zoom: 6,
+    );
+    final cluster = markers.singleWhere((marker) => marker.kind == PayLocationMarkerKind.cluster);
+    final pin = markers.singleWhere((marker) => marker.kind == PayLocationMarkerKind.pin);
+
+    expect(markers, hasLength(2));
+    expect(cluster.count, 2);
+    expect(cluster.diameter, 34);
+    expect(cluster.strokeWidth, 2);
+    expect(cluster.town, isNull);
+    expect(cluster.pins, [near, close]);
+    expect(pin.pins, [far]);
+  });
+
+  test('does not include a selected pin in a cluster', () {
+    const selected = PayLocationPin(name: 'A', category: null, lat: 47.37, lon: 8.54);
+    const close = PayLocationPin(name: 'B', category: null, lat: 47.4, lon: 8.56);
+    const far = PayLocationPin(name: 'C', category: null, lat: 46.2, lon: 6.14);
+
+    final markers = payLocationMarkers(
+      visible: const [selected, close, far],
+      selected: selected,
+      zoom: 6,
+    );
+    final selectedMarker = markers.singleWhere((marker) => marker.pins.contains(selected));
+
+    expect(selectedMarker.kind, PayLocationMarkerKind.pin);
+    expect(selectedMarker.diameter, 18);
+    expect(
+      markers
+          .where((marker) => !identical(marker, selectedMarker))
+          .expand((marker) => marker.pins)
+          .contains(selected),
+      isFalse,
+    );
+  });
+
+  test('shows an unselected pin town through zoom 7.5', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Bahnhofstrasse 1, 9403 Goldach',
+      category: null,
+      lat: 47.37,
+      lon: 8.54,
+    );
+
+    final zoomSeven = payLocationMarkers(visible: const [pin], selected: null, zoom: 7);
+    final zoomEight = payLocationMarkers(visible: const [pin], selected: null, zoom: 8);
+
+    expect(zoomSeven.single.town, 'Goldach');
+    expect(zoomEight.single.town, isNull);
+  });
+
+  test('calculates Web Mercator zoom for country and pin spans', () {
+    final countryZoom = payLocationZoomForSpan(
+      south: payLocationCountrySouth,
+      north: payLocationCountryNorth,
+      west: payLocationCountryWest,
+      east: payLocationCountryEast,
+      width: 400,
+      height: 300,
+      padding: 28,
+      maxZoom: 16,
+    );
+    final pinZoom = payLocationZoomForSpan(
+      south: 47.37,
+      north: 47.37001,
+      west: 8.54,
+      east: 8.54001,
+      width: 400,
+      height: 300,
+      padding: 36,
+      maxZoom: 12,
+    );
+
+    expect(countryZoom, greaterThan(5));
+    expect(countryZoom, lessThan(8));
+    expect(pinZoom, 12);
+    expect(countryZoom, lessThan(12));
+  });
+
   test('filters and sorts shop names', () {
     const zurich = PayLocationPin(name: 'SPAR Zürich', category: null, lat: 47, lon: 8);
     const bern = PayLocationPin(name: 'SPAR Bern', category: null, lat: 46.9, lon: 7.4);
@@ -238,52 +370,5 @@ void main() {
     expect(overview.length, lessThan(15));
     expect(overview.every((cluster) => cluster.pins.length < pins.length), isTrue);
     expect(close.every((cluster) => cluster.isSingle), isTrue);
-  });
-
-  test('hides a city label that sits on a shop group', () {
-    final pins = keepPayLocationPins(
-      jsonDecode(
-        File(
-          'test/goldens/screens/pay/fixtures/dev_places_ethereum_zchf.json',
-        ).readAsStringSync(),
-      ),
-    );
-    final clusters = clusterPayLocationPins(
-      pins,
-      cellDegrees: payLocationClusterCellDegrees(6.6),
-    );
-
-    expect(
-      payLocationCityCovered(
-        cityName: 'Zürich',
-        cityLat: 47.3769,
-        cityLon: 8.5417,
-        zoom: 6.6,
-        clusters: clusters,
-      ),
-      isTrue,
-    );
-    expect(
-      payLocationCityCovered(
-        cityName: 'Genf',
-        cityLat: 46.2044,
-        cityLon: 6.1432,
-        zoom: 6.6,
-        clusters: clusters,
-      ),
-      isFalse,
-    );
-  });
-
-  test('keeps the country and lake outlines on the map', () {
-    expect(payLocationCountryRings, hasLength(2));
-    expect(payLocationLakeRings.length, greaterThan(8));
-    for (final ring in [...payLocationCountryRings, ...payLocationLakeRings]) {
-      expect(ring.length, greaterThan(3));
-      for (final point in ring) {
-        expect(point.latitude, inInclusiveRange(45.5, 48.2));
-        expect(point.longitude, inInclusiveRange(5.5, 10.8));
-      }
-    }
   });
 }

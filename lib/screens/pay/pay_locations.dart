@@ -5,6 +5,12 @@ const String payLocationsAsset = 'ZCHF';
 
 const String payLocationsPlacesUrl =
     'https://api.opencryptopay.io/map/places?blockchain=Ethereum&asset=ZCHF';
+const String payLocationsStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
+
+const double payLocationCountrySouth = 45.83003;
+const double payLocationCountryNorth = 47.77564;
+const double payLocationCountryWest = 5.97002;
+const double payLocationCountryEast = 10.45459;
 
 class PayLocationPin {
   final String name;
@@ -88,6 +94,30 @@ class PayLocationCluster {
   bool get isSingle => pins.length == 1;
 }
 
+enum PayLocationMarkerKind { pin, cluster }
+
+class PayLocationMarker {
+  final PayLocationMarkerKind kind;
+  final double lat;
+  final double lon;
+  final double diameter;
+  final double strokeWidth;
+  final int? count;
+  final String? town;
+  final List<PayLocationPin> pins;
+
+  const PayLocationMarker({
+    required this.kind,
+    required this.lat,
+    required this.lon,
+    required this.diameter,
+    required this.strokeWidth,
+    required this.pins,
+    this.count,
+    this.town,
+  });
+}
+
 /// Cell size for a cluster spacing of about 64 pixels at [zoom].
 double payLocationClusterCellDegrees(double zoom) {
   final worldPixels = 256 * math.pow(2, zoom);
@@ -121,6 +151,94 @@ List<PayLocationCluster> clusterPayLocationPins(
         pins: group,
       ),
   ];
+}
+
+List<PayLocationMarker> payLocationMarkers({
+  required List<PayLocationPin> visible,
+  required PayLocationPin? selected,
+  required double zoom,
+}) {
+  PayLocationPin? selectedPin;
+  if (selected != null && visible.any((pin) => samePayLocationPin(pin, selected))) {
+    selectedPin = selected;
+  }
+  final clustered = [
+    for (final pin in visible)
+      if (selectedPin == null || !samePayLocationPin(pin, selectedPin)) pin,
+  ];
+  final clusters = clusterPayLocationPins(
+    clustered,
+    cellDegrees: payLocationClusterCellDegrees(zoom),
+  );
+  final markers = <PayLocationMarker>[
+    for (final cluster in clusters)
+      if (cluster.isSingle)
+        PayLocationMarker(
+          kind: PayLocationMarkerKind.pin,
+          lat: cluster.lat,
+          lon: cluster.lon,
+          diameter: 16,
+          strokeWidth: 2,
+          pins: cluster.pins,
+          town: _payLocationMarkerTown(cluster.pins.single, zoom <= 7.5),
+        )
+      else
+        PayLocationMarker(
+          kind: PayLocationMarkerKind.cluster,
+          lat: cluster.lat,
+          lon: cluster.lon,
+          diameter: 34,
+          strokeWidth: 2,
+          pins: cluster.pins,
+          count: cluster.pins.length,
+        ),
+  ];
+  if (selectedPin != null) {
+    markers.add(
+      PayLocationMarker(
+        kind: PayLocationMarkerKind.pin,
+        lat: selectedPin.lat,
+        lon: selectedPin.lon,
+        diameter: 18,
+        strokeWidth: 3,
+        pins: [selectedPin],
+        town: _payLocationMarkerTown(selectedPin, true),
+      ),
+    );
+  }
+  return markers;
+}
+
+String? _payLocationMarkerTown(PayLocationPin pin, bool show) {
+  if (!show) {
+    return null;
+  }
+  final town = payLocationLabel(pin.name).town;
+  return town.isEmpty ? null : town;
+}
+
+double payLocationZoomForSpan({
+  required double south,
+  required double north,
+  required double west,
+  required double east,
+  required double width,
+  required double height,
+  required double padding,
+  required double maxZoom,
+}) {
+  final lonSpan = math.max((east - west).abs(), 1e-9);
+  double mercatorY(double lat) {
+    final latRad = lat * math.pi / 180;
+    return math.log(math.tan(math.pi / 4 + latRad / 2));
+  }
+
+  final ySpan = math.max((mercatorY(north) - mercatorY(south)).abs(), 1e-9);
+  final usableW = math.max(width - 2 * padding, 1);
+  final usableH = math.max(height - 2 * padding, 1);
+  final zLon = math.log(usableW / 256 * 360 / lonSpan) / math.log(2);
+  final zLat = math.log(usableH / 256 / (ySpan / (2 * math.pi))) / math.log(2);
+  return math.min(zLon, zLat).clamp(5, maxZoom).toDouble();
 }
 
 List<PayLocationPin> filterPayLocationPins(List<PayLocationPin> pins, String query) {
@@ -184,40 +302,6 @@ List<PayLocationPin> sortPayLocationPins(List<PayLocationPin> pins) {
 
 bool samePayLocationPin(PayLocationPin a, PayLocationPin b) {
   return a.name == b.name && a.lat == b.lat && a.lon == b.lon;
-}
-
-/// True when a city label would run under a shop marker at [zoom].
-bool payLocationCityCovered({
-  required String cityName,
-  required double cityLat,
-  required double cityLon,
-  required double zoom,
-  required List<PayLocationCluster> clusters,
-  PayLocationPin? selected,
-}) {
-  final cell = payLocationClusterCellDegrees(zoom);
-  if (cell <= 0) {
-    return false;
-  }
-
-  final cosLat = math.cos(cityLat * math.pi / 180);
-  final textPx = math.max(28.0, cityName.length * 7.2);
-  bool hits(double lat, double lon, double markerPx) {
-    final dx = (cityLon - lon) / cell * 64;
-    final dy = cosLat == 0 ? 0.0 : (cityLat - lat) / cell * 64 / cosLat;
-    final gap = math.sqrt(dx * dx + dy * dy) - (textPx / 2 + markerPx / 2);
-    return gap < 4;
-  }
-
-  for (final cluster in clusters) {
-    if (hits(cluster.lat, cluster.lon, cluster.isSingle ? 18 : 34)) {
-      return true;
-    }
-  }
-  if (selected != null && hits(selected.lat, selected.lon, 168)) {
-    return true;
-  }
-  return false;
 }
 
 double? _finiteDouble(Object? value) {
