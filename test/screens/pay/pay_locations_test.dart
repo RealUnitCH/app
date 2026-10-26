@@ -546,12 +546,13 @@ void main() {
   });
 
   test('frames the Liberty snapshot around the country view', () {
-    expect(payLocationTileLon(payLocationLibertyTileX), 0);
-    expect(payLocationTileLon(payLocationLibertyTileX + payLocationLibertyTileColumns), 16.875);
-    final north = payLocationTileLat(payLocationLibertyTileY);
-    final south = payLocationTileLat(payLocationLibertyTileY + payLocationLibertyTileRows);
-    expect(north, greaterThan(payLocationCountryNorth));
-    expect(south, lessThan(payLocationCountrySouth));
-    expect(north, greaterThan(south));
+    expect(payLocationLibertyWest, 4.21875);
+    expect(payLocationLibertyEast, 12.65625);
+    expect(payLocationLibertyNorth, closeTo(51.179342979289686, 1e-12));
+    expect(payLocationLibertySouth, closeTo(44.59046718130912, 1e-12));
+    expect(payLocationLibertyWest, lessThan(payLocationCountryWest));
+    expect(payLocationLibertyEast, greaterThan(payLocationCountryEast));
+    expect(payLocationLibertyNorth, greaterThan(payLocationCountryNorth));
+    expect(payLocationLibertySouth, lessThan(payLocationCountrySouth));
   });
 }

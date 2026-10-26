@@ -47,10 +47,10 @@ class PayLocationsTestMap extends StatelessWidget {
         }
         final view = payLocationCountryView(width: width, height: height);
         final markers = payLocationMarkers(visible: pins, selected: selected, zoom: view.zoom);
-        final west = payLocationTileLon(payLocationLibertyTileX);
-        final north = payLocationTileLat(payLocationLibertyTileY);
-        final east = payLocationTileLon(payLocationLibertyTileX + payLocationLibertyTileColumns);
-        final south = payLocationTileLat(payLocationLibertyTileY + payLocationLibertyTileRows);
+        const west = payLocationLibertyWest;
+        const north = payLocationLibertyNorth;
+        const east = payLocationLibertyEast;
+        const south = payLocationLibertySouth;
         final topLeft = _project(north, west, view, width, height);
         final bottomRight = _project(south, east, view, width, height);
         return ClipRect(

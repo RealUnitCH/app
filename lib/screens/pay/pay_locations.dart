@@ -13,23 +13,13 @@ const double payLocationCountryNorth = 47.77564;
 const double payLocationCountryWest = 5.97002;
 const double payLocationCountryEast = 10.45459;
 
-/// Zoom-7 tile window of the OpenFreeMap Liberty snapshot used by widget tests.
-const int payLocationLibertyTileZoom = 7;
-const int payLocationLibertyTileX = 64;
-const int payLocationLibertyTileY = 41;
-const int payLocationLibertyTileColumns = 6;
-const int payLocationLibertyTileRows = 7;
-
-double payLocationTileLon(int tileX, {int zoom = payLocationLibertyTileZoom}) {
-  final n = math.pow(2, zoom).toDouble();
-  return tileX / n * 360 - 180;
-}
-
-double payLocationTileLat(int tileY, {int zoom = payLocationLibertyTileZoom}) {
-  final n = math.pow(2, zoom).toDouble();
-  final mercator = math.pi * (1 - 2 * tileY / n);
-  return (2 * math.atan(math.exp(mercator)) - math.pi / 2) * 180 / math.pi;
-}
+/// Edges of the Liberty snapshot used by widget tests.
+/// MapLibre unprojects its 1536×1792 zoom-7 canvas, with 512px tiles,
+/// to these corners. The canvas is centred on 8.4375°E, 47.98992166741417°N.
+const double payLocationLibertyWest = 4.21875;
+const double payLocationLibertyEast = 12.65625;
+const double payLocationLibertyNorth = 51.179342979289686;
+const double payLocationLibertySouth = 44.59046718130912;
 
 /// Country camera used by the street map after the style loads.
 class PayLocationCountryView {
