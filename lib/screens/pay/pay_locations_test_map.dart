@@ -8,9 +8,11 @@ import 'package:realunit_wallet/styles/colors.dart';
 const String _libertyFixture = 'test/goldens/screens/pay/fixtures/pay_locations_liberty.png';
 
 Uint8List? _libertyBytes;
+MemoryImage? _libertyImage;
 
-Uint8List _readLibertyPng() {
-  return _libertyBytes ??= File(_libertyFixture).readAsBytesSync();
+MemoryImage _libertyProvider() {
+  final bytes = _libertyBytes ??= File(_libertyFixture).readAsBytesSync();
+  return _libertyImage ??= MemoryImage(bytes);
 }
 
 /// Street-map stand-in for widget tests. A platform view cannot host MapLibre,
@@ -61,8 +63,8 @@ class PayLocationsTestMap extends StatelessWidget {
                 top: topLeft.dy,
                 width: bottomRight.dx - topLeft.dx,
                 height: bottomRight.dy - topLeft.dy,
-                child: Image.memory(
-                  _readLibertyPng(),
+                child: Image(
+                  image: _libertyProvider(),
                   fit: BoxFit.fill,
                   filterQuality: FilterQuality.medium,
                   gaplessPlayback: true,

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:alchemist/alchemist.dart' show precacheImages;
 import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
@@ -34,6 +36,12 @@ http.Client _client({
   });
 }
 
+/// The street snapshot is mounted only after the place response. Load it, then precache.
+Future<void> _pumpPayLocations(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+  await precacheImages(tester);
+}
+
 Widget _map(http.Client client) {
   return PayLocationsPage(
     httpClient: client,
@@ -62,6 +70,7 @@ void main() {
     'published locations',
     fileName: 'pay_locations_page_empty',
     constraints: phoneConstraints,
+    pumpBeforeTest: _pumpPayLocations,
     builder: () => wrapForGolden(
       PayLocationsPage(httpClient: _client(placesBody: _publishedPlacesBody)),
     ),
@@ -71,6 +80,7 @@ void main() {
     'locations with nothing published',
     fileName: 'pay_locations_page_unpublished',
     constraints: phoneConstraints,
+    pumpBeforeTest: _pumpPayLocations,
     builder: () => wrapForGolden(PayLocationsPage(httpClient: _client())),
   );
 
@@ -78,6 +88,7 @@ void main() {
     'locations with one place',
     fileName: 'pay_locations_page_places',
     constraints: phoneConstraints,
+    pumpBeforeTest: _pumpPayLocations,
     builder: () => wrapForGolden(
       PayLocationsPage(httpClient: _client(placesBody: _placesBody)),
     ),
@@ -87,6 +98,7 @@ void main() {
     'locations with no search match',
     fileName: 'pay_locations_page_no_match',
     constraints: phoneConstraints,
+    pumpBeforeTest: _pumpPayLocations,
     builder: () => wrapForGolden(
       PayLocationsPage(
         httpClient: _client(placesBody: _publishedPlacesBody),
