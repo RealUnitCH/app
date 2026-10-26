@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart' as maplibre;
@@ -34,12 +35,11 @@ class PayLocationsPage extends StatefulWidget {
 }
 
 class _PayLocationsPageState extends State<PayLocationsPage> {
-  static const String _pinColor = '#E02523';
-  static const String _clusterColor = '#034C81';
   static const String _white = '#FFFFFF';
   static const String _townColor = '#0F172A';
 
   late final TextEditingController _searchController;
+  final ValueNotifier<PayLocationPin?> _detailPin = ValueNotifier<PayLocationPin?>(null);
 
   maplibre.MapLibreMapController? _mapController;
   List<PayLocationPin> _pins = const [];
@@ -52,6 +52,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   bool _countryFitDone = false;
   bool _countryFitScheduled = false;
   bool _drawingMarkers = false;
+  bool _detailSheetOpen = false;
   double _zoom = 7;
   maplibre.LatLng _center = const maplibre.LatLng(46.8, 8.23);
   Size _mapSize = Size.zero;
@@ -127,6 +128,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     _markerGeneration++;
     _styleLoaded = false;
     _searchController.dispose();
+    _detailPin.dispose();
     super.dispose();
   }
 
@@ -177,6 +179,51 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     setState(() => _selectedPin = pin);
     _redrawMarkers();
     _moveTo(pin.lat, pin.lon, 13);
+    _showDetails(pin);
+  }
+
+  void _showDetails(PayLocationPin pin) {
+    _detailPin.value = pin;
+    if (_detailSheetOpen) {
+      return;
+    }
+    _detailSheetOpen = true;
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (context) => _PayLocationDetailsSheet(
+          pinListenable: _detailPin,
+          loadPhotos: _loadDetailPhotos,
+        ),
+      ).whenComplete(() {
+        _detailSheetOpen = false;
+        if (mounted) {
+          _detailPin.value = null;
+        }
+      }),
+    );
+  }
+
+  Future<List<PayLocationPhoto>> _loadDetailPhotos(PayLocationPin pin) async {
+    final url = payLocationDetailUrl(pin.id);
+    if (url == null) {
+      return const [];
+    }
+    try {
+      final response = await _get(Uri.parse(url)).timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200) {
+        return const [];
+      }
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map) {
+        return const [];
+      }
+      return payLocationPhotos(decoded);
+    } catch (_) {
+      return const [];
+    }
   }
 
   void _onQuery(String value) {
@@ -331,6 +378,8 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       itemBuilder: (context, index) {
         final pin = visible[index];
         final label = payLocationLabel(pin.name);
+        final hasStructuredAddress = pin.street.isNotEmpty || pin.city.isNotEmpty;
+        final structuredAddress = _payLocationListAddress(pin);
         final selected = _selectedPin != null && samePayLocationPin(pin, _selectedPin!);
         return Material(
           color: selected ? RealUnitColors.brand200 : RealUnitColors.basic.white,
@@ -342,14 +391,23 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label.place,
+                    hasStructuredAddress ? pin.name : label.place,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (label.street != null)
+                  if (hasStructuredAddress && structuredAddress.isNotEmpty)
+                    Text(
+                      structuredAddress,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.neutral500,
+                      ),
+                    )
+                  else if (!hasStructuredAddress && label.street != null)
                     Text(
                       label.street!,
                       maxLines: 1,
@@ -358,6 +416,8 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
                         color: RealUnitColors.neutral500,
                       ),
                     ),
+                  const SizedBox(height: 4),
+                  _PayLocationActivityLine(pin: pin),
                 ],
               ),
             ),
@@ -491,7 +551,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
             maplibre.CircleOptions(
               geometry: maplibre.LatLng(marker.lat, marker.lon),
               circleRadius: marker.diameter / 2 - marker.strokeWidth, // Stroke is outside radius.
-              circleColor: marker.kind == PayLocationMarkerKind.pin ? _pinColor : _clusterColor,
+              circleColor: marker.color,
               circleStrokeWidth: marker.strokeWidth,
               circleStrokeColor: _white,
             ),
@@ -692,5 +752,285 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
 
   void _openCluster(List<PayLocationPin> pins) {
     _fitPins(pins, padding: 48, maxZoom: 14);
+  }
+}
+
+String _payLocationListAddress(PayLocationPin pin) {
+  final street = [pin.street, pin.houseNumber].where((part) => part.isNotEmpty).join(' ');
+  final city = [pin.postalCode, pin.city].where((part) => part.isNotEmpty).join(' ');
+  return [street, city].where((part) => part.isNotEmpty).join(', ');
+}
+
+Color _payLocationColor(String activity) {
+  final hex = payLocationActivityColor(activity);
+  return Color(int.parse('FF${hex.substring(1)}', radix: 16));
+}
+
+String _payLocationActivityLabel(BuildContext context, String activity) {
+  final strings = S.of(context);
+  return switch (activity) {
+    'daily' => strings.payLocationsActivityDaily,
+    'within7Days' => strings.payLocationsActivityWeekly,
+    'within30Days' => strings.payLocationsActivityMonthly,
+    'olderThan30Days' => strings.payLocationsActivityIdle,
+    _ => strings.payLocationsActivityNone,
+  };
+}
+
+String _payLocationActivityHelp(BuildContext context, String activity) {
+  final strings = S.of(context);
+  return switch (activity) {
+    'daily' => strings.payLocationsActivityDailyHelp,
+    'within7Days' => strings.payLocationsActivityWeeklyHelp,
+    'within30Days' => strings.payLocationsActivityMonthlyHelp,
+    'olderThan30Days' => strings.payLocationsActivityIdleHelp,
+    _ => strings.payLocationsActivityNoneHelp,
+  };
+}
+
+class _PayLocationActivityLine extends StatelessWidget {
+  const _PayLocationActivityLine({required this.pin});
+
+  final PayLocationPin pin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: _payLocationColor(pin.activity),
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0x40000000)),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            _payLocationActivityLabel(context, pin.activity),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PayLocationDetailsSheet extends StatelessWidget {
+  const _PayLocationDetailsSheet({required this.pinListenable, required this.loadPhotos});
+
+  final ValueListenable<PayLocationPin?> pinListenable;
+  final Future<List<PayLocationPhoto>> Function(PayLocationPin pin) loadPhotos;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: ValueListenableBuilder<PayLocationPin?>(
+        valueListenable: pinListenable,
+        builder: (context, pin, _) {
+          if (pin == null) {
+            return const SizedBox.shrink();
+          }
+          return Stack(
+            children: [
+              _PayLocationDetailsBody(
+                key: ValueKey('${pin.id}:${pin.name}:${pin.lat}:${pin.lon}'),
+                pin: pin,
+                loadPhotos: loadPhotos,
+              ),
+              Positioned(
+                top: 0,
+                right: 8,
+                child: IconButton(
+                  tooltip: S.of(context).payLocationsDetailClose,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PayLocationDetailsBody extends StatefulWidget {
+  const _PayLocationDetailsBody({
+    super.key,
+    required this.pin,
+    required this.loadPhotos,
+  });
+
+  final PayLocationPin pin;
+  final Future<List<PayLocationPhoto>> Function(PayLocationPin pin) loadPhotos;
+
+  @override
+  State<_PayLocationDetailsBody> createState() => _PayLocationDetailsBodyState();
+}
+
+class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
+  late final Future<List<PayLocationPhoto>> _photos;
+
+  @override
+  void initState() {
+    super.initState();
+    _photos = widget.loadPhotos(widget.pin);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pin = widget.pin;
+    final category = pin.category;
+    return FutureBuilder<List<PayLocationPhoto>>(
+      future: _photos,
+      builder: (context, snapshot) {
+        final photos = _detailPhotos(pin.coverUrl, snapshot.data ?? const []);
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final photo in photos) ...[
+                _PayLocationPhotoView(photo: photo),
+                const SizedBox(height: 16),
+              ],
+              Padding(
+                padding: const EdgeInsets.only(right: 48),
+                child: Text(
+                  pin.name,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _PayLocationActivityLine(pin: pin),
+              const SizedBox(height: 6),
+              Text(
+                _payLocationActivityHelp(context, pin.activity),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              for (final line in payLocationAddressLines(pin)) ...[
+                const SizedBox(height: 8),
+                Text(line, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+              if (pin.description.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(pin.description, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+              if (category != null && category.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _PayLocationDetailValue(
+                  label: S.of(context).payLocationsDetailCategory,
+                  value: category,
+                ),
+              ],
+              if (pin.shopType.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _PayLocationDetailValue(
+                  label: S.of(context).payLocationsDetailShopType,
+                  value: pin.shopType == 'Others'
+                      ? S.of(context).payLocationsShopTypeOthers
+                      : pin.shopType,
+                ),
+              ],
+              if (pin.techProvider.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _PayLocationDetailValue(
+                  label: S.of(context).payLocationsDetailProvider,
+                  value: pin.techProvider,
+                ),
+              ],
+              const SizedBox(height: 12),
+              _PayLocationDetailValue(
+                label: S.of(context).payLocationsDetailPayment,
+                value: S.of(context).payLocationsDetailPaymentValue,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+List<PayLocationPhoto> _detailPhotos(
+  String? coverUrl,
+  List<PayLocationPhoto> detailPhotos,
+) {
+  final photos = <PayLocationPhoto>[];
+  final indexes = <String, int>{};
+  if (coverUrl != null) {
+    indexes[coverUrl] = 0;
+    photos.add(PayLocationPhoto(url: coverUrl));
+  }
+  for (final photo in detailPhotos) {
+    final existing = indexes[photo.url];
+    if (existing != null) {
+      photos[existing] = photo;
+      continue;
+    }
+    indexes[photo.url] = photos.length;
+    photos.add(photo);
+  }
+  return photos;
+}
+
+class _PayLocationPhotoView extends StatelessWidget {
+  const _PayLocationPhotoView({required this.photo});
+
+  final PayLocationPhoto photo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            photo.url,
+            width: double.infinity,
+            height: 200,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          ),
+        ),
+        if (photo.caption != null) ...[
+          const SizedBox(height: 6),
+          Text(photo.caption!, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ],
+    );
+  }
+}
+
+class _PayLocationDetailValue extends StatelessWidget {
+  const _PayLocationDetailValue({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          TextSpan(text: value),
+        ],
+      ),
+      style: Theme.of(context).textTheme.bodyMedium,
+    );
   }
 }

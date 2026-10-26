@@ -155,6 +155,70 @@ void main() {
     expect(pins.single.category, 'store');
   });
 
+  test('keeps activity and all published shop details', () {
+    final pins = keepPayLocationPins({
+      'places': [
+        {
+          'id': ' npub1shop ',
+          'name': ' SPAR Goldach ',
+          'category': ' shopping ',
+          'lat': 47.47,
+          'lon': 9.48,
+          'description': ' Local shop ',
+          'techProvider': ' DFX.swiss ',
+          'shopType': ' SPAR ',
+          'street': ' Bahnhofstrasse ',
+          'houseNumber': ' 1 ',
+          'postalCode': ' 9403 ',
+          'city': ' Goldach ',
+          'country': ' Switzerland ',
+          'activity': 'daily',
+          'coverPhoto': {'url': ' https://example.com/cover.jpg '},
+        },
+      ],
+    });
+
+    expect(pins, hasLength(1));
+    final pin = pins.single;
+    expect(pin.id, 'npub1shop');
+    expect(pin.name, 'SPAR Goldach');
+    expect(pin.category, 'shopping');
+    expect(pin.description, 'Local shop');
+    expect(pin.techProvider, 'DFX.swiss');
+    expect(pin.shopType, 'SPAR');
+    expect(pin.street, 'Bahnhofstrasse');
+    expect(pin.houseNumber, '1');
+    expect(pin.postalCode, '9403');
+    expect(pin.city, 'Goldach');
+    expect(pin.country, 'Switzerland');
+    expect(pin.activity, 'daily');
+    expect(pin.coverUrl, 'https://example.com/cover.jpg');
+    expect(payLocationActivityColor(pin.activity), '#FF4D00');
+    expect(
+      payLocationMarkers(visible: [pin], selected: null, zoom: 10).single.color,
+      '#FF4D00',
+    );
+  });
+
+  test('normalizes missing and unknown activity to none', () {
+    final pins = keepPayLocationPins({
+      'places': [
+        {'name': 'Missing', 'lat': 47, 'lon': 8},
+        {'name': 'Unknown', 'lat': 47.1, 'lon': 8.1, 'activity': 'sometimes'},
+        {'name': 'Empty', 'lat': 47.2, 'lon': 8.2, 'activity': ''},
+        {'name': 'Wrong type', 'lat': 47.3, 'lon': 8.3, 'activity': 1},
+      ],
+    });
+
+    expect(pins.map((pin) => pin.activity), ['none', 'none', 'none', 'none']);
+    expect(pins.map((pin) => payLocationActivityColor(pin.activity)), [
+      '#FFE3CC',
+      '#FFE3CC',
+      '#FFE3CC',
+      '#FFE3CC',
+    ]);
+  });
+
   test('groups nearby shops and keeps distant shops apart', () {
     const near = PayLocationPin(name: 'A', category: null, lat: 47.37, lon: 8.54);
     const close = PayLocationPin(name: 'B', category: null, lat: 47.4, lon: 8.56);
@@ -186,6 +250,7 @@ void main() {
     expect(markers.single.kind, PayLocationMarkerKind.pin);
     expect(markers.single.diameter, 16);
     expect(markers.single.strokeWidth, 2);
+    expect(markers.single.color, '#FFE3CC');
     expect(markers.single.count, isNull);
     expect(markers.single.town, isNull);
     expect(markers.single.pins, [pin]);
@@ -205,6 +270,7 @@ void main() {
     expect(markers.single.kind, PayLocationMarkerKind.pin);
     expect(markers.single.diameter, 18);
     expect(markers.single.strokeWidth, 3);
+    expect(markers.single.color, '#FFE3CC');
     expect(markers.single.count, isNull);
     expect(markers.single.town, 'Goldach');
     expect(markers.single.pins, [pin]);
@@ -227,6 +293,7 @@ void main() {
     expect(cluster.count, 2);
     expect(cluster.diameter, 34);
     expect(cluster.strokeWidth, 2);
+    expect(cluster.color, '#034C81');
     expect(cluster.town, isNull);
     expect(cluster.pins, [near, close]);
     expect(pin.pins, [far]);
@@ -327,6 +394,65 @@ void main() {
     final dashed = payLocationLabel('SPAR Seestrasse 1–3, 8640 Rapperswil');
     expect(dashed.street, 'SPAR Seestrasse 1–3');
     expect(dashed.town, 'Rapperswil');
+  });
+
+  test('builds structured address lines without empty values', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Goldach',
+      category: null,
+      lat: 47.47,
+      lon: 9.48,
+      street: 'Bahnhofstrasse',
+      houseNumber: '1',
+      postalCode: '9403',
+      city: 'Goldach',
+      country: 'Switzerland',
+    );
+
+    expect(payLocationAddressLines(pin), [
+      'Bahnhofstrasse 1',
+      '9403 Goldach',
+      'Switzerland',
+    ]);
+  });
+
+  test('builds detail URLs only for npub identifiers', () {
+    expect(payLocationDetailUrl(null), isNull);
+    expect(payLocationDetailUrl('4b42348f-8a02-4fbb-8ab7-252b1182c25c'), isNull);
+    expect(
+      payLocationDetailUrl('npub1shop'),
+      'https://api.opencryptopay.io/map/places/npub1shop',
+    );
+  });
+
+  test('reads valid place photos and drops non-https URLs', () {
+    final photos = payLocationPhotos({
+      'place': {
+        'photos': [
+          {
+            'url': ' https://example.com/shop.jpg ',
+            'caption': ' Front ',
+            'width': 1200,
+            'height': 800.5,
+          },
+          {'url': 'http://example.com/insecure.jpg'},
+          {'url': 'https://example.com/no-size.jpg', 'width': 0, 'height': double.nan},
+        ],
+      },
+    });
+
+    expect(photos, hasLength(2));
+    expect(photos.first.url, 'https://example.com/shop.jpg');
+    expect(photos.first.caption, 'Front');
+    expect(photos.first.width, 1200);
+    expect(photos.first.height, 800.5);
+    expect(photos.last.url, 'https://example.com/no-size.jpg');
+    expect(photos.last.caption, isNull);
+    expect(photos.last.width, isNull);
+    expect(photos.last.height, isNull);
+    expect(payLocationPhotos(null), isEmpty);
+    expect(payLocationPhotos(<String, Object>{}), isEmpty);
+    expect(payLocationPhotos({'place': {}}), isEmpty);
   });
 
   test('sorts published addresses by town', () {

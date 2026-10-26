@@ -6,6 +6,7 @@ const String payLocationsAsset = 'ZCHF';
 const String payLocationsPlacesUrl =
     'https://api.opencryptopay.io/map/places?blockchain=Ethereum&asset=ZCHF';
 const String payLocationsStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
+const String payLocationClusterColor = '#034C81';
 
 const double payLocationCountrySouth = 45.83003;
 const double payLocationCountryNorth = 47.77564;
@@ -17,13 +18,59 @@ class PayLocationPin {
   final String? category;
   final double lat;
   final double lon;
+  final String? id;
+  final String description;
+  final String techProvider;
+  final String shopType;
+  final String street;
+  final String houseNumber;
+  final String postalCode;
+  final String city;
+  final String country;
+  final String activity;
+  final String? coverUrl;
 
   const PayLocationPin({
     required this.name,
     required this.category,
     required this.lat,
     required this.lon,
+    this.id,
+    this.description = '',
+    this.techProvider = '',
+    this.shopType = '',
+    this.street = '',
+    this.houseNumber = '',
+    this.postalCode = '',
+    this.city = '',
+    this.country = '',
+    this.activity = 'none',
+    this.coverUrl,
   });
+}
+
+class PayLocationPhoto {
+  final String url;
+  final String? caption;
+  final double? width;
+  final double? height;
+
+  const PayLocationPhoto({
+    required this.url,
+    this.caption,
+    this.width,
+    this.height,
+  });
+}
+
+String payLocationActivityColor(String activity) {
+  return switch (activity) {
+    'daily' => '#FF4D00',
+    'within7Days' => '#FF7A29',
+    'within30Days' => '#FFA05C',
+    'olderThan30Days' => '#FFC48F',
+    _ => '#FFE3CC',
+  };
 }
 
 bool payLocationsPlacesBodyIsList(Object? body) {
@@ -71,12 +118,27 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
       continue;
     }
     final category = place['category'];
+    final id = _nonEmptyString(place['id']);
+    final activity = _payLocationActivity(place['activity']);
+    final coverPhoto = place['coverPhoto'];
+    final coverUrl = coverPhoto is Map ? _httpsUrl(coverPhoto['url']) : null;
     pins.add(
       PayLocationPin(
         name: name.trim(),
-        category: category is String ? category : null,
+        category: category is String ? category.trim() : null,
         lat: lat,
         lon: lon,
+        id: id,
+        description: _trimmedString(place['description']),
+        techProvider: _trimmedString(place['techProvider']),
+        shopType: _trimmedString(place['shopType']),
+        street: _trimmedString(place['street']),
+        houseNumber: _trimmedString(place['houseNumber']),
+        postalCode: _trimmedString(place['postalCode']),
+        city: _trimmedString(place['city']),
+        country: _trimmedString(place['country']),
+        activity: activity,
+        coverUrl: coverUrl,
       ),
     );
   }
@@ -102,6 +164,7 @@ class PayLocationMarker {
   final double lon;
   final double diameter;
   final double strokeWidth;
+  final String color;
   final int? count;
   final String? town;
   final List<PayLocationPin> pins;
@@ -112,6 +175,7 @@ class PayLocationMarker {
     required this.lon,
     required this.diameter,
     required this.strokeWidth,
+    required this.color,
     required this.pins,
     this.count,
     this.town,
@@ -179,6 +243,7 @@ List<PayLocationMarker> payLocationMarkers({
           lon: cluster.lon,
           diameter: 16,
           strokeWidth: 2,
+          color: payLocationActivityColor(cluster.pins.single.activity),
           pins: cluster.pins,
           town: _payLocationMarkerTown(cluster.pins.single, zoom <= 7.5),
         )
@@ -189,6 +254,7 @@ List<PayLocationMarker> payLocationMarkers({
           lon: cluster.lon,
           diameter: 34,
           strokeWidth: 2,
+          color: payLocationClusterColor,
           pins: cluster.pins,
           count: cluster.pins.length,
         ),
@@ -201,6 +267,7 @@ List<PayLocationMarker> payLocationMarkers({
         lon: selectedPin.lon,
         diameter: 18,
         strokeWidth: 3,
+        color: payLocationActivityColor(selectedPin.activity),
         pins: [selectedPin],
         town: _payLocationMarkerTown(selectedPin, true),
       ),
@@ -215,6 +282,55 @@ String? _payLocationMarkerTown(PayLocationPin pin, bool show) {
   }
   final town = payLocationLabel(pin.name).town;
   return town.isEmpty ? null : town;
+}
+
+List<String> payLocationAddressLines(PayLocationPin pin) {
+  return [
+    _joinNonEmpty([pin.street, pin.houseNumber], ' '),
+    _joinNonEmpty([pin.postalCode, pin.city], ' '),
+    pin.country,
+  ].where((line) => line.isNotEmpty).toList(growable: false);
+}
+
+String? payLocationDetailUrl(String? id) {
+  if (id == null || !id.startsWith('npub1')) {
+    return null;
+  }
+  return 'https://api.opencryptopay.io/map/places/$id';
+}
+
+List<PayLocationPhoto> payLocationPhotos(Object? body) {
+  if (body is! Map) {
+    return const [];
+  }
+  final place = body['place'];
+  if (place is! Map) {
+    return const [];
+  }
+  final photos = place['photos'];
+  if (photos is! List) {
+    return const [];
+  }
+
+  final result = <PayLocationPhoto>[];
+  for (final photo in photos) {
+    if (photo is! Map) {
+      continue;
+    }
+    final url = _httpsUrl(photo['url']);
+    if (url == null) {
+      continue;
+    }
+    result.add(
+      PayLocationPhoto(
+        url: url,
+        caption: _nonEmptyString(photo['caption']),
+        width: _positiveFiniteDouble(photo['width']),
+        height: _positiveFiniteDouble(photo['height']),
+      ),
+    );
+  }
+  return result;
 }
 
 double payLocationZoomForSpan({
@@ -311,4 +427,42 @@ double? _finiteDouble(Object? value) {
 
   final number = value.toDouble();
   return number.isFinite ? number : null;
+}
+
+double? _positiveFiniteDouble(Object? value) {
+  final number = _finiteDouble(value);
+  return number != null && number > 0 ? number : null;
+}
+
+String _trimmedString(Object? value) {
+  return value is String ? value.trim() : '';
+}
+
+String? _nonEmptyString(Object? value) {
+  final text = _trimmedString(value);
+  return text.isEmpty ? null : text;
+}
+
+String _payLocationActivity(Object? value) {
+  return switch (value) {
+    'daily' => 'daily',
+    'within7Days' => 'within7Days',
+    'within30Days' => 'within30Days',
+    'olderThan30Days' => 'olderThan30Days',
+    'none' => 'none',
+    _ => 'none',
+  };
+}
+
+String? _httpsUrl(Object? value) {
+  final url = _nonEmptyString(value);
+  if (url == null || !url.startsWith('https://')) {
+    return null;
+  }
+  final parsed = Uri.tryParse(url);
+  return parsed != null && parsed.scheme == 'https' && parsed.host.isNotEmpty ? url : null;
+}
+
+String _joinNonEmpty(List<String> parts, String separator) {
+  return parts.where((part) => part.isNotEmpty).join(separator);
 }
