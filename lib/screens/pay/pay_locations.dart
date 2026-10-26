@@ -13,6 +13,78 @@ const double payLocationCountryNorth = 47.77564;
 const double payLocationCountryWest = 5.97002;
 const double payLocationCountryEast = 10.45459;
 
+/// One vertex of a country or lake ring. Latitude, then longitude.
+class PayLocationRingPoint {
+  final double lat;
+  final double lon;
+
+  const PayLocationRingPoint(this.lat, this.lon);
+}
+
+/// Country camera used by the street map after the style loads.
+class PayLocationCountryView {
+  final double zoom;
+  final double centerLat;
+  final double centerLon;
+
+  const PayLocationCountryView({
+    required this.zoom,
+    required this.centerLat,
+    required this.centerLon,
+  });
+}
+
+PayLocationCountryView payLocationCountryView({
+  required double width,
+  required double height,
+}) {
+  return PayLocationCountryView(
+    zoom: payLocationZoomForSpan(
+      south: payLocationCountrySouth,
+      north: payLocationCountryNorth,
+      west: payLocationCountryWest,
+      east: payLocationCountryEast,
+      width: width,
+      height: height,
+      padding: 28,
+      maxZoom: 16,
+    ),
+    centerLat: (payLocationCountrySouth + payLocationCountryNorth) / 2,
+    centerLon: (payLocationCountryWest + payLocationCountryEast) / 2,
+  );
+}
+
+/// Web Mercator point in a view whose centre is [centerLat], [centerLon].
+class PayLocationMapPoint {
+  final double x;
+  final double y;
+
+  const PayLocationMapPoint(this.x, this.y);
+}
+
+PayLocationMapPoint payLocationMapPoint({
+  required double lat,
+  required double lon,
+  required double zoom,
+  required double centerLat,
+  required double centerLon,
+  required double width,
+  required double height,
+}) {
+  final world = 256.0 * math.pow(2, zoom);
+  double xOf(double longitude) => (longitude + 180) / 360 * world;
+  double yOf(double latitude) {
+    final latRad = latitude * math.pi / 180;
+    final mercator = math.log(math.tan(math.pi / 4 + latRad / 2));
+    return (0.5 - mercator / (2 * math.pi)) * world;
+  }
+
+  return PayLocationMapPoint(
+    width / 2 + (xOf(lon) - xOf(centerLon)),
+    height / 2 + (yOf(lat) - yOf(centerLat)),
+  );
+}
+
 class PayLocationPin {
   final String name;
   final String? category;
@@ -362,7 +434,10 @@ List<PayLocationPin> filterPayLocationPins(List<PayLocationPin> pins, String que
   if (needle.isEmpty) {
     return pins;
   }
-  return [for (final pin in pins) if (pin.name.toLowerCase().contains(needle)) pin];
+  return [
+    for (final pin in pins)
+      if (pin.name.toLowerCase().contains(needle)) pin,
+  ];
 }
 
 class PayLocationLabel {
@@ -400,19 +475,20 @@ PayLocationLabel payLocationLabel(String name) {
 }
 
 List<PayLocationPin> sortPayLocationPins(List<PayLocationPin> pins) {
-  final sorted = [...pins]..sort((a, b) {
-    final left = payLocationLabel(a.name);
-    final right = payLocationLabel(b.name);
-    final byTown = left.town.compareTo(right.town);
-    if (byTown != 0) {
-      return byTown;
-    }
-    final byPlace = left.place.compareTo(right.place);
-    if (byPlace != 0) {
-      return byPlace;
-    }
-    return (left.street ?? '').compareTo(right.street ?? '');
-  });
+  final sorted = [...pins]
+    ..sort((a, b) {
+      final left = payLocationLabel(a.name);
+      final right = payLocationLabel(b.name);
+      final byTown = left.town.compareTo(right.town);
+      if (byTown != 0) {
+        return byTown;
+      }
+      final byPlace = left.place.compareTo(right.place);
+      if (byPlace != 0) {
+        return byPlace;
+      }
+      return (left.street ?? '').compareTo(right.street ?? '');
+    });
   return sorted;
 }
 

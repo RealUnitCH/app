@@ -30,7 +30,12 @@ void main() {
 
   test('a places body must be a map whose places field is a list', () {
     expect(payLocationsPlacesBodyIsList({'places': []}), isTrue);
-    expect(payLocationsPlacesBodyIsList({'places': <Object?>[{}]}), isTrue);
+    expect(
+      payLocationsPlacesBodyIsList({
+        'places': <Object?>[{}],
+      }),
+      isTrue,
+    );
     expect(payLocationsPlacesBodyIsList([]), isFalse);
     expect(payLocationsPlacesBodyIsList(null), isFalse);
     expect(payLocationsPlacesBodyIsList(1), isFalse);
@@ -496,5 +501,47 @@ void main() {
     expect(overview.length, lessThan(15));
     expect(overview.every((cluster) => cluster.pins.length < pins.length), isTrue);
     expect(close.every((cluster) => cluster.isSingle), isTrue);
+  });
+
+  test('projects the country centre to the middle of the test map', () {
+    const width = 358.0;
+    const height = 400.0;
+    final view = payLocationCountryView(width: width, height: height);
+    final centre = payLocationMapPoint(
+      lat: view.centerLat,
+      lon: view.centerLon,
+      zoom: view.zoom,
+      centerLat: view.centerLat,
+      centerLon: view.centerLon,
+      width: width,
+      height: height,
+    );
+    final north = payLocationMapPoint(
+      lat: payLocationCountryNorth,
+      lon: view.centerLon,
+      zoom: view.zoom,
+      centerLat: view.centerLat,
+      centerLon: view.centerLon,
+      width: width,
+      height: height,
+    );
+    final lugano = payLocationMapPoint(
+      lat: 46.003,
+      lon: 8.951,
+      zoom: view.zoom,
+      centerLat: view.centerLat,
+      centerLon: view.centerLon,
+      width: width,
+      height: height,
+    );
+
+    expect(view.zoom, greaterThan(5));
+    expect(view.zoom, lessThan(8));
+    expect(centre.x, closeTo(width / 2, 0.001));
+    expect(centre.y, closeTo(height / 2, 0.001));
+    expect(north.y, lessThan(centre.y));
+    expect(lugano.y, greaterThan(centre.y));
+    expect(lugano.x, inInclusiveRange(0, width));
+    expect(lugano.y, inInclusiveRange(0, height));
   });
 }

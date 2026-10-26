@@ -9,6 +9,7 @@ import 'package:maplibre_gl/maplibre_gl.dart' as maplibre;
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
+import 'package:realunit_wallet/screens/pay/pay_locations_test_map.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -466,8 +467,8 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
 
   Widget _buildMap() {
     if (WidgetsBinding.instance.runtimeType.toString().contains('TestWidgetsFlutterBinding')) {
-      // A platform view breaks widget tests.
-      return const ColoredBox(color: RealUnitColors.brand200);
+      // A platform view breaks widget tests, so the golden paints the country instead.
+      return PayLocationsTestMap(pins: _visiblePins(), selected: _selectedPin);
     }
     return LayoutBuilder(
       builder: (context, constraints) {
