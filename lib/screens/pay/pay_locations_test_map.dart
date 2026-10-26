@@ -1,10 +1,20 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations.dart';
-import 'package:realunit_wallet/screens/pay/pay_locations_lakes.dart';
-import 'package:realunit_wallet/screens/pay/pay_locations_outline.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-/// Painted country view for widget tests. A platform view cannot host the street map.
+const String _libertyFixture = 'test/goldens/screens/pay/fixtures/pay_locations_liberty.png';
+
+Uint8List? _libertyBytes;
+
+Uint8List _readLibertyPng() {
+  return _libertyBytes ??= File(_libertyFixture).readAsBytesSync();
+}
+
+/// Street-map stand-in for widget tests. A platform view cannot host MapLibre,
+/// so the golden draws the same Liberty snapshot on the country camera.
 class PayLocationsTestMap extends StatelessWidget {
   const PayLocationsTestMap({super.key, required this.pins, required this.selected});
 
@@ -35,15 +45,43 @@ class PayLocationsTestMap extends StatelessWidget {
         }
         final view = payLocationCountryView(width: width, height: height);
         final markers = payLocationMarkers(visible: pins, selected: selected, zoom: view.zoom);
-        return CustomPaint(
-          size: Size(width, height),
-          painter: _PayLocationsTestMapPainter(
-            view: view,
-            width: width,
-            height: height,
-            markers: markers,
-            townStyle: townStyle,
-            countStyle: countStyle,
+        final west = payLocationTileLon(payLocationLibertyTileX);
+        final north = payLocationTileLat(payLocationLibertyTileY);
+        final east = payLocationTileLon(payLocationLibertyTileX + payLocationLibertyTileColumns);
+        final south = payLocationTileLat(payLocationLibertyTileY + payLocationLibertyTileRows);
+        final topLeft = _project(north, west, view, width, height);
+        final bottomRight = _project(south, east, view, width, height);
+        return ClipRect(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: RealUnitColors.brand200),
+              Positioned(
+                left: topLeft.dx,
+                top: topLeft.dy,
+                width: bottomRight.dx - topLeft.dx,
+                height: bottomRight.dy - topLeft.dy,
+                child: Image.memory(
+                  _readLibertyPng(),
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.medium,
+                  gaplessPlayback: true,
+                  excludeFromSemantics: true,
+                ),
+              ),
+              CustomPaint(
+                painter: _PayLocationsMarkerPainter(
+                  view: view,
+                  width: width,
+                  height: height,
+                  markers: markers,
+                  townStyle: townStyle,
+                  countStyle: countStyle,
+                ),
+                child: const SizedBox.expand(),
+              ),
+              const Positioned(right: 4, bottom: 4, child: _LibertyCredit()),
+            ],
           ),
         );
       },
@@ -51,8 +89,46 @@ class PayLocationsTestMap extends StatelessWidget {
   }
 }
 
-class _PayLocationsTestMapPainter extends CustomPainter {
-  _PayLocationsTestMapPainter({
+Offset _project(double lat, double lon, PayLocationCountryView view, double width, double height) {
+  final point = payLocationMapPoint(
+    lat: lat,
+    lon: lon,
+    zoom: view.zoom,
+    centerLat: view.centerLat,
+    centerLon: view.centerLon,
+    width: width,
+    height: height,
+  );
+  return Offset(point.x, point.y);
+}
+
+class _LibertyCredit extends StatelessWidget {
+  const _LibertyCredit();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: RealUnitColors.basic.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Padding(
+        padding: const .symmetric(horizontal: 6, vertical: 2),
+        child: Text(
+          'OpenFreeMap © OpenMapTiles © OpenStreetMap',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: RealUnitColors.neutral900,
+            fontSize: 9,
+            height: 1.1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PayLocationsMarkerPainter extends CustomPainter {
+  _PayLocationsMarkerPainter({
     required this.view,
     required this.width,
     required this.height,
@@ -70,28 +146,6 @@ class _PayLocationsTestMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = RealUnitColors.brand200);
-    final land = Paint()..color = RealUnitColors.basic.white;
-    final landEdge = Paint()
-      ..color = RealUnitColors.neutral600
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-    for (final ring in payLocationCountryRings) {
-      final path = _ring(ring);
-      canvas.drawPath(path, land);
-      canvas.drawPath(path, landEdge);
-    }
-    final water = Paint()..color = RealUnitColors.brand200;
-    final waterEdge = Paint()
-      ..color = RealUnitColors.realUnitBlue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-    for (final ring in payLocationLakeRings) {
-      final path = _ring(ring);
-      canvas.drawPath(path, water);
-      canvas.drawPath(path, waterEdge);
-    }
-
     for (final marker in markers) {
       _paintMarker(canvas, marker);
     }
@@ -106,20 +160,6 @@ class _PayLocationsTestMapPainter extends CustomPainter {
         _paintTown(canvas, marker, town);
       }
     }
-  }
-
-  Path _ring(List<PayLocationRingPoint> ring) {
-    final path = Path();
-    for (var index = 0; index < ring.length; index++) {
-      final point = _at(ring[index].lat, ring[index].lon);
-      if (index == 0) {
-        path.moveTo(point.dx, point.dy);
-      } else {
-        path.lineTo(point.dx, point.dy);
-      }
-    }
-    path.close();
-    return path;
   }
 
   void _paintMarker(Canvas canvas, PayLocationMarker marker) {
@@ -174,23 +214,12 @@ class _PayLocationsTestMapPainter extends CustomPainter {
     text.paint(canvas, Offset(rect.left + padH, rect.top + padV));
   }
 
-  Offset _at(double lat, double lon) {
-    final point = payLocationMapPoint(
-      lat: lat,
-      lon: lon,
-      zoom: view.zoom,
-      centerLat: view.centerLat,
-      centerLon: view.centerLon,
-      width: width,
-      height: height,
-    );
-    return Offset(point.x, point.y);
-  }
+  Offset _at(double lat, double lon) => _project(lat, lon, view, width, height);
 
   Color _hex(String hex) => Color(int.parse('FF${hex.substring(1)}', radix: 16));
 
   @override
-  bool shouldRepaint(covariant _PayLocationsTestMapPainter oldDelegate) {
+  bool shouldRepaint(covariant _PayLocationsMarkerPainter oldDelegate) {
     return oldDelegate.view.zoom != view.zoom ||
         oldDelegate.width != width ||
         oldDelegate.height != height ||

@@ -544,4 +544,14 @@ void main() {
     expect(lugano.x, inInclusiveRange(0, width));
     expect(lugano.y, inInclusiveRange(0, height));
   });
+
+  test('frames the Liberty snapshot around the country view', () {
+    expect(payLocationTileLon(payLocationLibertyTileX), 0);
+    expect(payLocationTileLon(payLocationLibertyTileX + payLocationLibertyTileColumns), 16.875);
+    final north = payLocationTileLat(payLocationLibertyTileY);
+    final south = payLocationTileLat(payLocationLibertyTileY + payLocationLibertyTileRows);
+    expect(north, greaterThan(payLocationCountryNorth));
+    expect(south, lessThan(payLocationCountrySouth));
+    expect(north, greaterThan(south));
+  });
 }

@@ -467,7 +467,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
 
   Widget _buildMap() {
     if (WidgetsBinding.instance.runtimeType.toString().contains('TestWidgetsFlutterBinding')) {
-      // A platform view breaks widget tests, so the golden paints the country instead.
+      // A platform view breaks widget tests, so the golden draws the Liberty snapshot.
       return PayLocationsTestMap(pins: _visiblePins(), selected: _selectedPin);
     }
     return LayoutBuilder(

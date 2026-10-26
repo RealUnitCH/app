@@ -13,12 +13,22 @@ const double payLocationCountryNorth = 47.77564;
 const double payLocationCountryWest = 5.97002;
 const double payLocationCountryEast = 10.45459;
 
-/// One vertex of a country or lake ring. Latitude, then longitude.
-class PayLocationRingPoint {
-  final double lat;
-  final double lon;
+/// Zoom-7 tile window of the OpenFreeMap Liberty snapshot used by widget tests.
+const int payLocationLibertyTileZoom = 7;
+const int payLocationLibertyTileX = 64;
+const int payLocationLibertyTileY = 41;
+const int payLocationLibertyTileColumns = 6;
+const int payLocationLibertyTileRows = 7;
 
-  const PayLocationRingPoint(this.lat, this.lon);
+double payLocationTileLon(int tileX, {int zoom = payLocationLibertyTileZoom}) {
+  final n = math.pow(2, zoom).toDouble();
+  return tileX / n * 360 - 180;
+}
+
+double payLocationTileLat(int tileY, {int zoom = payLocationLibertyTileZoom}) {
+  final n = math.pow(2, zoom).toDouble();
+  final mercator = math.pi * (1 - 2 * tileY / n);
+  return (2 * math.atan(math.exp(mercator)) - math.pi / 2) * 180 / math.pi;
 }
 
 /// Country camera used by the street map after the style loads.
