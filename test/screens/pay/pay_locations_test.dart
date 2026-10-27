@@ -496,6 +496,14 @@ void main() {
       payLocationDetailUrl('npub1shop'),
       'https://api.opencryptopay.io/map/places/npub1shop',
     );
+    expect(payLocationDetailUrl('npub1a/b'), isNull);
+    expect(payLocationDetailUrl('npub1a?x=1'), isNull);
+    expect(payLocationDetailUrl('npub1a#frag'), isNull);
+    expect(payLocationDetailUrl('npub1shop/'), isNull);
+    expect(
+      payLocationDetailUrl('npub1/../../places?blockchain=Bitcoin&asset=BTC'),
+      isNull,
+    );
   });
 
   test('reads only pinned place photo URLs', () {
@@ -562,9 +570,10 @@ void main() {
         ).readAsStringSync(),
       ),
     );
+    final country = payLocationCountryView(width: 358, height: 400);
     final overview = clusterPayLocationPins(
       pins,
-      cellDegrees: payLocationClusterCellDegrees(6.6),
+      cellDegrees: payLocationClusterCellDegrees(country.zoom),
     );
     final close = clusterPayLocationPins(
       pins,

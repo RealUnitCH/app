@@ -16,6 +16,11 @@ const _placesBody =
     '{"places":[{"name":"SPAR Zürich","category":"grocery","lat":47.37,"lon":8.54,'
     '"supports":[{"blockchain":"Ethereum","asset":"ZCHF"}]}]}';
 
+final _onePixelPng = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQ'
+  'AAAABJRU5ErkJggg==',
+);
+
 final String _publishedPlacesBody = File(
   'test/goldens/screens/pay/fixtures/dev_places_ethereum_zchf.json',
 ).readAsStringSync();
@@ -196,6 +201,26 @@ void main() {
       PayLocationsPage(httpClient: _client(placesBody: _detailBody('none'))),
     ),
   );
+
+  goldenTest(
+    'location details other shop type',
+    fileName: 'pay_locations_detail_others',
+    constraints: phoneConstraints,
+    pumpBeforeTest: _pumpOpenedDetails,
+    builder: () => wrapForGolden(
+      PayLocationsPage(
+        httpClient: _client(placesBody: _detailBody('daily', shopType: 'Others')),
+      ),
+    ),
+  );
+
+  goldenTest(
+    'location details with photo',
+    fileName: 'pay_locations_detail_photo',
+    constraints: phoneConstraints,
+    pumpBeforeTest: _pumpOpenedPhoto,
+    builder: () => wrapForGolden(PayLocationsPage(httpClient: _photoClient())),
+  );
 }
 
 String _activityBody(String activity) {
@@ -204,14 +229,46 @@ String _activityBody(String activity) {
       '"supports":[{"blockchain":"Ethereum","asset":"ZCHF"}]}]}';
 }
 
-String _detailBody(String activity) {
+String _detailBody(String activity, {String shopType = 'SPAR'}) {
   return '{"places":[{"id":"npub1shop","name":"SPAR Zürich","category":"Lebensmittel",'
       '"lat":47.37,"lon":8.54,"activity":"$activity",'
       '"description":"Ein Geschäft mit ZCHF.",'
-      '"techProvider":"DFX.swiss","shopType":"SPAR",'
+      '"techProvider":"DFX.swiss","shopType":"$shopType",'
       '"street":"Bahnhofstrasse","houseNumber":"1",'
       '"postalCode":"8001","city":"Zürich","country":"Schweiz",'
       '"supports":[{"blockchain":"Ethereum","asset":"ZCHF"}]}]}';
+}
+
+const _detailPhotoUrl = 'https://api.opencryptopay.io/map/photos/'
+    'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.jpg';
+
+http.Client _photoClient() {
+  return MockClient((request) async {
+    final url = request.url.toString();
+    if (url == payLocationsPlacesUrl) {
+      return http.Response.bytes(
+        utf8.encode(_detailBody('daily')),
+        200,
+        headers: const {'content-type': 'application/json; charset=utf-8'},
+      );
+    }
+    if (url == 'https://api.opencryptopay.io/map/places/npub1shop') {
+      final body = '{"place":{"photos":[{"url":"$_detailPhotoUrl","caption":"Eingang"}]}}';
+      return http.Response.bytes(
+        utf8.encode(body),
+        200,
+        headers: const {'content-type': 'application/json; charset=utf-8'},
+      );
+    }
+    if (url == _detailPhotoUrl) {
+      return http.Response.bytes(
+        _onePixelPng,
+        200,
+        headers: const {'content-type': 'image/png'},
+      );
+    }
+    return http.Response('unexpected', 500);
+  });
 }
 
 Future<void> _pumpOpenedDetails(WidgetTester tester) async {
@@ -219,5 +276,11 @@ Future<void> _pumpOpenedDetails(WidgetTester tester) async {
   await precacheImages(tester);
   await tester.ensureVisible(find.text('SPAR Zürich'));
   await tester.tap(find.text('SPAR Zürich'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpOpenedPhoto(WidgetTester tester) async {
+  await _pumpOpenedDetails(tester);
+  await precacheImages(tester);
   await tester.pumpAndSettle();
 }

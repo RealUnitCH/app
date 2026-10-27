@@ -16,6 +16,9 @@ const double payLocationCountryNorth = 47.77564;
 const double payLocationCountryWest = 5.97002;
 const double payLocationCountryEast = 10.45459;
 
+/// MapLibre draws Liberty with 512px tiles. Zoom and the test map share that size.
+const double _payLocationTileSize = 512;
+
 /// Edges of the Liberty snapshot used by widget tests.
 /// MapLibre unprojects its 1536×1792 zoom-7 canvas, with 512px tiles,
 /// to these corners. The canvas is centred on 8.4375°E, 47.98992166741417°N.
@@ -74,7 +77,7 @@ PayLocationMapPoint payLocationMapPoint({
   required double width,
   required double height,
 }) {
-  final world = 256.0 * math.pow(2, zoom);
+  final world = _payLocationTileSize * math.pow(2, zoom);
   double xOf(double longitude) => (longitude + 180) / 360 * world;
   double yOf(double latitude) {
     final latRad = latitude * math.pi / 180;
@@ -292,7 +295,7 @@ class PayLocationMarker {
 
 /// Cell size for a cluster spacing of about 64 pixels at [zoom].
 double payLocationClusterCellDegrees(double zoom) {
-  final worldPixels = 256 * math.pow(2, zoom);
+  final worldPixels = _payLocationTileSize * math.pow(2, zoom);
   return 360 / worldPixels * 64;
 }
 
@@ -400,11 +403,22 @@ List<String> payLocationAddressLines(PayLocationPin pin) {
   ].where((line) => line.isNotEmpty).toList(growable: false);
 }
 
+final RegExp _payLocationDetailId = RegExp(r'^npub1[0-9a-z]+$');
+
 String? payLocationDetailUrl(String? id) {
-  if (id == null || !id.startsWith('npub1')) {
+  if (id == null || !_payLocationDetailId.hasMatch(id)) {
     return null;
   }
-  return 'https://api.opencryptopay.io/map/places/$id';
+  final parsed = Uri.https('api.opencryptopay.io', '/map/places/$id');
+  if (parsed.userInfo.isNotEmpty ||
+      parsed.host != 'api.opencryptopay.io' ||
+      parsed.hasPort ||
+      parsed.hasQuery ||
+      parsed.hasFragment ||
+      parsed.path != '/map/places/$id') {
+    return null;
+  }
+  return parsed.toString();
 }
 
 List<PayLocationPhoto> payLocationPhotos(Object? body) {
@@ -460,8 +474,8 @@ double payLocationZoomForSpan({
   final ySpan = math.max((mercatorY(north) - mercatorY(south)).abs(), 1e-9);
   final usableW = math.max(width - 2 * padding, 1);
   final usableH = math.max(height - 2 * padding, 1);
-  final zLon = math.log(usableW / 256 * 360 / lonSpan) / math.log(2);
-  final zLat = math.log(usableH / 256 / (ySpan / (2 * math.pi))) / math.log(2);
+  final zLon = math.log(usableW / _payLocationTileSize * 360 / lonSpan) / math.log(2);
+  final zLat = math.log(usableH / _payLocationTileSize / (ySpan / (2 * math.pi))) / math.log(2);
   return math.min(zLon, zLat).clamp(5, maxZoom).toDouble();
 }
 

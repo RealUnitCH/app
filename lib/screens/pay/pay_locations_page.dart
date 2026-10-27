@@ -407,34 +407,39 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
               padding: const .symmetric(horizontal: 12, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 4,
                 children: [
-                  Text(
-                    hasStructuredAddress ? pin.name : label.place,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasStructuredAddress ? pin.name : label.place,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (hasStructuredAddress && structuredAddress.isNotEmpty)
+                        Text(
+                          structuredAddress,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: RealUnitColors.neutral500,
+                          ),
+                        )
+                      else if (!hasStructuredAddress && label.street != null)
+                        Text(
+                          label.street!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: RealUnitColors.neutral500,
+                          ),
+                        ),
+                    ],
                   ),
-                  if (hasStructuredAddress && structuredAddress.isNotEmpty)
-                    Text(
-                      structuredAddress,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: RealUnitColors.neutral500,
-                      ),
-                    )
-                  else if (!hasStructuredAddress && label.street != null)
-                    Text(
-                      label.street!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: RealUnitColors.neutral500,
-                      ),
-                    ),
-                  const SizedBox(height: 4),
                   _PayLocationActivityLine(pin: pin),
                 ],
               ),
@@ -813,6 +818,7 @@ class _PayLocationActivityLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      spacing: 6,
       children: [
         Container(
           width: 10,
@@ -823,7 +829,6 @@ class _PayLocationActivityLine extends StatelessWidget {
             border: Border.all(color: RealUnitColors.basic.black.withValues(alpha: 0.25)),
           ),
         ),
-        const SizedBox(width: 6),
         Flexible(
           child: Text(
             _payLocationActivityLabel(context, pin.activity),
@@ -920,62 +925,72 @@ class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 12,
             children: [
-              for (final photo in photos) ...[
-                _PayLocationPhotoView(photo: photo, loadBytes: widget.loadBytes),
-                const SizedBox(height: 16),
-              ],
-              Padding(
-                padding: const EdgeInsets.only(right: 48),
-                child: Text(
-                  pin.name,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
+                children: [
+                  for (final photo in photos)
+                    _PayLocationPhotoView(photo: photo, loadBytes: widget.loadBytes),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 48),
+                    child: Text(
+                      pin.name,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 6,
+                        children: [
+                          _PayLocationActivityLine(pin: pin),
+                          Text(
+                            _payLocationActivityHelp(context, pin.activity),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                      for (final line in payLocationAddressLines(pin))
+                        Text(line, style: Theme.of(context).textTheme.bodyMedium),
+                    ],
+                  ),
+                  if (pin.description.isNotEmpty)
+                    Text(pin.description, style: Theme.of(context).textTheme.bodyMedium),
+                  if (category != null && category.isNotEmpty)
+                    _PayLocationDetailValue(
+                      label: S.of(context).payLocationsDetailCategory,
+                      value: category,
+                    ),
+                ],
               ),
-              const SizedBox(height: 16),
-              _PayLocationActivityLine(pin: pin),
-              const SizedBox(height: 6),
-              Text(
-                _payLocationActivityHelp(context, pin.activity),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              for (final line in payLocationAddressLines(pin)) ...[
-                const SizedBox(height: 8),
-                Text(line, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (pin.description.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(pin.description, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (category != null && category.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _PayLocationDetailValue(
-                  label: S.of(context).payLocationsDetailCategory,
-                  value: category,
-                ),
-              ],
-              if (pin.shopType.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _PayLocationDetailValue(
-                  label: S.of(context).payLocationsDetailShopType,
-                  value: pin.shopType == 'Others'
-                      ? S.of(context).payLocationsShopTypeOthers
-                      : pin.shopType,
-                ),
-              ],
-              if (pin.techProvider.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _PayLocationDetailValue(
-                  label: S.of(context).payLocationsDetailProvider,
-                  value: pin.techProvider,
-                ),
-              ],
-              const SizedBox(height: 12),
-              _PayLocationDetailValue(
-                label: S.of(context).payLocationsDetailPayment,
-                value: S.of(context).payLocationsDetailPaymentValue,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 12,
+                children: [
+                  if (pin.shopType.isNotEmpty)
+                    _PayLocationDetailValue(
+                      label: S.of(context).payLocationsDetailShopType,
+                      value: pin.shopType == 'Others'
+                          ? S.of(context).payLocationsShopTypeOthers
+                          : pin.shopType,
+                    ),
+                  if (pin.techProvider.isNotEmpty)
+                    _PayLocationDetailValue(
+                      label: S.of(context).payLocationsDetailProvider,
+                      value: pin.techProvider,
+                    ),
+                  _PayLocationDetailValue(
+                    label: S.of(context).payLocationsDetailPayment,
+                    value: S.of(context).payLocationsDetailPaymentValue,
+                  ),
+                ],
               ),
             ],
           ),
@@ -1038,6 +1053,7 @@ class _PayLocationPhotoViewState extends State<_PayLocationPhotoView> {
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 6,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -1049,10 +1065,7 @@ class _PayLocationPhotoViewState extends State<_PayLocationPhotoView> {
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
-            if (caption != null) ...[
-              const SizedBox(height: 6),
-              Text(caption, style: Theme.of(context).textTheme.bodySmall),
-            ],
+            if (caption != null) Text(caption, style: Theme.of(context).textTheme.bodySmall),
           ],
         );
       },

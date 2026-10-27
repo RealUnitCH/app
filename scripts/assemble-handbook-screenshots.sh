@@ -491,6 +491,8 @@ MAPPING=(
   "439-pay-locations-detail-monthly=screens/pay/goldens/macos/pay_locations_detail_monthly.png"
   "440-pay-locations-detail-idle=screens/pay/goldens/macos/pay_locations_detail_idle.png"
   "441-pay-locations-detail-none=screens/pay/goldens/macos/pay_locations_detail_none.png"
+  "442-pay-locations-detail-others=screens/pay/goldens/macos/pay_locations_detail_others.png"
+  "443-pay-locations-detail-photo=screens/pay/goldens/macos/pay_locations_detail_photo.png"
 )
 
 missing=()
