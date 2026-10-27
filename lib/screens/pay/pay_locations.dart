@@ -356,7 +356,7 @@ List<PayLocationMarker> payLocationMarkers({
           strokeWidth: 2,
           color: payLocationActivityColor(cluster.pins.single.activity),
           pins: cluster.pins,
-          town: _payLocationMarkerTown(cluster.pins.single, zoom <= 7.5),
+          town: _payLocationMarkerTown(cluster.pins.single, zoom <= payLocationTownLabelMaxZoom),
         )
       else
         PayLocationMarker(
@@ -543,6 +543,22 @@ class PayLocationCommandDrift {
 
 const double payLocationCameraCenterTolerance = 1e-4;
 const double payLocationCameraZoomTolerance = 0.05;
+
+/// Unselected town labels are drawn only at this zoom and closer to the country.
+const double payLocationTownLabelMaxZoom = 7.5;
+
+/// The reported zoom is always kept. Markers redraw when the change is larger
+/// than the camera noise band, and always when a town label appears or disappears.
+bool payLocationZoomNeedsRedraw({
+  required double previousZoom,
+  required double reportedZoom,
+}) {
+  final crossedTownLabel =
+      (previousZoom <= payLocationTownLabelMaxZoom) !=
+      (reportedZoom <= payLocationTownLabelMaxZoom);
+  final zoomStep = (reportedZoom - previousZoom).abs();
+  return crossedTownLabel || zoomStep > payLocationCameraZoomTolerance;
+}
 
 double payLocationCenterDistance({
   required double fromLat,

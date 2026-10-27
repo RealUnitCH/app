@@ -185,10 +185,12 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     }
     _center = position.target;
     final zoom = position.zoom;
-    if ((zoom - _zoom).abs() <= 0.05) {
+    final redraw = payLocationZoomNeedsRedraw(previousZoom: _zoom, reportedZoom: zoom);
+    _zoom = zoom;
+    if (!redraw) {
       return;
     }
-    setState(() => _zoom = zoom);
+    setState(() {});
     _redrawMarkers();
   }
 

@@ -578,6 +578,13 @@ void main() {
     expect(left.left, isTrue);
   });
 
+  test('keeps a small zoom change and redraws when a town label crosses the cutoff', () {
+    expect(payLocationZoomNeedsRedraw(previousZoom: 10, reportedZoom: 10.04), isFalse);
+    expect(payLocationZoomNeedsRedraw(previousZoom: 10, reportedZoom: 10.06), isTrue);
+    expect(payLocationZoomNeedsRedraw(previousZoom: 7.49, reportedZoom: 7.5), isFalse);
+    expect(payLocationZoomNeedsRedraw(previousZoom: 7.49, reportedZoom: 7.51), isTrue);
+  });
+
   test('stores a span zoom delta inside the zoom limits', () {
     expect(payLocationStoredSpanZoomDelta(fitted: 15, zoomDelta: 3), 1);
     expect(payLocationStoredSpanZoomDelta(fitted: 7, zoomDelta: -10), -2);
