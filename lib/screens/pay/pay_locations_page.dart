@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -932,8 +931,11 @@ class _PayLocationDetailsBody extends StatefulWidget {
 
 class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
   late final Future<List<PayLocationPhoto>> _photos;
-  final Map<String, Uint8List> _drawnPhotos = {};
+  final Map<String, Uint8List> _photoBytes = {};
   final Set<String> _startedPhotos = {};
+  final Set<String> _shownPhotos = {};
+  final Set<String> _failedPhotos = {};
+  final Set<String> _queuedPhotos = {};
 
   @override
   void initState() {
@@ -956,14 +958,36 @@ class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
       if (!mounted || bytes == null || bytes.isEmpty) {
         return;
       }
-      final decoded = await _decodePayLocationPhoto(bytes);
-      if (!mounted || decoded == null) {
-        return;
-      }
-      setState(() => _drawnPhotos[url] = decoded);
+      setState(() => _photoBytes[url] = bytes);
     } catch (_) {
       // A photo that never arrives is left out of the sheet.
     }
+  }
+
+  void _queuePhoto(String url, void Function() apply) {
+    if (_queuedPhotos.contains(url) || _shownPhotos.contains(url) || _failedPhotos.contains(url)) {
+      return;
+    }
+    _queuedPhotos.add(url);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _queuedPhotos.remove(url);
+      if (mounted) {
+        apply();
+      }
+    });
+  }
+
+  void _showPhoto(String url) {
+    _queuePhoto(url, () => setState(() => _shownPhotos.add(url)));
+  }
+
+  void _hidePhoto(String url) {
+    _queuePhoto(url, () {
+      setState(() {
+        _failedPhotos.add(url);
+        _shownPhotos.remove(url);
+      });
+    });
   }
 
   @override
@@ -977,80 +1001,120 @@ class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
         _ensurePhotoLoads(photos);
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 12,
+          child: Stack(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 16,
-                children: [
-                  for (final photo in photos)
-                    if (_drawnPhotos[photo.url] case final bytes?)
-                      _PayLocationPhotoFrame(bytes: bytes, caption: photo.caption),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 48),
-                    child: Text(
-                      pin.name,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 6,
-                        children: [
-                          _PayLocationActivityLine(pin: pin),
-                          Text(
-                            _payLocationActivityHelp(context, pin.activity),
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                      for (final line in payLocationAddressLines(pin))
-                        Text(line, style: Theme.of(context).textTheme.bodyMedium),
-                    ],
-                  ),
-                  if (pin.description.isNotEmpty)
-                    Text(pin.description, style: Theme.of(context).textTheme.bodyMedium),
-                  if (category != null && category.isNotEmpty)
-                    _PayLocationDetailValue(
-                      label: S.of(context).payLocationsDetailCategory,
-                      value: category,
-                    ),
-                ],
-              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 12,
                 children: [
-                  if (pin.shopType.isNotEmpty)
-                    _PayLocationDetailValue(
-                      label: S.of(context).payLocationsDetailShopType,
-                      value: pin.shopType == 'Others'
-                          ? S.of(context).payLocationsShopTypeOthers
-                          : pin.shopType,
-                    ),
-                  if (pin.techProvider.isNotEmpty)
-                    _PayLocationDetailValue(
-                      label: S.of(context).payLocationsDetailProvider,
-                      value: pin.techProvider,
-                    ),
-                  _PayLocationDetailValue(
-                    label: S.of(context).payLocationsDetailPayment,
-                    value: S.of(context).payLocationsDetailPaymentValue,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 16,
+                    children: [
+                      for (final photo in photos)
+                        if (_shownPhotos.contains(photo.url))
+                          _PayLocationPhotoFrame(
+                            bytes: _photoBytes[photo.url]!,
+                            caption: photo.caption,
+                          ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 48),
+                        child: Text(
+                          pin.name,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 8,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 6,
+                            children: [
+                              _PayLocationActivityLine(pin: pin),
+                              Text(
+                                _payLocationActivityHelp(context, pin.activity),
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                          for (final line in payLocationAddressLines(pin))
+                            Text(line, style: Theme.of(context).textTheme.bodyMedium),
+                        ],
+                      ),
+                      if (pin.description.isNotEmpty)
+                        Text(pin.description, style: Theme.of(context).textTheme.bodyMedium),
+                      if (category != null && category.isNotEmpty)
+                        _PayLocationDetailValue(
+                          label: S.of(context).payLocationsDetailCategory,
+                          value: category,
+                        ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 12,
+                    children: [
+                      if (pin.shopType.isNotEmpty)
+                        _PayLocationDetailValue(
+                          label: S.of(context).payLocationsDetailShopType,
+                          value: pin.shopType == 'Others'
+                              ? S.of(context).payLocationsShopTypeOthers
+                              : pin.shopType,
+                        ),
+                      if (pin.techProvider.isNotEmpty)
+                        _PayLocationDetailValue(
+                          label: S.of(context).payLocationsDetailProvider,
+                          value: pin.techProvider,
+                        ),
+                      _PayLocationDetailValue(
+                        label: S.of(context).payLocationsDetailPayment,
+                        value: S.of(context).payLocationsDetailPaymentValue,
+                      ),
+                    ],
                   ),
                 ],
+              ),
+              Positioned(
+                left: 0,
+                top: 0,
+                child: IgnorePointer(
+                  child: Opacity(opacity: 0, child: _photoProbes(photos)),
+                ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _photoProbes(List<PayLocationPhoto> photos) {
+    return Column(
+      children: [
+        for (final photo in photos)
+          if (_photoBytes.containsKey(photo.url) &&
+              !_shownPhotos.contains(photo.url) &&
+              !_failedPhotos.contains(photo.url))
+            Image.memory(
+              _photoBytes[photo.url]!,
+              width: 8,
+              height: 8,
+              frameBuilder: (context, child, frame, _) {
+                if (frame != null) {
+                  _showPhoto(photo.url);
+                }
+                return child;
+              },
+              errorBuilder: (_, _, _) {
+                _hidePhoto(photo.url);
+                return const SizedBox.shrink();
+              },
+            ),
+      ],
     );
   }
 }
@@ -1097,25 +1161,6 @@ class _PayLocationPhotoFrame extends StatelessWidget {
         if (caption != null) Text(caption, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
-  }
-}
-
-Future<Uint8List?> _decodePayLocationPhoto(Uint8List bytes) async {
-  ui.Codec? codec;
-  ui.Image? image;
-  try {
-    codec = await ui.instantiateImageCodec(bytes);
-    final frame = await codec.getNextFrame();
-    image = frame.image;
-    if (image.width < 1 || image.height < 1) {
-      return null;
-    }
-    return bytes;
-  } catch (_) {
-    return null;
-  } finally {
-    image?.dispose();
-    codec?.dispose();
   }
 }
 
