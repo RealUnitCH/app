@@ -496,6 +496,78 @@ class PayLocationZoomStep {
   final double? spanZoomDelta;
 }
 
+/// Closest sample of one camera command. The commanded ride gets closer, so it
+/// does not count as a move. A pan or pinch does, once the centre or the zoom
+/// is worse than that closest sample by more than the tolerance.
+class PayLocationCommandDrift {
+  const PayLocationCommandDrift({
+    this.bestCenterDistance,
+    this.bestZoomError,
+    this.left = false,
+  });
+
+  final double? bestCenterDistance;
+  final double? bestZoomError;
+  final bool left;
+
+  PayLocationCommandDrift observe({
+    required double centerDistance,
+    required double zoomError,
+  }) {
+    if (left) {
+      return this;
+    }
+    final centerLeft =
+        bestCenterDistance != null &&
+        centerDistance > bestCenterDistance! + payLocationCameraCenterTolerance;
+    final zoomLeft =
+        bestZoomError != null &&
+        zoomError > bestZoomError! + payLocationCameraZoomTolerance;
+    if (centerLeft || zoomLeft) {
+      return PayLocationCommandDrift(
+        bestCenterDistance: bestCenterDistance,
+        bestZoomError: bestZoomError,
+        left: true,
+      );
+    }
+    return PayLocationCommandDrift(
+      bestCenterDistance: bestCenterDistance == null
+          ? centerDistance
+          : math.min(bestCenterDistance!, centerDistance),
+      bestZoomError: bestZoomError == null
+          ? zoomError
+          : math.min(bestZoomError!, zoomError),
+    );
+  }
+}
+
+const double payLocationCameraCenterTolerance = 1e-4;
+const double payLocationCameraZoomTolerance = 0.05;
+
+double payLocationCenterDistance({
+  required double fromLat,
+  required double fromLon,
+  required double toLat,
+  required double toLon,
+}) {
+  final dLat = fromLat - toLat;
+  final dLon = fromLon - toLon;
+  return math.sqrt(dLat * dLat + dLon * dLon);
+}
+
+/// The span delta stored after the shown zoom is clamped to 5–16.
+double payLocationStoredSpanZoomDelta({
+  required double fitted,
+  required double zoomDelta,
+}) {
+  final unclamped = fitted + zoomDelta;
+  final shown = unclamped.clamp(5, 16).toDouble();
+  if (shown == unclamped) {
+    return zoomDelta;
+  }
+  return shown - fitted;
+}
+
 /// Zoom buttons keep a search, tap, or country fit until the camera moves.
 PayLocationZoomStep payLocationZoomStep({
   required PayLocationCameraKind? pendingKind,

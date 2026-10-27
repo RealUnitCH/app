@@ -532,6 +532,60 @@ void main() {
     expect(step.zoom, 13);
   });
 
+  test('keeps a camera command while its ride gets closer', () {
+    var drift = const PayLocationCommandDrift();
+    drift = drift.observe(centerDistance: 0.5, zoomError: 4);
+    drift = drift.observe(centerDistance: 0.2, zoomError: 1);
+    drift = drift.observe(centerDistance: 0.01, zoomError: 0.02);
+
+    expect(drift.left, isFalse);
+  });
+
+  test('marks a pan that leaves the commanded centre', () {
+    final approached = const PayLocationCommandDrift().observe(
+      centerDistance: 0.01,
+      zoomError: 0,
+    );
+    final stayed = approached.observe(
+      centerDistance: 0.01 + payLocationCameraCenterTolerance,
+      zoomError: 0,
+    );
+    final left = approached.observe(
+      centerDistance: 0.01 + payLocationCameraCenterTolerance + 0.0001,
+      zoomError: 0,
+    );
+
+    expect(stayed.left, isFalse);
+    expect(left.left, isTrue);
+    expect(left.observe(centerDistance: 0, zoomError: 0).left, isTrue);
+  });
+
+  test('marks a pinch that leaves the commanded zoom', () {
+    final approached = const PayLocationCommandDrift().observe(
+      centerDistance: 0,
+      zoomError: 0.01,
+    );
+    final stayed = approached.observe(
+      centerDistance: 0,
+      zoomError: 0.01 + payLocationCameraZoomTolerance,
+    );
+    final left = approached.observe(
+      centerDistance: 0,
+      zoomError: 0.01 + payLocationCameraZoomTolerance + 0.01,
+    );
+
+    expect(stayed.left, isFalse);
+    expect(left.left, isTrue);
+  });
+
+  test('stores a span zoom delta inside the zoom limits', () {
+    expect(payLocationStoredSpanZoomDelta(fitted: 15, zoomDelta: 3), 1);
+    expect(payLocationStoredSpanZoomDelta(fitted: 7, zoomDelta: -10), -2);
+    expect(payLocationStoredSpanZoomDelta(fitted: 10, zoomDelta: 1), 1);
+    expect(payLocationStoredSpanZoomDelta(fitted: 16, zoomDelta: 2), 0);
+    expect(payLocationStoredSpanZoomDelta(fitted: 5, zoomDelta: -3), 0);
+  });
+
   test('zooms from the current level after a pinch that kept the centre', () {
     final step = payLocationZoomStep(
       pendingKind: PayLocationCameraKind.point,

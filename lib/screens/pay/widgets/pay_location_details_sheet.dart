@@ -31,7 +31,7 @@ String _payLocationActivityHelp(BuildContext context, String activity) {
 }
 
 class PayLocationActivityLine extends StatelessWidget {
-  const PayLocationActivityLine({required this.pin});
+  const PayLocationActivityLine({super.key, required this.pin});
 
   final PayLocationPin pin;
 
@@ -63,6 +63,7 @@ class PayLocationActivityLine extends StatelessWidget {
 
 class PayLocationDetailsSheet extends StatelessWidget {
   const PayLocationDetailsSheet({
+    super.key,
     required this.pinListenable,
     required this.loadPhotos,
     required this.loadBytes,

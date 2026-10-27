@@ -58,6 +58,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   bool _countryFitScheduled = false;
   _CameraIntent? _cameraIntent;
   bool _cameraMovedSinceCommand = false;
+  PayLocationCommandDrift _commandDrift = const PayLocationCommandDrift();
+  maplibre.LatLng? _commandedTarget;
+  double? _commandedZoom;
   bool _drawingMarkers = false;
   bool _detailSheetOpen = false;
   double _zoom = 7;
@@ -154,12 +157,33 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     _redrawMarkers();
   }
 
+  void _beginCameraCommand() {
+    _cameraMovedSinceCommand = false;
+    _commandDrift = const PayLocationCommandDrift();
+  }
+
   void _onCameraMove(maplibre.CameraPosition position) {
     if (!mounted) {
       return;
     }
+    final target = _commandedTarget;
+    final commandedZoom = _commandedZoom;
+    if (!_cameraMovedSinceCommand && target != null && commandedZoom != null) {
+      final drift = _commandDrift.observe(
+        centerDistance: payLocationCenterDistance(
+          fromLat: position.target.latitude,
+          fromLon: position.target.longitude,
+          toLat: target.latitude,
+          toLon: target.longitude,
+        ),
+        zoomError: (position.zoom - commandedZoom).abs(),
+      );
+      _commandDrift = drift;
+      if (drift.left) {
+        _cameraMovedSinceCommand = true;
+      }
+    }
     _center = position.target;
-    _cameraMovedSinceCommand = true;
     final zoom = position.zoom;
     if ((zoom - _zoom).abs() <= 0.05) {
       return;
@@ -190,7 +214,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       currentZoom: _zoom,
       delta: delta,
     );
-    _cameraMovedSinceCommand = false;
+    _beginCameraCommand();
     if (step.spanZoomDelta != null) {
       _cameraIntent = _CameraIntent.span(
         south: intent!.south!,
@@ -711,7 +735,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     // A tap, search, or zoom that arrived first stays. The country fit
     // only fills an empty intent.
     if (_cameraIntent == null) {
-      _cameraMovedSinceCommand = false;
+      _beginCameraCommand();
     }
     _cameraIntent ??= const _CameraIntent.span(
       south: payLocationCountrySouth,
@@ -745,7 +769,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     required double padding,
     required double maxZoom,
   }) {
-    _cameraMovedSinceCommand = false;
+    _beginCameraCommand();
     _cameraIntent = _CameraIntent.span(
       south: south,
       north: north,
@@ -781,13 +805,31 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
             padding: intent.padding!,
             maxZoom: intent.maxZoom!,
           );
-          zoom = (fitted + intent.zoomDelta).clamp(5, 16).toDouble();
+          final storedDelta = payLocationStoredSpanZoomDelta(
+            fitted: fitted,
+            zoomDelta: intent.zoomDelta,
+          );
+          if (storedDelta != intent.zoomDelta) {
+            _cameraIntent = _CameraIntent.span(
+              south: intent.south!,
+              north: intent.north!,
+              west: intent.west!,
+              east: intent.east!,
+              padding: intent.padding!,
+              maxZoom: intent.maxZoom!,
+              zoomDelta: storedDelta,
+            );
+          }
+          zoom = (fitted + storedDelta).clamp(5, 16).toDouble();
           center = maplibre.LatLng(
             (intent.south! + intent.north!) / 2,
             (intent.west! + intent.east!) / 2,
           );
         }
     }
+    _commandedTarget = center;
+    _commandedZoom = zoom;
+    _commandDrift = const PayLocationCommandDrift();
     unawaited(
       controller.animateCamera(maplibre.CameraUpdate.newLatLngZoom(center, zoom)),
     );
@@ -825,7 +867,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   void _moveTo(double lat, double lon, double zoom) {
-    _cameraMovedSinceCommand = false;
+    _beginCameraCommand();
     _cameraIntent = _CameraIntent.point(lat, lon, zoom);
     _applyCamera();
   }
