@@ -218,13 +218,35 @@ class _PayLocationsMarkerPainter extends CustomPainter {
 
   Offset _at(double lat, double lon) => _project(lat, lon, view, width, height);
 
-  Color _hex(String hex) => Color(int.parse('FF${hex.substring(1)}', radix: 16));
+  Color _hex(String hex) => payLocationPaintForHex(hex);
 
   @override
   bool shouldRepaint(covariant _PayLocationsMarkerPainter oldDelegate) {
     return oldDelegate.view.zoom != view.zoom ||
         oldDelegate.width != width ||
         oldDelegate.height != height ||
-        oldDelegate.markers.length != markers.length;
+        !_sameMarkers(oldDelegate.markers, markers);
+  }
+
+  bool _sameMarkers(List<PayLocationMarker> previous, List<PayLocationMarker> next) {
+    if (previous.length != next.length) {
+      return false;
+    }
+    for (var index = 0; index < previous.length; index++) {
+      final left = previous[index];
+      final right = next[index];
+      if (left.kind != right.kind ||
+          left.lat != right.lat ||
+          left.lon != right.lon ||
+          left.diameter != right.diameter ||
+          left.strokeWidth != right.strokeWidth ||
+          left.color != right.color ||
+          left.count != right.count ||
+          left.town != right.town ||
+          left.pins.length != right.pins.length) {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -36,8 +37,8 @@ class PayLocationsPage extends StatefulWidget {
 }
 
 class _PayLocationsPageState extends State<PayLocationsPage> {
-  static const String _white = '#FFFFFF';
-  static const String _townColor = '#0F172A';
+  static final String _white = payLocationHex(RealUnitColors.basic.white);
+  static final String _townColor = payLocationHex(RealUnitColors.neutral900);
 
   late final TextEditingController _searchController;
   final ValueNotifier<PayLocationPin?> _detailPin = ValueNotifier<PayLocationPin?>(null);
@@ -197,6 +198,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         builder: (context) => _PayLocationDetailsSheet(
           pinListenable: _detailPin,
           loadPhotos: _loadDetailPhotos,
+          loadBytes: _loadPhotoBytes,
         ),
       ).whenComplete(() {
         _detailSheetOpen = false;
@@ -224,6 +226,22 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       return payLocationPhotos(decoded);
     } catch (_) {
       return const [];
+    }
+  }
+
+  Future<Uint8List?> _loadPhotoBytes(String url) async {
+    final allowed = payLocationPhotoUrl(url);
+    if (allowed == null) {
+      return null;
+    }
+    try {
+      final response = await _get(Uri.parse(allowed)).timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+        return null;
+      }
+      return response.bodyBytes;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -538,6 +556,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
           selected: _selectedPin,
           zoom: _zoom,
         );
+        _addedMarkers = const [];
         await controller.clearCircles();
         await controller.clearSymbols();
         if (!_markerDrawIsCurrent(generation, controller)) {
@@ -559,6 +578,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
           );
           circleData.add(_markerData(marker, index));
         }
+        _addedMarkers = markers;
         if (circleOptions.isNotEmpty) {
           await controller.addCircles(circleOptions, circleData);
         }
@@ -606,7 +626,6 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         if (!_markerDrawIsCurrent(generation, controller)) {
           continue;
         }
-        _addedMarkers = markers;
         return;
       }
     } finally {
@@ -762,10 +781,7 @@ String _payLocationListAddress(PayLocationPin pin) {
   return [street, city].where((part) => part.isNotEmpty).join(', ');
 }
 
-Color _payLocationColor(String activity) {
-  final hex = payLocationActivityColor(activity);
-  return Color(int.parse('FF${hex.substring(1)}', radix: 16));
-}
+Color _payLocationColor(String activity) => payLocationActivityPaint(activity);
 
 String _payLocationActivityLabel(BuildContext context, String activity) {
   final strings = S.of(context);
@@ -805,7 +821,7 @@ class _PayLocationActivityLine extends StatelessWidget {
           decoration: BoxDecoration(
             color: _payLocationColor(pin.activity),
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0x40000000)),
+            border: Border.all(color: RealUnitColors.basic.black.withValues(alpha: 0.25)),
           ),
         ),
         const SizedBox(width: 6),
@@ -821,10 +837,15 @@ class _PayLocationActivityLine extends StatelessWidget {
 }
 
 class _PayLocationDetailsSheet extends StatelessWidget {
-  const _PayLocationDetailsSheet({required this.pinListenable, required this.loadPhotos});
+  const _PayLocationDetailsSheet({
+    required this.pinListenable,
+    required this.loadPhotos,
+    required this.loadBytes,
+  });
 
   final ValueListenable<PayLocationPin?> pinListenable;
   final Future<List<PayLocationPhoto>> Function(PayLocationPin pin) loadPhotos;
+  final Future<Uint8List?> Function(String url) loadBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -841,6 +862,7 @@ class _PayLocationDetailsSheet extends StatelessWidget {
                 key: ValueKey('${pin.id}:${pin.name}:${pin.lat}:${pin.lon}'),
                 pin: pin,
                 loadPhotos: loadPhotos,
+                loadBytes: loadBytes,
               ),
               Positioned(
                 top: 0,
@@ -867,10 +889,12 @@ class _PayLocationDetailsBody extends StatefulWidget {
     super.key,
     required this.pin,
     required this.loadPhotos,
+    required this.loadBytes,
   });
 
   final PayLocationPin pin;
   final Future<List<PayLocationPhoto>> Function(PayLocationPin pin) loadPhotos;
+  final Future<Uint8List?> Function(String url) loadBytes;
 
   @override
   State<_PayLocationDetailsBody> createState() => _PayLocationDetailsBodyState();
@@ -899,7 +923,7 @@ class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (final photo in photos) ...[
-                _PayLocationPhotoView(photo: photo),
+                _PayLocationPhotoView(photo: photo, loadBytes: widget.loadBytes),
                 const SizedBox(height: 16),
               ],
               Padding(
@@ -984,31 +1008,55 @@ List<PayLocationPhoto> _detailPhotos(
   return photos;
 }
 
-class _PayLocationPhotoView extends StatelessWidget {
-  const _PayLocationPhotoView({required this.photo});
+class _PayLocationPhotoView extends StatefulWidget {
+  const _PayLocationPhotoView({required this.photo, required this.loadBytes});
 
   final PayLocationPhoto photo;
+  final Future<Uint8List?> Function(String url) loadBytes;
+
+  @override
+  State<_PayLocationPhotoView> createState() => _PayLocationPhotoViewState();
+}
+
+class _PayLocationPhotoViewState extends State<_PayLocationPhotoView> {
+  late final Future<Uint8List?> _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = widget.loadBytes(widget.photo.url);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.network(
-            photo.url,
-            width: double.infinity,
-            height: 200,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const SizedBox.shrink(),
-          ),
-        ),
-        if (photo.caption != null) ...[
-          const SizedBox(height: 6),
-          Text(photo.caption!, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ],
+    final caption = widget.photo.caption;
+    return FutureBuilder<Uint8List?>(
+      future: _bytes,
+      builder: (context, snapshot) {
+        final bytes = snapshot.data;
+        if (bytes == null || bytes.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.memory(
+                bytes,
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+            if (caption != null) ...[
+              const SizedBox(height: 6),
+              Text(caption, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -1026,7 +1074,7 @@ class _PayLocationDetailValue extends StatelessWidget {
         children: [
           TextSpan(
             text: '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           TextSpan(text: value),
         ],

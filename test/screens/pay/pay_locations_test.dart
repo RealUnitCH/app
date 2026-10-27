@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,11 @@ import 'package:realunit_wallet/screens/pay/pay_locations.dart';
 import 'package:realunit_wallet/screens/pay/pay_locations_page.dart';
 
 import '../../helper/pump_golden_app.dart';
+
+final Uint8List _onePixelPng = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQ'
+  'AAAABJRU5ErkJggg==',
+);
 
 void main() {
   test('requests only ZCHF on Ethereum', () {
@@ -147,6 +153,66 @@ void main() {
     expect(find.text('Noch keine Standorte veröffentlicht.'), findsOneWidget);
   });
 
+  testWidgets('loads a pinned place photo through the injected client', (tester) async {
+    final jpg = 'https://api.opencryptopay.io/map/photos/${'d' * 64}.jpg';
+    const detail = 'https://api.opencryptopay.io/map/places/npub1shop';
+    final seen = <String>[];
+    final client = MockClient((request) async {
+      final url = request.url.toString();
+      seen.add(url);
+      if (url == payLocationsPlacesUrl) {
+        return http.Response.bytes(
+          utf8.encode(
+            '{"places":[{"id":"npub1shop","name":"SPAR Zürich","lat":47.37,"lon":8.54,'
+            '"activity":"daily","category":"Lebensmittel",'
+            '"description":"Ein Geschäft mit ZCHF.","techProvider":"DFX.swiss",'
+            '"shopType":"SPAR","street":"Bahnhofstrasse","houseNumber":"1",'
+            '"postalCode":"8001","city":"Zürich","country":"Schweiz",'
+            '"supports":[{"blockchain":"Ethereum","asset":"ZCHF"}]}]}',
+          ),
+          200,
+          headers: const {'content-type': 'application/json; charset=utf-8'},
+        );
+      }
+      if (url == detail) {
+        return http.Response.bytes(
+          utf8.encode(
+            '{"place":{"photos":[{"url":"$jpg","caption":"Front"},'
+            '{"url":"https://example.com/shop.jpg"}]}}',
+          ),
+          200,
+          headers: const {'content-type': 'application/json; charset=utf-8'},
+        );
+      }
+      if (url == jpg) {
+        return http.Response.bytes(
+          _onePixelPng,
+          200,
+          headers: const {'content-type': 'image/png'},
+        );
+      }
+      return http.Response('unexpected', 500);
+    });
+
+    await tester.pumpWidget(
+      wrapForGolden(
+        PayLocationsPage(httpClient: client, mapBuilder: (_) => const SizedBox.shrink()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SPAR Zürich'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('An mindestens 5 Tagen eine Zahlung in den letzten 7 Tagen.'),
+      findsOneWidget,
+    );
+    expect(find.text('Ethereum / ZCHF'), findsOneWidget);
+    expect(seen, contains(detail));
+    expect(seen, contains(jpg));
+    expect(seen.where((url) => url.contains('example.com')), isEmpty);
+  });
+
   test('keeps a decoded place that accepts ZCHF on Ethereum', () {
     final pins = keepPayLocationPins(
       jsonDecode(
@@ -178,7 +244,9 @@ void main() {
           'city': ' Goldach ',
           'country': ' Switzerland ',
           'activity': 'daily',
-          'coverPhoto': {'url': ' https://example.com/cover.jpg '},
+          'coverPhoto': {
+            'url': ' https://api.opencryptopay.io/map/photos/${'a' * 64}.jpg ',
+          },
         },
       ],
     });
@@ -197,7 +265,7 @@ void main() {
     expect(pin.city, 'Goldach');
     expect(pin.country, 'Switzerland');
     expect(pin.activity, 'daily');
-    expect(pin.coverUrl, 'https://example.com/cover.jpg');
+    expect(pin.coverUrl, 'https://api.opencryptopay.io/map/photos/${'a' * 64}.jpg');
     expect(payLocationActivityColor(pin.activity), '#FF4D00');
     expect(
       payLocationMarkers(visible: [pin], selected: null, zoom: 10).single.color,
@@ -430,34 +498,40 @@ void main() {
     );
   });
 
-  test('reads valid place photos and drops non-https URLs', () {
+  test('reads only pinned place photo URLs', () {
+    final jpg = 'https://api.opencryptopay.io/map/photos/${'a' * 64}.jpg';
+    final png = 'https://api.opencryptopay.io/map/photos/${'b' * 64}.png';
+    final webp = 'https://api.opencryptopay.io/map/photos/${'c' * 64}.webp';
     final photos = payLocationPhotos({
       'place': {
         'photos': [
-          {
-            'url': ' https://example.com/shop.jpg ',
-            'caption': ' Front ',
-            'width': 1200,
-            'height': 800.5,
-          },
-          {'url': 'http://example.com/insecure.jpg'},
-          {'url': 'https://example.com/no-size.jpg', 'width': 0, 'height': double.nan},
+          {'url': ' $jpg ', 'caption': ' Front ', 'width': 1200, 'height': 800.5},
+          {'url': png},
+          {'url': webp, 'width': 0, 'height': double.nan},
+          {'url': 'https://example.com/shop.jpg'},
+          {'url': 'http://api.opencryptopay.io/map/photos/${'a' * 64}.jpg'},
+          {'url': '$jpg?size=1'},
+          {'url': '$jpg#cover'},
+          {'url': 'https://user@api.opencryptopay.io/map/photos/${'a' * 64}.jpg'},
+          {'url': 'https://api.opencryptopay.io/map/photos/${'A' * 64}.jpg'},
+          {'url': 'https://api.opencryptopay.io/map/photos/${'a' * 63}.jpg'},
+          {'url': 'https://api.opencryptopay.io/map/photos/${'a' * 64}.gif'},
+          {'url': 'https://api.opencryptopay.io:443/map/photos/${'a' * 64}.jpg'},
         ],
       },
     });
 
-    expect(photos, hasLength(2));
-    expect(photos.first.url, 'https://example.com/shop.jpg');
+    expect(photos.map((photo) => photo.url), [jpg, png, webp]);
     expect(photos.first.caption, 'Front');
     expect(photos.first.width, 1200);
     expect(photos.first.height, 800.5);
-    expect(photos.last.url, 'https://example.com/no-size.jpg');
     expect(photos.last.caption, isNull);
     expect(photos.last.width, isNull);
     expect(photos.last.height, isNull);
     expect(payLocationPhotos(null), isEmpty);
     expect(payLocationPhotos(<String, Object>{}), isEmpty);
     expect(payLocationPhotos({'place': {}}), isEmpty);
+    expect(payLocationPhotoUrl('https://example.com/cover.jpg'), isNull);
   });
 
   test('sorts published addresses by town', () {

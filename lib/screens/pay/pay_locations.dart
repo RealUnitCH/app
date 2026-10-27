@@ -1,4 +1,7 @@
 import 'dart:math' as math;
+import 'dart:ui';
+
+import 'package:realunit_wallet/styles/colors.dart';
 
 const String payLocationsBlockchain = 'Ethereum';
 const String payLocationsAsset = 'ZCHF';
@@ -6,7 +9,7 @@ const String payLocationsAsset = 'ZCHF';
 const String payLocationsPlacesUrl =
     'https://api.opencryptopay.io/map/places?blockchain=Ethereum&asset=ZCHF';
 const String payLocationsStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
-const String payLocationClusterColor = '#034C81';
+String get payLocationClusterColor => payLocationHex(RealUnitColors.darkBlue);
 
 const double payLocationCountrySouth = 45.83003;
 const double payLocationCountryNorth = 47.77564;
@@ -135,14 +138,47 @@ class PayLocationPhoto {
   });
 }
 
-String payLocationActivityColor(String activity) {
+Color payLocationActivityPaint(String activity) {
   return switch (activity) {
-    'daily' => '#FF4D00',
-    'within7Days' => '#FF7A29',
-    'within30Days' => '#FFA05C',
-    'olderThan30Days' => '#FFC48F',
-    _ => '#FFE3CC',
+    'daily' => RealUnitColors.payActivityDaily,
+    'within7Days' => RealUnitColors.payActivityWeekly,
+    'within30Days' => RealUnitColors.payActivityMonthly,
+    'olderThan30Days' => RealUnitColors.payActivityIdle,
+    _ => RealUnitColors.payActivityNone,
   };
+}
+
+String payLocationActivityColor(String activity) {
+  return payLocationHex(payLocationActivityPaint(activity));
+}
+
+/// `#RRGGBB` for MapLibre, taken from a palette color.
+String payLocationHex(Color color) {
+  final rgb = color.toARGB32() & 0x00FFFFFF;
+  return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+}
+
+/// Resolves a palette hex back to that color. Unknown values use the none swatch.
+Color payLocationPaintForHex(String hex) {
+  final normalized = hex.toUpperCase();
+  const palette = <Color>[
+    RealUnitColors.payActivityDaily,
+    RealUnitColors.payActivityWeekly,
+    RealUnitColors.payActivityMonthly,
+    RealUnitColors.payActivityIdle,
+    RealUnitColors.payActivityNone,
+    RealUnitColors.darkBlue,
+    RealUnitColors.neutral900,
+  ];
+  for (final color in palette) {
+    if (payLocationHex(color) == normalized) {
+      return color;
+    }
+  }
+  if (payLocationHex(RealUnitColors.basic.white) == normalized) {
+    return RealUnitColors.basic.white;
+  }
+  return RealUnitColors.payActivityNone;
 }
 
 bool payLocationsPlacesBodyIsList(Object? body) {
@@ -193,7 +229,7 @@ List<PayLocationPin> keepPayLocationPins(Object? body) {
     final id = _nonEmptyString(place['id']);
     final activity = _payLocationActivity(place['activity']);
     final coverPhoto = place['coverPhoto'];
-    final coverUrl = coverPhoto is Map ? _httpsUrl(coverPhoto['url']) : null;
+    final coverUrl = coverPhoto is Map ? payLocationPhotoUrl(coverPhoto['url']) : null;
     pins.add(
       PayLocationPin(
         name: name.trim(),
@@ -389,7 +425,7 @@ List<PayLocationPhoto> payLocationPhotos(Object? body) {
     if (photo is! Map) {
       continue;
     }
-    final url = _httpsUrl(photo['url']);
+    final url = payLocationPhotoUrl(photo['url']);
     if (url == null) {
       continue;
     }
@@ -530,13 +566,29 @@ String _payLocationActivity(Object? value) {
   };
 }
 
-String? _httpsUrl(Object? value) {
+final RegExp _payLocationPhotoPath = RegExp(
+  r'^/map/photos/[0-9a-f]{64}\.(jpg|png|webp)$',
+);
+
+/// Only `https://api.opencryptopay.io/map/photos/{64 lowercase hex}.{jpg|png|webp}`.
+String? payLocationPhotoUrl(Object? value) {
   final url = _nonEmptyString(value);
-  if (url == null || !url.startsWith('https://')) {
+  if (url == null) {
     return null;
   }
   final parsed = Uri.tryParse(url);
-  return parsed != null && parsed.scheme == 'https' && parsed.host.isNotEmpty ? url : null;
+  if (parsed == null ||
+      parsed.scheme != 'https' ||
+      parsed.userInfo.isNotEmpty ||
+      parsed.host != 'api.opencryptopay.io' ||
+      parsed.hasPort ||
+      parsed.hasQuery ||
+      parsed.hasFragment ||
+      !_payLocationPhotoPath.hasMatch(parsed.path)) {
+    return null;
+  }
+  final canonical = 'https://api.opencryptopay.io${parsed.path}';
+  return url == canonical ? url : null;
 }
 
 String _joinNonEmpty(List<String> parts, String separator) {
