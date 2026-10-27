@@ -585,6 +585,24 @@ void main() {
     expect(payLocationZoomNeedsRedraw(previousZoom: 7.49, reportedZoom: 7.51), isTrue);
   });
 
+  test('small zoom steps add up against the last drawn zoom', () {
+    const start = PayLocationZoomTrack(reported: 10, drawn: 10);
+    final first = start.observe(10.04);
+    expect(first.reported, 10.04);
+    expect(first.drawn, 10);
+    final second = first.observe(10.08);
+    expect(second.reported, 10.08);
+    expect(second.drawn, 10.08);
+
+    const labels = PayLocationZoomTrack(reported: 7.49, drawn: 7.49);
+    final still = labels.observe(7.5);
+    expect(still.reported, 7.5);
+    expect(still.drawn, 7.49);
+    final crossed = still.observe(7.51);
+    expect(crossed.reported, 7.51);
+    expect(crossed.drawn, 7.51);
+  });
+
   test('stores a span zoom delta inside the zoom limits', () {
     expect(payLocationStoredSpanZoomDelta(fitted: 15, zoomDelta: 3), 1);
     expect(payLocationStoredSpanZoomDelta(fitted: 7, zoomDelta: -10), -2);

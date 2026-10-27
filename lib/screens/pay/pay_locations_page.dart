@@ -63,7 +63,10 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   double? _commandedZoom;
   bool _drawingMarkers = false;
   bool _detailSheetOpen = false;
-  double _zoom = 7;
+  PayLocationZoomTrack _zoomTrack = const PayLocationZoomTrack(
+    reported: 7,
+    drawn: 7,
+  );
   maplibre.LatLng _center = const maplibre.LatLng(46.8, 8.23);
   Size _mapSize = Size.zero;
   int _loadGeneration = 0;
@@ -184,9 +187,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       }
     }
     _center = position.target;
-    final zoom = position.zoom;
-    final redraw = payLocationZoomNeedsRedraw(previousZoom: _zoom, reportedZoom: zoom);
-    _zoom = zoom;
+    final nextZoom = _zoomTrack.observe(position.zoom);
+    final redraw = nextZoom.drawn != _zoomTrack.drawn;
+    _zoomTrack = nextZoom;
     if (!redraw) {
       return;
     }
@@ -213,7 +216,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       cameraMovedSinceCommand: _cameraMovedSinceCommand,
       centerLat: _center.latitude,
       centerLon: _center.longitude,
-      currentZoom: _zoom,
+      currentZoom: _zoomTrack.reported,
       delta: delta,
     );
     _beginCameraCommand();
@@ -615,7 +618,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         final markers = payLocationMarkers(
           visible: _visiblePins(),
           selected: _selectedPin,
-          zoom: _zoom,
+          zoom: _zoomTrack.reported,
         );
         _addedMarkers = const [];
         await controller.clearCircles();

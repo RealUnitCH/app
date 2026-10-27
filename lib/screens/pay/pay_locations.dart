@@ -547,8 +547,9 @@ const double payLocationCameraZoomTolerance = 0.05;
 /// Unselected town labels are drawn only at this zoom and closer to the country.
 const double payLocationTownLabelMaxZoom = 7.5;
 
-/// The reported zoom is always kept. Markers redraw when the change is larger
-/// than the camera noise band, and always when a town label appears or disappears.
+/// [previousZoom] is the zoom the markers were last drawn at. A step inside
+/// the noise band does not redraw. Several such steps do, once they add up.
+/// Crossing the town-label cutoff always redraws.
 bool payLocationZoomNeedsRedraw({
   required double previousZoom,
   required double reportedZoom,
@@ -558,6 +559,25 @@ bool payLocationZoomNeedsRedraw({
       (reportedZoom <= payLocationTownLabelMaxZoom);
   final zoomStep = (reportedZoom - previousZoom).abs();
   return crossedTownLabel || zoomStep > payLocationCameraZoomTolerance;
+}
+
+/// Newest reported zoom, and the zoom the markers were last drawn at.
+class PayLocationZoomTrack {
+  const PayLocationZoomTrack({required this.reported, required this.drawn});
+
+  final double reported;
+  final double drawn;
+
+  PayLocationZoomTrack observe(double reportedZoom) {
+    final redraw = payLocationZoomNeedsRedraw(
+      previousZoom: drawn,
+      reportedZoom: reportedZoom,
+    );
+    return PayLocationZoomTrack(
+      reported: reportedZoom,
+      drawn: redraw ? reportedZoom : drawn,
+    );
+  }
 }
 
 double payLocationCenterDistance({
