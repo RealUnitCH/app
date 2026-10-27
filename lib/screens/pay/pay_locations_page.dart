@@ -1,3 +1,6 @@
+// @no-integration-test: MapLibre is a platform view, and widget tests cannot
+// host it. Under the test binding this page draws PayLocationsTestMap. The
+// camera decision and the markers are covered in pay_locations_test.dart.
 import 'dart:async';
 import 'dart:convert';
 
@@ -53,6 +56,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   bool _countryFitDone = false;
   bool _countryFitScheduled = false;
   _CameraIntent? _cameraIntent;
+  bool _cameraMovedSinceCommand = false;
   bool _drawingMarkers = false;
   bool _detailSheetOpen = false;
   double _zoom = 7;
@@ -156,6 +160,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       return;
     }
     _center = position.target;
+    _cameraMovedSinceCommand = true;
     final zoom = position.zoom;
     if ((zoom - _zoom).abs() <= 0.05) {
       return;
@@ -169,18 +174,37 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       return;
     }
     final intent = _cameraIntent;
-    var basis = _zoom;
-    if (intent != null &&
-        intent.kind == _CameraKind.point &&
-        intent.lat == _center.latitude &&
-        intent.lon == _center.longitude) {
-      final pending = intent.zoom;
-      if (pending != null) {
-        basis = pending;
-      }
+    final pendingKind = switch (intent?.kind) {
+      null => null,
+      _CameraKind.point => PayLocationCameraKind.point,
+      _CameraKind.span => PayLocationCameraKind.span,
+    };
+    final step = payLocationZoomStep(
+      pendingKind: pendingKind,
+      pendingLat: intent?.lat,
+      pendingLon: intent?.lon,
+      pendingZoom: intent?.zoom,
+      pendingSpanZoomDelta: intent?.zoomDelta ?? 0,
+      cameraMovedSinceCommand: _cameraMovedSinceCommand,
+      centerLat: _center.latitude,
+      centerLon: _center.longitude,
+      currentZoom: _zoom,
+      delta: delta,
+    );
+    _cameraMovedSinceCommand = false;
+    if (step.spanZoomDelta != null) {
+      _cameraIntent = _CameraIntent.span(
+        south: intent!.south!,
+        north: intent.north!,
+        west: intent.west!,
+        east: intent.east!,
+        padding: intent.padding!,
+        maxZoom: intent.maxZoom!,
+        zoomDelta: step.spanZoomDelta!,
+      );
+    } else {
+      _cameraIntent = _CameraIntent.point(step.lat!, step.lon!, step.zoom!);
     }
-    final zoom = (basis + delta).clamp(5, 16).toDouble();
-    _cameraIntent = _CameraIntent.point(_center.latitude, _center.longitude, zoom);
     _applyCamera();
   }
 
@@ -687,6 +711,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     }
     // A tap, search, or zoom that arrived first stays. The country fit
     // only fills an empty intent.
+    if (_cameraIntent == null) {
+      _cameraMovedSinceCommand = false;
+    }
     _cameraIntent ??= const _CameraIntent.span(
       south: payLocationCountrySouth,
       north: payLocationCountryNorth,
@@ -719,6 +746,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     required double padding,
     required double maxZoom,
   }) {
+    _cameraMovedSinceCommand = false;
     _cameraIntent = _CameraIntent.span(
       south: south,
       north: north,
@@ -743,20 +771,23 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
         center = maplibre.LatLng(intent.lat!, intent.lon!);
         zoom = intent.zoom!;
       case _CameraKind.span:
-        zoom = payLocationZoomForSpan(
-          south: intent.south!,
-          north: intent.north!,
-          west: intent.west!,
-          east: intent.east!,
-          width: _mapSize.width,
-          height: _mapSize.height,
-          padding: intent.padding!,
-          maxZoom: intent.maxZoom!,
-        );
-        center = maplibre.LatLng(
-          (intent.south! + intent.north!) / 2,
-          (intent.west! + intent.east!) / 2,
-        );
+        {
+          final fitted = payLocationZoomForSpan(
+            south: intent.south!,
+            north: intent.north!,
+            west: intent.west!,
+            east: intent.east!,
+            width: _mapSize.width,
+            height: _mapSize.height,
+            padding: intent.padding!,
+            maxZoom: intent.maxZoom!,
+          );
+          zoom = (fitted + intent.zoomDelta).clamp(5, 16).toDouble();
+          center = maplibre.LatLng(
+            (intent.south! + intent.north!) / 2,
+            (intent.west! + intent.east!) / 2,
+          );
+        }
     }
     unawaited(
       controller.animateCamera(maplibre.CameraUpdate.newLatLngZoom(center, zoom)),
@@ -795,6 +826,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   void _moveTo(double lat, double lon, double zoom) {
+    _cameraMovedSinceCommand = false;
     _cameraIntent = _CameraIntent.point(lat, lon, zoom);
     _applyCamera();
   }
@@ -901,7 +933,7 @@ class _PayLocationDetailsSheet extends StatelessWidget {
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close),
                   style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                    backgroundColor: RealUnitColors.basic.white.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -1169,6 +1201,7 @@ enum _CameraKind { point, span }
 class _CameraIntent {
   const _CameraIntent.point(this.lat, this.lon, this.zoom)
       : kind = _CameraKind.point,
+        zoomDelta = 0,
         south = null,
         north = null,
         west = null,
@@ -1183,6 +1216,7 @@ class _CameraIntent {
     required this.east,
     required this.padding,
     required this.maxZoom,
+    this.zoomDelta = 0,
   }) : kind = _CameraKind.span,
        lat = null,
        lon = null,
@@ -1198,6 +1232,7 @@ class _CameraIntent {
   final double? east;
   final double? padding;
   final double? maxZoom;
+  final double zoomDelta;
 }
 
 class _PayLocationDetailValue extends StatelessWidget {

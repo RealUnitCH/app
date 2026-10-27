@@ -207,7 +207,7 @@ void main() {
       find.text('An mindestens 5 Tagen eine Zahlung in den letzten 7 Tagen.'),
       findsOneWidget,
     );
-    expect(find.text('Ethereum / ZCHF'), findsOneWidget);
+    expect(find.text('Zahlung: Ethereum / ZCHF'), findsOneWidget);
     expect(seen, contains(detail));
     expect(seen, contains(jpg));
     expect(seen.where((url) => url.contains('example.com')), isEmpty);
@@ -349,6 +349,20 @@ void main() {
     expect(markers.single.pins, [pin]);
   });
 
+  test('uses a structured city on the selected marker', () {
+    const pin = PayLocationPin(
+      name: 'SPAR Zürich',
+      category: null,
+      lat: 47.37,
+      lon: 8.54,
+      city: 'Zürich',
+    );
+
+    final markers = payLocationMarkers(visible: const [pin], selected: pin, zoom: 10);
+
+    expect(markers.single.town, 'Zürich');
+  });
+
   test('creates a cluster and a single marker at country zoom', () {
     const near = PayLocationPin(name: 'A', category: null, lat: 47.37, lon: 8.54);
     const close = PayLocationPin(name: 'B', category: null, lat: 47.4, lon: 8.56);
@@ -436,6 +450,63 @@ void main() {
     expect(countryZoom, lessThan(8));
     expect(pinZoom, 12);
     expect(countryZoom, lessThan(12));
+  });
+
+  test('keeps an unapplied search target when zooming', () {
+    final step = payLocationZoomStep(
+      pendingKind: PayLocationCameraKind.point,
+      pendingLat: 47.37,
+      pendingLon: 8.54,
+      pendingZoom: 12,
+      pendingSpanZoomDelta: 0,
+      cameraMovedSinceCommand: false,
+      centerLat: 46.8,
+      centerLon: 8.23,
+      currentZoom: 7,
+      delta: 1,
+    );
+
+    expect(step.lat, 47.37);
+    expect(step.lon, 8.54);
+    expect(step.zoom, 13);
+    expect(step.spanZoomDelta, isNull);
+  });
+
+  test('stores a zoom delta on a country fit the camera has not reached', () {
+    final step = payLocationZoomStep(
+      pendingKind: PayLocationCameraKind.span,
+      pendingLat: null,
+      pendingLon: null,
+      pendingZoom: null,
+      pendingSpanZoomDelta: 1,
+      cameraMovedSinceCommand: false,
+      centerLat: 46.8,
+      centerLon: 8.23,
+      currentZoom: 7,
+      delta: 1,
+    );
+
+    expect(step.spanZoomDelta, 2);
+    expect(step.lat, isNull);
+  });
+
+  test('zooms the current centre after the camera has moved', () {
+    final step = payLocationZoomStep(
+      pendingKind: PayLocationCameraKind.point,
+      pendingLat: 47.37,
+      pendingLon: 8.54,
+      pendingZoom: 12,
+      pendingSpanZoomDelta: 0,
+      cameraMovedSinceCommand: true,
+      centerLat: 46.9,
+      centerLon: 8.3,
+      currentZoom: 11,
+      delta: -1,
+    );
+
+    expect(step.lat, 46.9);
+    expect(step.lon, 8.3);
+    expect(step.zoom, 10);
   });
 
   test('filters and sorts shop names', () {

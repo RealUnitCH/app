@@ -391,6 +391,10 @@ String? _payLocationMarkerTown(PayLocationPin pin, bool show) {
   if (!show) {
     return null;
   }
+  final city = pin.city.trim();
+  if (city.isNotEmpty) {
+    return city;
+  }
   final town = payLocationLabel(pin.name).town;
   return town.isEmpty ? null : town;
 }
@@ -478,6 +482,65 @@ double payLocationZoomForSpan({
   final zLat = math.log(usableH / _payLocationTileSize / (ySpan / (2 * math.pi))) / math.log(2);
   return math.min(zLon, zLat).clamp(5, maxZoom).toDouble();
 }
+
+enum PayLocationCameraKind { point, span }
+
+class PayLocationZoomStep {
+  const PayLocationZoomStep.point(this.lat, this.lon, this.zoom) : spanZoomDelta = null;
+
+  const PayLocationZoomStep.span(this.spanZoomDelta) : lat = null, lon = null, zoom = null;
+
+  final double? lat;
+  final double? lon;
+  final double? zoom;
+  final double? spanZoomDelta;
+}
+
+/// Zoom buttons keep a search, tap, or country fit until the camera moves.
+PayLocationZoomStep payLocationZoomStep({
+  required PayLocationCameraKind? pendingKind,
+  required double? pendingLat,
+  required double? pendingLon,
+  required double? pendingZoom,
+  required double pendingSpanZoomDelta,
+  required bool cameraMovedSinceCommand,
+  required double centerLat,
+  required double centerLon,
+  required double currentZoom,
+  required double delta,
+}) {
+  final keepsPendingPoint =
+      pendingKind == PayLocationCameraKind.point &&
+      pendingLat != null &&
+      pendingLon != null &&
+      !cameraMovedSinceCommand &&
+      (pendingLat != centerLat || pendingLon != centerLon);
+  if (keepsPendingPoint) {
+    final basis = pendingZoom ?? currentZoom;
+    return PayLocationZoomStep.point(
+      pendingLat,
+      pendingLon,
+      _clampPayLocationZoom(basis + delta),
+    );
+  }
+  if (pendingKind == PayLocationCameraKind.span && !cameraMovedSinceCommand) {
+    return PayLocationZoomStep.span(pendingSpanZoomDelta + delta);
+  }
+  var basis = currentZoom;
+  if (pendingKind == PayLocationCameraKind.point &&
+      pendingLat == centerLat &&
+      pendingLon == centerLon &&
+      pendingZoom != null) {
+    basis = pendingZoom;
+  }
+  return PayLocationZoomStep.point(
+    centerLat,
+    centerLon,
+    _clampPayLocationZoom(basis + delta),
+  );
+}
+
+double _clampPayLocationZoom(double zoom) => zoom.clamp(5, 16).toDouble();
 
 List<PayLocationPin> filterPayLocationPins(List<PayLocationPin> pins, String query) {
   final needle = query.trim().toLowerCase();
