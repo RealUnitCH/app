@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -52,6 +53,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   bool _styleLoaded = false;
   bool _countryFitDone = false;
   bool _countryFitScheduled = false;
+  _CameraIntent? _cameraIntent;
   bool _drawingMarkers = false;
   bool _detailSheetOpen = false;
   double _zoom = 7;
@@ -164,16 +166,23 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   void _zoomBy(double delta) {
-    final controller = _mapController;
-    if (!_styleLoaded ||
-        controller == null ||
-        !_hasMapSize ||
-        !_center.latitude.isFinite ||
-        !_center.longitude.isFinite) {
+    if (!_center.latitude.isFinite || !_center.longitude.isFinite) {
       return;
     }
-    final zoom = (_zoom + delta).clamp(5, 16).toDouble();
-    unawaited(controller.animateCamera(maplibre.CameraUpdate.zoomTo(zoom)));
+    final intent = _cameraIntent;
+    var basis = _zoom;
+    if (intent != null &&
+        intent.kind == _CameraKind.point &&
+        intent.lat == _center.latitude &&
+        intent.lon == _center.longitude) {
+      final pending = intent.zoom;
+      if (pending != null) {
+        basis = pending;
+      }
+    }
+    final zoom = (basis + delta).clamp(5, 16).toDouble();
+    _cameraIntent = _CameraIntent.point(_center.latitude, _center.longitude, zoom);
+    _applyCamera();
   }
 
   void _selectPin(PayLocationPin pin) {
@@ -677,7 +686,9 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     if (_countryFitDone) {
       return true;
     }
-    final moved = _fitSpan(
+    // A tap, search, or zoom that arrived first stays. The country fit
+    // only fills an empty intent.
+    _cameraIntent ??= const _CameraIntent.span(
       south: payLocationCountrySouth,
       north: payLocationCountryNorth,
       west: payLocationCountryWest,
@@ -685,10 +696,7 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
       padding: 28,
       maxZoom: 16,
     );
-    if (moved) {
-      _countryFitDone = true;
-    }
-    return moved;
+    return _applyCamera();
   }
 
   void _scheduleCountryFit() {
@@ -712,24 +720,49 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
     required double padding,
     required double maxZoom,
   }) {
-    final controller = _mapController;
-    if (!_styleLoaded || controller == null || !_hasMapSize) {
-      return false;
-    }
-    final zoom = payLocationZoomForSpan(
+    _cameraIntent = _CameraIntent.span(
       south: south,
       north: north,
       west: west,
       east: east,
-      width: _mapSize.width,
-      height: _mapSize.height,
       padding: padding,
       maxZoom: maxZoom,
     );
-    final center = maplibre.LatLng((south + north) / 2, (west + east) / 2);
+    return _applyCamera();
+  }
+
+  bool _applyCamera() {
+    final intent = _cameraIntent;
+    final controller = _mapController;
+    if (intent == null || !_styleLoaded || controller == null || !_hasMapSize) {
+      return false;
+    }
+    final maplibre.LatLng center;
+    final double zoom;
+    switch (intent.kind) {
+      case _CameraKind.point:
+        center = maplibre.LatLng(intent.lat!, intent.lon!);
+        zoom = intent.zoom!;
+      case _CameraKind.span:
+        zoom = payLocationZoomForSpan(
+          south: intent.south!,
+          north: intent.north!,
+          west: intent.west!,
+          east: intent.east!,
+          width: _mapSize.width,
+          height: _mapSize.height,
+          padding: intent.padding!,
+          maxZoom: intent.maxZoom!,
+        );
+        center = maplibre.LatLng(
+          (intent.south! + intent.north!) / 2,
+          (intent.west! + intent.east!) / 2,
+        );
+    }
     unawaited(
       controller.animateCamera(maplibre.CameraUpdate.newLatLngZoom(center, zoom)),
     );
+    _countryFitDone = true;
     return true;
   }
 
@@ -763,15 +796,8 @@ class _PayLocationsPageState extends State<PayLocationsPage> {
   }
 
   void _moveTo(double lat, double lon, double zoom) {
-    final controller = _mapController;
-    if (!_styleLoaded || controller == null || !_hasMapSize) {
-      return;
-    }
-    unawaited(
-      controller.animateCamera(
-        maplibre.CameraUpdate.newLatLngZoom(maplibre.LatLng(lat, lon), zoom),
-      ),
-    );
+    _cameraIntent = _CameraIntent.point(lat, lon, zoom);
+    _applyCamera();
   }
 
   void _openCluster(List<PayLocationPin> pins) {
@@ -906,11 +932,38 @@ class _PayLocationDetailsBody extends StatefulWidget {
 
 class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
   late final Future<List<PayLocationPhoto>> _photos;
+  final Map<String, Uint8List> _drawnPhotos = {};
+  final Set<String> _startedPhotos = {};
 
   @override
   void initState() {
     super.initState();
     _photos = widget.loadPhotos(widget.pin);
+  }
+
+  void _ensurePhotoLoads(List<PayLocationPhoto> photos) {
+    for (final photo in photos) {
+      if (!_startedPhotos.add(photo.url)) {
+        continue;
+      }
+      unawaited(_loadPhoto(photo.url));
+    }
+  }
+
+  Future<void> _loadPhoto(String url) async {
+    try {
+      final bytes = await widget.loadBytes(url);
+      if (!mounted || bytes == null || bytes.isEmpty) {
+        return;
+      }
+      final decoded = await _decodePayLocationPhoto(bytes);
+      if (!mounted || decoded == null) {
+        return;
+      }
+      setState(() => _drawnPhotos[url] = decoded);
+    } catch (_) {
+      // A photo that never arrives is left out of the sheet.
+    }
   }
 
   @override
@@ -921,6 +974,7 @@ class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
       future: _photos,
       builder: (context, snapshot) {
         final photos = _detailPhotos(pin.coverUrl, snapshot.data ?? const []);
+        _ensurePhotoLoads(photos);
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           child: Column(
@@ -932,7 +986,8 @@ class _PayLocationDetailsBodyState extends State<_PayLocationDetailsBody> {
                 spacing: 16,
                 children: [
                   for (final photo in photos)
-                    _PayLocationPhotoView(photo: photo, loadBytes: widget.loadBytes),
+                    if (_drawnPhotos[photo.url] case final bytes?)
+                      _PayLocationPhotoFrame(bytes: bytes, caption: photo.caption),
                   Padding(
                     padding: const EdgeInsets.only(right: 48),
                     child: Text(
@@ -1022,55 +1077,82 @@ List<PayLocationPhoto> _detailPhotos(
   return photos;
 }
 
-class _PayLocationPhotoView extends StatefulWidget {
-  const _PayLocationPhotoView({required this.photo, required this.loadBytes});
+class _PayLocationPhotoFrame extends StatelessWidget {
+  const _PayLocationPhotoFrame({required this.bytes, required this.caption});
 
-  final PayLocationPhoto photo;
-  final Future<Uint8List?> Function(String url) loadBytes;
-
-  @override
-  State<_PayLocationPhotoView> createState() => _PayLocationPhotoViewState();
-}
-
-class _PayLocationPhotoViewState extends State<_PayLocationPhotoView> {
-  late final Future<Uint8List?> _bytes;
-
-  @override
-  void initState() {
-    super.initState();
-    _bytes = widget.loadBytes(widget.photo.url);
-  }
+  final Uint8List bytes;
+  final String? caption;
 
   @override
   Widget build(BuildContext context) {
-    final caption = widget.photo.caption;
-    return FutureBuilder<Uint8List?>(
-      future: _bytes,
-      builder: (context, snapshot) {
-        final bytes = snapshot.data;
-        if (bytes == null || bytes.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 6,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.memory(
-                bytes,
-                width: double.infinity,
-                height: 200,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
-              ),
-            ),
-            if (caption != null) Text(caption, style: Theme.of(context).textTheme.bodySmall),
-          ],
-        );
-      },
+    final caption = this.caption;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 6,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(bytes, width: double.infinity, height: 200, fit: BoxFit.cover),
+        ),
+        if (caption != null) Text(caption, style: Theme.of(context).textTheme.bodySmall),
+      ],
     );
   }
+}
+
+Future<Uint8List?> _decodePayLocationPhoto(Uint8List bytes) async {
+  ui.Codec? codec;
+  ui.Image? image;
+  try {
+    codec = await ui.instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    image = frame.image;
+    if (image.width < 1 || image.height < 1) {
+      return null;
+    }
+    return bytes;
+  } catch (_) {
+    return null;
+  } finally {
+    image?.dispose();
+    codec?.dispose();
+  }
+}
+
+enum _CameraKind { point, span }
+
+class _CameraIntent {
+  const _CameraIntent.point(this.lat, this.lon, this.zoom)
+      : kind = _CameraKind.point,
+        south = null,
+        north = null,
+        west = null,
+        east = null,
+        padding = null,
+        maxZoom = null;
+
+  const _CameraIntent.span({
+    required this.south,
+    required this.north,
+    required this.west,
+    required this.east,
+    required this.padding,
+    required this.maxZoom,
+  }) : kind = _CameraKind.span,
+       lat = null,
+       lon = null,
+       zoom = null;
+
+  final _CameraKind kind;
+  final double? lat;
+  final double? lon;
+  final double? zoom;
+  final double? south;
+  final double? north;
+  final double? west;
+  final double? east;
+  final double? padding;
+  final double? maxZoom;
 }
 
 class _PayLocationDetailValue extends StatelessWidget {
