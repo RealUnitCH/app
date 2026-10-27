@@ -157,9 +157,11 @@ void main() {
     final jpg = 'https://api.opencryptopay.io/map/photos/${'d' * 64}.jpg';
     const detail = 'https://api.opencryptopay.io/map/places/npub1shop';
     final seen = <String>[];
+    final redirects = <bool>[];
     final client = MockClient((request) async {
       final url = request.url.toString();
       seen.add(url);
+      redirects.add(request.followRedirects);
       if (url == payLocationsPlacesUrl) {
         return http.Response.bytes(
           utf8.encode(
@@ -211,6 +213,8 @@ void main() {
     expect(seen, contains(detail));
     expect(seen, contains(jpg));
     expect(seen.where((url) => url.contains('example.com')), isEmpty);
+    expect(redirects, isNotEmpty);
+    expect(redirects, everyElement(isFalse));
   });
 
   test('keeps a decoded place that accepts ZCHF on Ethereum', () {
@@ -507,6 +511,44 @@ void main() {
     expect(step.lat, 46.9);
     expect(step.lon, 8.3);
     expect(step.zoom, 10);
+  });
+
+  test('stacks a zoom that is still waiting at the current centre', () {
+    final step = payLocationZoomStep(
+      pendingKind: PayLocationCameraKind.point,
+      pendingLat: 46.8,
+      pendingLon: 8.23,
+      pendingZoom: 12,
+      pendingSpanZoomDelta: 0,
+      cameraMovedSinceCommand: false,
+      centerLat: 46.8,
+      centerLon: 8.23,
+      currentZoom: 7,
+      delta: 1,
+    );
+
+    expect(step.lat, 46.8);
+    expect(step.lon, 8.23);
+    expect(step.zoom, 13);
+  });
+
+  test('zooms from the current level after a pinch that kept the centre', () {
+    final step = payLocationZoomStep(
+      pendingKind: PayLocationCameraKind.point,
+      pendingLat: 46.8,
+      pendingLon: 8.23,
+      pendingZoom: 12,
+      pendingSpanZoomDelta: 0,
+      cameraMovedSinceCommand: true,
+      centerLat: 46.8,
+      centerLon: 8.23,
+      currentZoom: 14,
+      delta: 1,
+    );
+
+    expect(step.lat, 46.8);
+    expect(step.lon, 8.23);
+    expect(step.zoom, 15);
   });
 
   test('filters and sorts shop names', () {

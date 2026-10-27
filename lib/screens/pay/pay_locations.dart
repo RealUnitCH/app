@@ -527,7 +527,8 @@ PayLocationZoomStep payLocationZoomStep({
     return PayLocationZoomStep.span(pendingSpanZoomDelta + delta);
   }
   var basis = currentZoom;
-  if (pendingKind == PayLocationCameraKind.point &&
+  if (!cameraMovedSinceCommand &&
+      pendingKind == PayLocationCameraKind.point &&
       pendingLat == centerLat &&
       pendingLon == centerLon &&
       pendingZoom != null) {
