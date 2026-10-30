@@ -9,7 +9,7 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
-import 'package:realunit_wallet/setup/account_currency_sync.dart';
+import 'package:realunit_wallet/setup/account_sync.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 import 'package:realunit_wallet/setup/error_handling/error_handlers.dart';
@@ -55,7 +55,7 @@ class WalletApp extends StatefulWidget {
 }
 
 class _WalletAppState extends State<WalletApp> {
-  late final AccountCurrencySync _accountCurrency = getIt<AccountCurrencySync>();
+  late final AccountSync _accountSync = getIt<AccountSync>();
 
   @override
   void initState() {
@@ -91,7 +91,7 @@ class _WalletAppState extends State<WalletApp> {
                 listenWhen: (previous, current) =>
                     previous.openWallet == null && current.openWallet != null,
                 listener: (context, homeState) {
-                  _accountCurrency.onOpened(homeState.openWallet);
+                  _accountSync.onOpened(homeState.openWallet);
                 },
               ),
               BlocListener<HomeBloc, HomeState>(
@@ -100,14 +100,14 @@ class _WalletAppState extends State<WalletApp> {
                     current.openWallet != null &&
                     !identical(previous.openWallet, current.openWallet),
                 listener: (context, homeState) {
-                  _accountCurrency.onSwitched(homeState.openWallet);
+                  _accountSync.onSwitched(homeState.openWallet);
                 },
               ),
               BlocListener<HomeBloc, HomeState>(
                 listenWhen: (previous, current) =>
                     previous.openWallet != null && current.openWallet == null,
                 listener: (context, homeState) {
-                  _accountCurrency.onClosed();
+                  _accountSync.onClosed();
                 },
               ),
               BlocListener<HomeBloc, HomeState>(
