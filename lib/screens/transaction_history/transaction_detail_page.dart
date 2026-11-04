@@ -12,12 +12,21 @@ import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/trans
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/frozen_chf_label.dart';
 import 'package:realunit_wallet/widgets/hide_amount_text.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 import 'package:realunit_wallet/widgets/transaction_date_label.dart';
 import 'package:realunit_wallet/widgets/transaction_title_label.dart';
+
+// The payout receipt is the ZCHF exchange into CHF or EUR. A share sale
+// without that exchange has nothing to download.
+bool _saleHasExchangePayout(Transaction transaction) {
+  if (transaction is! DfxTransaction) return false;
+  if (transaction.inputAsset?.toUpperCase() != 'ZCHF') return false;
+  return Currency.tryFromCode(transaction.outputAsset) != null;
+}
 
 class TransactionDetailArgs {
   final Transaction transaction;
@@ -282,13 +291,14 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
           state: isLoading && _pending == .realunit ? .loading : .idle,
           onPressed: isLoading ? null : _onRealunitPressed,
         ),
-        AppFilledButton(
-          variant: .secondary,
-          icon: Icons.file_download_outlined,
-          label: S.of(context).saleReceiptExchange,
-          state: isLoading && _pending == .exchange ? .loading : .idle,
-          onPressed: isLoading ? null : _onExchangePressed,
-        ),
+        if (_saleHasExchangePayout(transaction))
+          AppFilledButton(
+            variant: .secondary,
+            icon: Icons.file_download_outlined,
+            label: S.of(context).saleReceiptExchange,
+            state: isLoading && _pending == .exchange ? .loading : .idle,
+            onPressed: isLoading ? null : _onExchangePressed,
+          ),
       ];
     }
     // A payment is two acts with a receipt each: the sale of the shares (the regular sale

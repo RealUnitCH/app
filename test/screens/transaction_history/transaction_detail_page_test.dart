@@ -212,12 +212,12 @@ void main() {
   }
 
   testWidgets(
-    'sale shows two receipt buttons and each starts its own receipt',
+    'sale without a payout shows only the RealUnit receipt',
     (tester) async {
       await pumpDetail(tester, _tx(category: TransferCategory.sale));
 
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
-      expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
+      expect(find.text('Auszahlung (DFX AG)'), findsNothing);
       expect(find.text('Beleg'), findsNothing);
       expect(find.text('Betrag in CHF'), findsNothing);
       expect(
@@ -237,13 +237,6 @@ void main() {
         ),
       ).called(1);
       verifyNever(() => receiptCubit.generateExchangeReceipt(any()));
-
-      await tester.tap(find.text('Auszahlung (DFX AG)'));
-      await tester.pump();
-
-      verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
-      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
-      expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
     },
   );
 
@@ -302,6 +295,11 @@ void main() {
       expect(find.text('tx-42'), findsNothing);
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
       expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
+
+      await tester.tap(find.text('Auszahlung (DFX AG)'));
+      await tester.pump();
+
+      verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
     },
   );
 
@@ -322,6 +320,8 @@ void main() {
       expect(find.textContaining('Verkaufserlös in'), findsNothing);
       expect(find.text('Auszahlung in EUR'), findsOneWidget);
       expect(find.text('1980.00'), findsOneWidget);
+      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+      expect(find.text('Auszahlung (DFX AG)'), findsNothing);
     },
   );
 
