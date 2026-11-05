@@ -501,6 +501,7 @@ MAPPING=(
   "449-kyc-update-share-register-name-page-registration-date-unavailable=screens/kyc/goldens/macos/kyc_update_share_register_name_page_registration_date_unavailable.png"
   "450-kyc-update-share-register-name-page-signing-cancelled=screens/kyc/goldens/macos/kyc_update_share_register_name_page_signing_cancelled.png"
   "454-kyc-update-share-register-name-page-success=screens/kyc/goldens/macos/kyc_update_share_register_name_page_success.png"
+  "455-kyc-update-share-register-name-page-send-failed=screens/kyc/goldens/macos/kyc_update_share_register_name_page_send_failed.png"
   "451-settings-user-data-page-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_name_update.png"
   "452-settings-user-data-page-email-only-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_email_only_name_update.png"
   "453-settings-user-data-page-empty-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_empty_name_update.png"
