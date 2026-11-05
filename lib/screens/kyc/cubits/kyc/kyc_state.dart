@@ -6,6 +6,7 @@ enum KycStep {
   registration,
   personalData,
   linkWallet,
+  updateShareRegisterName,
   legalDisclaimer,
   nationality,
   twoFa,
@@ -52,14 +53,20 @@ class KycSuccess extends KycState {
   /// per decision".
   final RealUnitUserDataDto? realUnitUserData;
 
+  /// Approved share-register name to sign. Set only for
+  /// [KycStep.updateShareRegisterName]. This is not [urlOrToken]: that field
+  /// carries a KYC session URL.
+  final String? shareRegisterName;
+
   const KycSuccess({
     required this.currentStep,
     this.urlOrToken,
     this.realUnitUserData,
+    this.shareRegisterName,
   });
 
   @override
-  List<Object?> get props => [currentStep, urlOrToken, realUnitUserData];
+  List<Object?> get props => [currentStep, urlOrToken, realUnitUserData, shareRegisterName];
 }
 
 class KycCompleted extends KycState {
@@ -113,7 +120,8 @@ class KycFailure extends KycState {
 
 /// Emitted when the wallet currently in use cannot produce EIP-712 signatures
 /// (today: the address+signature debug wallet) and the API has routed the
-/// user to a state (`NewRegistration` / `AddWallet`) that would require one.
+/// user to a state that would require one (`NewRegistration`, `AddWallet`,
+/// or the share-register name update on an already-registered wallet).
 /// Signing capability is a physical property of the wallet — see
 /// `docs/wallet-modes.md` for the full table.
 class KycSignatureUnsupportedFailure extends KycState {

@@ -168,6 +168,19 @@ class KycCubit extends Cubit<KycState> {
       final registrationInfo = await _registrationService.getRegistrationInfo();
       if (isClosed || generation != _runGeneration) return;
 
+      final shareRegisterName = registrationInfo.shareRegisterName;
+      final registeredUserData = registrationInfo.realUnitUserDataDto;
+      // Manual review still wins: a debug wallet parked in review must see
+      // the review screen, not a signature failure for a sign step it will
+      // not reach.
+      final nameUpdateRequiresSignature =
+          registrationInfo.state == RealUnitRegistrationState.alreadyRegistered &&
+          registrationInfo.manualReview != true &&
+          registrationInfo.nameUpdateRequired == true &&
+          shareRegisterName != null &&
+          shareRegisterName.isNotEmpty &&
+          registeredUserData != null;
+
       // Signing capability is a physical property of the wallet implementation
       // (debug mode is address-only, cannot produce EIP-712 signatures) and
       // cannot be derived from the server — see CONTRIBUTING.md "API as
@@ -176,7 +189,8 @@ class KycCubit extends Cubit<KycState> {
       // throw `UnsupportedError` deep inside the registration flow.
       if (_appStore.wallet.walletType == WalletType.debug &&
           (registrationInfo.state == RealUnitRegistrationState.newRegistration ||
-              registrationInfo.state == RealUnitRegistrationState.addWallet)) {
+              registrationInfo.state == RealUnitRegistrationState.addWallet ||
+              nameUpdateRequiresSignature)) {
         emit(const KycSignatureUnsupportedFailure());
         return;
       }
@@ -196,6 +210,25 @@ class KycCubit extends Cubit<KycState> {
               rejectionMessage == null
                   ? const KycManualReview()
                   : KycManualReview(rejectionMessage: rejectionMessage),
+            );
+            return;
+          }
+          // The API owns the share-register name gate. After a personal-name
+          // approval the backend reports `nameUpdateRequired == true` plus the
+          // exact name to sign. Only that explicit `true`, a non-empty name,
+          // and a stored user record open the gate — missing/null fields
+          // proceed as before. It sits under manual review and above the
+          // e-mail gate. See CONTRIBUTING.md "API as Decision Authority".
+          if (registrationInfo.nameUpdateRequired == true &&
+              shareRegisterName != null &&
+              shareRegisterName.isNotEmpty &&
+              registeredUserData != null) {
+            emit(
+              KycSuccess(
+                currentStep: KycStep.updateShareRegisterName,
+                realUnitUserData: registeredUserData,
+                shareRegisterName: shareRegisterName,
+              ),
             );
             return;
           }

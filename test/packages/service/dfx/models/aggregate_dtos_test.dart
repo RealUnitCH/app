@@ -334,6 +334,82 @@ void main() {
       expect(dto.manualReview, isNull);
     });
 
+    test('nameUpdateRequired absent stays null and shareRegisterName absent stays null', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+      });
+
+      expect(dto.nameUpdateRequired, isNull);
+      expect(dto.shareRegisterName, isNull);
+    });
+
+    test('nameUpdateRequired true and shareRegisterName round-trips', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'nameUpdateRequired': true,
+        'shareRegisterName': 'Ada Lovelace',
+      });
+
+      expect(dto.nameUpdateRequired, isTrue);
+      expect(dto.shareRegisterName, 'Ada Lovelace');
+    });
+
+    test('nameUpdateRequired JSON false stays false; null or a non-bool stays null', () {
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'nameUpdateRequired': false,
+        }).nameUpdateRequired,
+        isFalse,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'nameUpdateRequired': null,
+        }).nameUpdateRequired,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'nameUpdateRequired': 'true',
+        }).nameUpdateRequired,
+        isNull,
+      );
+    });
+
+    test('shareRegisterName empty, null, or non-string stays null', () {
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': '',
+        }).shareRegisterName,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': null,
+        }).shareRegisterName,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': 1,
+        }).shareRegisterName,
+        isNull,
+      );
+    });
+
     test('throws on a present but unparseable confirmedDate (fail loud)', () {
       expect(
         () => RealUnitRegistrationInfoDto.fromJson({

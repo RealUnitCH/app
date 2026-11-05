@@ -27,6 +27,7 @@ class RealUnitRegistrationService extends DFXAuthService {
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
   static const _registerWalletPath = '/v1/realunit/register/wallet';
+  static const _registerNamePath = '/v1/realunit/register/name';
 
   int get _chainId => appStore.apiConfig.asset.chainId;
 
@@ -293,5 +294,93 @@ class RealUnitRegistrationService extends DFXAuthService {
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
+  }
+
+  /// Signs [shareRegisterName] into the existing Aktionariat registration and
+  /// posts it. The user does not fill the registration form again. The signed
+  /// `name` is [shareRegisterName]; every other signed field is read from
+  /// [userData] the same way [_registerWallet] reads it.
+  ///
+  /// 201 and 202 are parsed with [RealUnitRegistrationResponseDto] (the same
+  /// body the wallet path uses). A non-auth 4xx is a content rejection and
+  /// throws [RegistrationRejectedException], matching `register/complete`.
+  Future<RealUnitRegistrationResponseDto> updateShareRegisterName(
+    RealUnitUserDataDto userData,
+    String shareRegisterName,
+  ) async {
+    // Fetch the signed date before unlocking — see completeRegistration.
+    final registrationDate = await getRegistrationDate();
+    await walletService.ensureCurrentWalletUnlocked();
+    try {
+      return await _updateShareRegisterName(userData, shareRegisterName, registrationDate);
+    } finally {
+      await walletService.lockCurrentWallet();
+    }
+  }
+
+  Future<RealUnitRegistrationResponseDto> _updateShareRegisterName(
+    RealUnitUserDataDto userData,
+    String shareRegisterName,
+    String registrationDate,
+  ) async {
+    final credentials = appStore.wallet.primaryAccount.primaryAddress;
+    // Same ASCII guard as _registerWallet. `name` is the approved
+    // share-register value, not the name stored on [userData].
+    final signature = await Eip712Signer.signRegistration(
+      credentials: credentials,
+      chainId: _chainId,
+      email: toBitboxSafeAscii(userData.email),
+      name: toBitboxSafeAscii(shareRegisterName),
+      type: userData.type,
+      phoneNumber: toBitboxSafeAscii(userData.phoneNumber),
+      birthday: toBitboxSafeAscii(userData.birthday),
+      nationality: userData.nationality,
+      addressStreet: toBitboxSafeAscii(userData.addressStreet),
+      addressPostalCode: toBitboxSafeAscii(userData.addressPostalCode),
+      addressCity: toBitboxSafeAscii(userData.addressCity),
+      addressCountry: userData.addressCountry,
+      swissTaxResidence: userData.swissTaxResidence,
+      registrationDate: registrationDate,
+    );
+
+    final requestDto = RealUnitRegisterWalletRequestDto(
+      walletAddress: credentials.address.hexEip55,
+      signature: signature,
+      registrationDate: registrationDate,
+    );
+
+    final uri = buildUri(host, _registerNamePath);
+    final response = await authenticatedPost(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(requestDto),
+    );
+
+    if (response.statusCode != 201 && response.statusCode != 202) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      final error = ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+      final status = error.statusCode;
+      // Same content-rejection rule as register/complete. The runtimeType
+      // check keeps code-specific subclasses intact; auth (401/403) and
+      // rate-limit (429) responses plus 5xx stay plain.
+      if (error.runtimeType == ApiException &&
+          status != null &&
+          status >= 400 &&
+          status < 500 &&
+          status != 401 &&
+          status != 403 &&
+          status != 429) {
+        throw RegistrationRejectedException(
+          statusCode: status,
+          code: error.code,
+          message: error.message,
+        );
+      }
+      throw error;
+    }
+
+    return RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
   }
 }
