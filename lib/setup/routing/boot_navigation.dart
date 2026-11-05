@@ -6,9 +6,9 @@ import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/setup/routing/effective_location.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
-import 'package:realunit_wallet/setup/routing/share_register_name_prompt.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
+import 'package:realunit_wallet/setup/routing/share_register_name_prompt.dart';
 
 export 'package:realunit_wallet/setup/routing/effective_location.dart';
 
@@ -283,8 +283,7 @@ void applyBootNavAction(
       // wait for the pushed route to pop — staying on /settings would
       // otherwise never bind. Restored KYC (even with /pay on top) stays
       // unbound; `_isKycLocation` walks the whole match list.
-      final restoreIsKyc =
-          restorePath == '/kyc' || restorePath.startsWith('/kyc/');
+      final restoreIsKyc = restorePath == '/kyc' || restorePath.startsWith('/kyc/');
       if (!restoreIsKyc) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
           unawaited(bindPendingReferralCode(router));

@@ -493,7 +493,17 @@ MAPPING=(
   "441-pay-locations-detail-none=screens/pay/goldens/macos/pay_locations_detail_none.png"
   "442-pay-locations-detail-others=screens/pay/goldens/macos/pay_locations_detail_others.png"
   "443-pay-locations-detail-photo=screens/pay/goldens/macos/pay_locations_detail_photo.png"
+  "444-kyc-update-share-register-name-page-default=screens/kyc/goldens/macos/kyc_update_share_register_name_page_default.png"
   "445-sell-failure-generic=screens/sell/goldens/macos/sell_failure_generic.png"
+  "446-kyc-update-share-register-name-page-missing-data=screens/kyc/goldens/macos/kyc_update_share_register_name_page_missing_data.png"
+  "447-kyc-update-share-register-name-page-failure=screens/kyc/goldens/macos/kyc_update_share_register_name_page_failure.png"
+  "448-kyc-update-share-register-name-page-rejection=screens/kyc/goldens/macos/kyc_update_share_register_name_page_rejection.png"
+  "449-kyc-update-share-register-name-page-registration-date-unavailable=screens/kyc/goldens/macos/kyc_update_share_register_name_page_registration_date_unavailable.png"
+  "450-kyc-update-share-register-name-page-signing-cancelled=screens/kyc/goldens/macos/kyc_update_share_register_name_page_signing_cancelled.png"
+  "451-settings-user-data-page-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_name_update.png"
+  "452-settings-user-data-page-email-only-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_email_only_name_update.png"
+  "453-settings-user-data-page-empty-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_empty_name_update.png"
+  "456-kyc-update-share-register-name-page-submitting=screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png"
 )
 
 missing=()

@@ -176,10 +176,7 @@ class KycCubit extends Cubit<KycState> {
       final nameUpdateRequiresSignature =
           registrationInfo.state == RealUnitRegistrationState.alreadyRegistered &&
           registrationInfo.manualReview != true &&
-          registrationInfo.nameUpdateRequired == true &&
-          shareRegisterName != null &&
-          shareRegisterName.isNotEmpty &&
-          registeredUserData != null;
+          registrationInfo.nameUpdateRequired == true;
 
       // Signing capability is a physical property of the wallet implementation
       // (debug mode is address-only, cannot produce EIP-712 signatures) and
@@ -213,16 +210,13 @@ class KycCubit extends Cubit<KycState> {
             );
             return;
           }
-          // The API owns the share-register name gate. After a personal-name
-          // approval the backend reports `nameUpdateRequired == true` plus the
-          // exact name to sign. Only that explicit `true`, a non-empty name,
-          // and a stored user record open the gate — missing/null fields
-          // proceed as before. It sits under manual review and above the
-          // e-mail gate. See CONTRIBUTING.md "API as Decision Authority".
-          if (registrationInfo.nameUpdateRequired == true &&
-              shareRegisterName != null &&
-              shareRegisterName.isNotEmpty &&
-              registeredUserData != null) {
+          // The API owns the share-register name gate. Only an explicit
+          // `nameUpdateRequired == true` opens it. A missing name or user
+          // record still routes here: the page shows its retry surface
+          // instead of falling through to completed. The gate sits under
+          // manual review and above the e-mail gate. See CONTRIBUTING.md
+          // "API as Decision Authority".
+          if (registrationInfo.nameUpdateRequired == true) {
             emit(
               KycSuccess(
                 currentStep: KycStep.updateShareRegisterName,
