@@ -100,6 +100,7 @@ void main() {
         when(
           () => nameCubit.submit(
             shareRegisterNameFailed: any(named: 'shareRegisterNameFailed'),
+            shareRegisterNameSendFailed: any(named: 'shareRegisterNameSendFailed'),
             registrationDateUnavailable: any(named: 'registrationDateUnavailable'),
             signingCancelled: any(named: 'signingCancelled'),
           ),

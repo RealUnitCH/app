@@ -496,6 +496,7 @@
   "shareRegisterNameAction": "Namen signieren",
   "shareRegisterNameBody": "Der genehmigte Name muss signiert werden, damit das Aktienregister aktualisiert werden kann.",
   "shareRegisterNameFailed": "Das Aktienregister hat die Aktualisierung nicht angenommen. Bitte versuchen Sie es erneut.",
+  "shareRegisterNameSendFailed": "Die Aktualisierung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
   "shareRegisterNameTitle": "Genehmigten Namen signieren",
   "showSeed": "Seed anzeigen",
   "signature": "Signatur",

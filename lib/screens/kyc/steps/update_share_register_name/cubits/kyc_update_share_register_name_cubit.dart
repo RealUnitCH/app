@@ -25,11 +25,12 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
       _shareRegisterName = shareRegisterName,
       super(KycUpdateShareRegisterNameReady(userData, shareRegisterName));
 
-  /// [shareRegisterNameFailed], [registrationDateUnavailable] and
-  /// [signingCancelled] are the localized sentences. The cubit has no
-  /// `BuildContext`, so the page supplies them.
+  /// [shareRegisterNameFailed], [shareRegisterNameSendFailed],
+  /// [registrationDateUnavailable] and [signingCancelled] are the localized
+  /// sentences. The cubit has no `BuildContext`, so the page supplies them.
   Future<void> submit({
     required String shareRegisterNameFailed,
+    required String shareRegisterNameSendFailed,
     required String registrationDateUnavailable,
     required String signingCancelled,
   }) async {
@@ -76,17 +77,19 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
       emit(KycUpdateShareRegisterNameBitboxRequired(_userData, _shareRegisterName));
     } catch (_) {
       if (isClosed) return;
-      emit(KycUpdateShareRegisterNameFailure(shareRegisterNameFailed));
+      emit(KycUpdateShareRegisterNameFailure(shareRegisterNameSendFailed));
     }
   }
 
   /// Re-runs [submit] after the BitBox was linked from `ConnectBitboxPage`.
   Future<void> retrySubmit({
     required String shareRegisterNameFailed,
+    required String shareRegisterNameSendFailed,
     required String registrationDateUnavailable,
     required String signingCancelled,
   }) => submit(
     shareRegisterNameFailed: shareRegisterNameFailed,
+    shareRegisterNameSendFailed: shareRegisterNameSendFailed,
     registrationDateUnavailable: registrationDateUnavailable,
     signingCancelled: signingCancelled,
   );

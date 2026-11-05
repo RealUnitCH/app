@@ -196,5 +196,16 @@ void main() {
         return buildView();
       },
     );
+
+    goldenTest(
+      'success — centered activity indicator',
+      fileName: 'kyc_update_share_register_name_page_success',
+      constraints: phoneConstraints,
+      pumpBeforeTest: pumpOnce,
+      builder: () {
+        when(() => nameCubit.state).thenReturn(const KycUpdateShareRegisterNameSuccess());
+        return buildView();
+      },
+    );
   });
 }

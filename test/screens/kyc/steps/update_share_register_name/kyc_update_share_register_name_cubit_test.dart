@@ -41,6 +41,7 @@ const _userData = RealUnitUserDataDto(
 
 const _shareRegisterName = 'Ada Lovelace';
 const _failed = 'share-register-name-failed';
+const _sendFailed = 'share-register-name-send-failed';
 const _dateUnavailable = 'registration-date-unavailable';
 const _signingCancelled = 'signing-cancelled';
 
@@ -59,6 +60,7 @@ void main() {
 
   Future<void> submit(KycUpdateShareRegisterNameCubit cubit) => cubit.submit(
     shareRegisterNameFailed: _failed,
+    shareRegisterNameSendFailed: _sendFailed,
     registrationDateUnavailable: _dateUnavailable,
     signingCancelled: _signingCancelled,
   );
@@ -252,7 +254,7 @@ void main() {
     );
 
     blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
-      'any other error → generic Failure',
+      'any other error → Failure with the send sentence, not the register rejection',
       setUp: () {
         when(
           () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
@@ -262,7 +264,7 @@ void main() {
       act: submit,
       expect: () => [
         const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
-        const KycUpdateShareRegisterNameFailure(_failed),
+        const KycUpdateShareRegisterNameFailure(_sendFailed),
       ],
     );
   });
