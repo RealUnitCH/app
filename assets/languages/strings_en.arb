@@ -495,7 +495,7 @@
   "settingsWalletBackupSubtitle2": "This is the only way to recover your wallet.",
   "shareRegisterNameAction": "Sign name",
   "shareRegisterNameBody": "The approved name has to be signed so the share register can be updated.",
-  "shareRegisterNameFailed": "The name could not be signed. Please try again.",
+  "shareRegisterNameFailed": "The share register did not accept the update. Please try again.",
   "shareRegisterNameTitle": "Sign the approved name",
   "showSeed": "Show Seed",
   "signature": "Signature",

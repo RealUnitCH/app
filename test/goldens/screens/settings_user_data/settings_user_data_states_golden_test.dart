@@ -39,19 +39,19 @@ void main() {
   );
 
   UserData buildUserData({DateTime? birthday}) => UserData(
-        email: 'test-direct@dfx.swiss',
-        name: 'Test Direct',
-        type: RegistrationUserType.human,
-        phoneNumber: '+41791234567',
-        birthday: birthday,
-        nationality: country,
-        addressStreet: 'Teststrasse 1',
-        addressPostalCode: '8000',
-        addressCity: 'Zurich',
-        addressCountry: country,
-        swissTaxResidence: true,
-        lang: 'DE',
-      );
+    email: 'test-direct@dfx.swiss',
+    name: 'Test Direct',
+    type: RegistrationUserType.human,
+    phoneNumber: '+41791234567',
+    birthday: birthday,
+    nationality: country,
+    addressStreet: 'Teststrasse 1',
+    addressPostalCode: '8000',
+    addressCity: 'Zurich',
+    addressCountry: country,
+    swissTaxResidence: true,
+    lang: 'DE',
+  );
 
   late _MockSettingsUserDataCubit cubit;
 
@@ -169,6 +169,41 @@ void main() {
       fileName: 'settings_user_data_page_failure',
       constraints: phoneConstraints,
       builder: () => buildSubject(const SettingsUserDataFailure()),
+    );
+
+    // nameUpdateRequired true adds the sign button under the data column.
+    // Existing cases above leave the flag unset, so their pixels stay put.
+    goldenTest(
+      'success with the share-register name button',
+      fileName: 'settings_user_data_page_name_update',
+      constraints: phoneConstraints,
+      builder: () => buildSubject(
+        SettingsUserDataSuccess(
+          userData: buildUserData(birthday: DateTime.utc(1990, 1, 1)),
+          nameUpdateRequired: true,
+        ),
+      ),
+    );
+
+    goldenTest(
+      'email only with the share-register name button',
+      fileName: 'settings_user_data_page_email_only_name_update',
+      constraints: phoneConstraints,
+      builder: () => buildSubject(
+        const SettingsUserDataSuccess(
+          email: 'test-direct@dfx.swiss',
+          nameUpdateRequired: true,
+        ),
+      ),
+    );
+
+    goldenTest(
+      'empty with the share-register name button',
+      fileName: 'settings_user_data_page_empty_name_update',
+      constraints: phoneConstraints,
+      builder: () => buildSubject(
+        const SettingsUserDataSuccess(nameUpdateRequired: true),
+      ),
     );
   });
 }

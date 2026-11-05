@@ -194,7 +194,12 @@ class _ShareRegisterNameUpdateButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppFilledButton(
-      onPressed: () => context.pushNamed(AppRoutes.kyc),
+      onPressed: () async {
+        await context.pushNamed(AppRoutes.kyc);
+        if (context.mounted) {
+          await context.read<SettingsUserDataCubit>().getUserData();
+        }
+      },
       label: S.of(context).shareRegisterNameAction,
     );
   }
