@@ -22,20 +22,21 @@ void main() {
     // each time instead of returning a sibling test's cached future.
     rootBundle.clear();
     settingsBloc = MockSettingsBloc();
-    when(() => settingsBloc.state).thenReturn(const SettingsState(language: Language.en));
+    when(
+      () => settingsBloc.state,
+    ).thenReturn(const SettingsState(language: Language.en));
   });
 
   Widget host({
     String assetBaseName = 'terms',
     String? initialMarkdownContent,
+    Future<String?> Function(String languageCode)? remoteText,
   }) => BlocProvider<SettingsBloc>.value(
     value: settingsBloc,
     child: LegalDocumentPage(
-      params: LegalDocumentParams(
-        title: 'Terms',
-        assetBaseName: assetBaseName,
-      ),
+      params: LegalDocumentParams(title: 'Terms', assetBaseName: assetBaseName),
       initialMarkdownContent: initialMarkdownContent,
+      remoteText: remoteText,
     ),
   );
 
@@ -51,7 +52,8 @@ void main() {
         expect(
           find.byKey(const ValueKey('legalDocumentLoadError')),
           findsOneWidget,
-          reason: 'a failed asset load must surface an error state, not a blank page',
+          reason:
+              'a failed asset load must surface an error state, not a blank page',
         );
         expect(
           find.byKey(const ValueKey('legalDocumentRetryButton')),
@@ -71,27 +73,38 @@ void main() {
       },
     );
 
-    testWidgets('renders the markdown body when content is provided', (tester) async {
+    testWidgets('renders the markdown body when content is provided', (
+      tester,
+    ) async {
       await tester.pumpApp(host(initialMarkdownContent: '# Hello'));
       await tester.pumpAndSettle();
 
       expect(find.byType(Markdown), findsOneWidget);
-      expect(find.byKey(const ValueKey('legalDocumentLoadError')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('legalDocumentLoadError')),
+        findsNothing,
+      );
     });
 
-    testWidgets('retry re-runs the load and stays in the error state while the asset is missing', (
-      tester,
-    ) async {
-      await tester.pumpApp(host(assetBaseName: 'missing_legal_asset_test'));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'retry re-runs the load and stays in the error state while the asset is missing',
+      (tester) async {
+        await tester.pumpApp(host(assetBaseName: 'missing_legal_asset_test'));
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const ValueKey('legalDocumentRetryButton')));
-      await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey('legalDocumentRetryButton')),
+        );
+        await tester.pumpAndSettle();
 
-      // The asset is still missing, so we expect the error state to persist
-      // without throwing — exercising the retry path.
-      expect(find.byKey(const ValueKey('legalDocumentLoadError')), findsOneWidget);
-    });
+        // The asset is still missing, so we expect the error state to persist
+        // without throwing — exercising the retry path.
+        expect(
+          find.byKey(const ValueKey('legalDocumentLoadError')),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets('retry recovers and renders the document once the asset loads', (
       tester,
@@ -103,27 +116,151 @@ void main() {
       // Mock the asset channel so the first load fails and, after retry, the
       // second load succeeds — exercising the full error -> retry -> loaded path.
       final messenger = tester.binding.defaultBinaryMessenger;
-      messenger.setMockMessageHandler('flutter/assets', (ByteData? message) async {
+      messenger.setMockMessageHandler('flutter/assets', (
+        ByteData? message,
+      ) async {
         final key = utf8.decode(
-          message!.buffer.asUint8List(message.offsetInBytes, message.lengthInBytes),
+          message!.buffer.asUint8List(
+            message.offsetInBytes,
+            message.lengthInBytes,
+          ),
         );
         if (key == assetKey && !failNext) {
-          return ByteData.sublistView(Uint8List.fromList(utf8.encode('# Recovered')));
+          return ByteData.sublistView(
+            Uint8List.fromList(utf8.encode('# Recovered')),
+          );
         }
         return null; // missing asset -> loadString throws
       });
-      addTearDown(() => messenger.setMockMessageHandler('flutter/assets', null));
+      addTearDown(
+        () => messenger.setMockMessageHandler('flutter/assets', null),
+      );
 
       await tester.pumpApp(host(assetBaseName: baseName));
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('legalDocumentLoadError')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('legalDocumentLoadError')),
+        findsOneWidget,
+      );
 
       failNext = false;
       await tester.tap(find.byKey(const ValueKey('legalDocumentRetryButton')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const ValueKey('legalDocumentLoadError')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('legalDocumentLoadError')),
+        findsNothing,
+      );
       expect(find.byType(Markdown), findsOneWidget);
     });
+
+    testWidgets('shows remote markdown without reading the asset', (
+      tester,
+    ) async {
+      await tester.pumpApp(
+        host(
+          assetBaseName: 'missing_legal_asset_test',
+          remoteText: (code) async {
+            expect(code, 'en');
+            return '# From the legal API';
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Markdown), findsOneWidget);
+      expect(
+        tester.widget<Markdown>(find.byType(Markdown)).data,
+        contains('From the legal API'),
+      );
+      expect(
+        find.byKey(const ValueKey('legalDocumentLoadError')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('falls back to the asset when the remote text is missing', (
+      tester,
+    ) async {
+      const baseName = 'remote_fallback_legal_asset';
+      mockLegalAsset(
+        tester,
+        'assets/legal/${baseName}_en.md',
+        '# Bundled terms',
+      );
+
+      await tester.pumpApp(
+        host(assetBaseName: baseName, remoteText: (_) async => null),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Markdown>(find.byType(Markdown)).data,
+        contains('Bundled terms'),
+      );
+      expect(
+        find.byKey(const ValueKey('legalDocumentLoadError')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('falls back to the asset when the remote call throws', (
+      tester,
+    ) async {
+      const baseName = 'remote_throw_legal_asset';
+      mockLegalAsset(
+        tester,
+        'assets/legal/${baseName}_en.md',
+        '# Bundled after error',
+      );
+
+      await tester.pumpApp(
+        host(
+          assetBaseName: baseName,
+          remoteText: (_) async => throw Exception('down'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Markdown>(find.byType(Markdown)).data,
+        contains('Bundled after error'),
+      );
+    });
+
+    testWidgets('falls back to the asset when the remote text is blank', (
+      tester,
+    ) async {
+      const baseName = 'remote_blank_legal_asset';
+      mockLegalAsset(
+        tester,
+        'assets/legal/${baseName}_en.md',
+        '# Bundled after blank',
+      );
+
+      await tester.pumpApp(
+        host(assetBaseName: baseName, remoteText: (_) async => '  '),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Markdown>(find.byType(Markdown)).data,
+        contains('Bundled after blank'),
+      );
+    });
   });
+}
+
+void mockLegalAsset(WidgetTester tester, String assetKey, String body) {
+  final messenger = tester.binding.defaultBinaryMessenger;
+  messenger.setMockMessageHandler('flutter/assets', (ByteData? message) async {
+    final key = utf8.decode(
+      message!.buffer.asUint8List(message.offsetInBytes, message.lengthInBytes),
+    );
+    if (key == assetKey) {
+      return ByteData.sublistView(Uint8List.fromList(utf8.encode(body)));
+    }
+    return null;
+  });
+  addTearDown(() => messenger.setMockMessageHandler('flutter/assets', null));
 }
