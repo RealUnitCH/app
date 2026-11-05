@@ -109,12 +109,16 @@ RealUnitRegistrationInfoDto _walletStatus(
   bool? emailConfirmed,
   bool? manualReview,
   String? rejectionMessage,
+  bool? nameUpdateRequired,
+  String? shareRegisterName,
 }) => RealUnitRegistrationInfoDto(
   state: state,
   realUnitUserDataDto: userData,
   emailConfirmed: emailConfirmed,
   manualReview: manualReview,
   rejectionMessage: rejectionMessage,
+  nameUpdateRequired: nameUpdateRequired,
+  shareRegisterName: shareRegisterName,
 );
 
 // Single-agreement legal info. `allAccepted:false` leaves the one agreement
@@ -782,6 +786,96 @@ void main() {
       expect: () => [
         const KycLoading(),
         const KycManualReview(),
+      ],
+    );
+
+    // Share-register name gate. Only an explicit `nameUpdateRequired == true`
+    // with a non-empty name and stored user data routes to the sign step.
+    // Manual review is above it and still wins.
+    blocTest<KycCubit, KycState>(
+      'emits KycSuccess(updateShareRegisterName) when AlreadyRegistered and nameUpdateRequired=true',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            userData: _fixtureUserData,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(
+          currentStep: KycStep.updateShareRegisterName,
+          realUnitUserData: _fixtureUserData,
+          shareRegisterName: 'Ada Lovelace',
+        ),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'manualReview=true takes precedence over nameUpdateRequired=true',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            userData: _fixtureUserData,
+            manualReview: true,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycManualReview(),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycSignatureUnsupportedFailure when debug wallet needs the share-register name signed',
+      setUp: () {
+        when(() => wallet.walletType).thenReturn(WalletType.debug);
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            userData: _fixtureUserData,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSignatureUnsupportedFailure(),
       ],
     );
 

@@ -53,7 +53,13 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
       final userDataDto = result.realUnitUserDataDto;
 
       if (userDataDto == null) {
-        emit(SettingsUserDataSuccess(email: user.mail, capabilities: user.capabilities));
+        emit(
+          SettingsUserDataSuccess(
+            email: user.mail,
+            capabilities: user.capabilities,
+            nameUpdateRequired: result.nameUpdateRequired,
+          ),
+        );
         return;
       }
 
@@ -95,6 +101,7 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
           ),
           pendingSteps: pendingSteps,
           capabilities: user.capabilities,
+          nameUpdateRequired: result.nameUpdateRequired,
         ),
       );
     } on BitboxNotConnectedException {

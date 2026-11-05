@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/setup/routing/effective_location.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/share_register_name_prompt.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 
@@ -240,6 +241,7 @@ void applyBootNavAction(
           router.goNamed(routeName);
           unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
           unawaited(bindPendingReferralCode(router));
+          unawaited(promptShareRegisterNameUpdate(router));
           return;
         }
       }
@@ -251,6 +253,7 @@ void applyBootNavAction(
       router.goNamed(routeName);
       if (routeName == AppRoutes.dashboard) {
         unawaited(bindPendingReferralCode(router));
+        unawaited(promptShareRegisterNameUpdate(router));
       }
       return;
     case BootNavRestore(:final location):
@@ -285,6 +288,9 @@ void applyBootNavAction(
       if (!restoreIsKyc) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
           unawaited(bindPendingReferralCode(router));
+          if (restorePath == '/dashboard') {
+            unawaited(promptShareRegisterNameUpdate(router));
+          }
         });
       }
       return;
@@ -306,6 +312,9 @@ void applyBootNavAction(
         }
       }
       unawaited(bindPendingReferralCode(router));
+      if (path == '/dashboard') {
+        unawaited(promptShareRegisterNameUpdate(router));
+      }
       return;
   }
 }
