@@ -47,6 +47,10 @@ const _genericFailure =
     'Das Aktienregister hat die Aktualisierung nicht angenommen. '
     'Bitte versuchen Sie es erneut.';
 
+const _sendFailed =
+    'Die Aktualisierung konnte nicht gesendet werden. '
+    'Bitte versuchen Sie es erneut.';
+
 const _rejection = 'Der Name stimmt nicht mit dem genehmigten Eintrag überein.';
 
 const _dateUnavailable =
@@ -130,6 +134,26 @@ void main() {
           nameCubit,
           Stream<KycUpdateShareRegisterNameState>.value(
             const KycUpdateShareRegisterNameFailure(_genericFailure),
+          ),
+          initialState: const KycUpdateShareRegisterNameReady(_userData, _shareRegisterName),
+        );
+        return buildView();
+      },
+    );
+
+    goldenTest(
+      'send failed — snackbar says the update could not be sent, button idle',
+      fileName: 'kyc_update_share_register_name_page_send_failed',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+      },
+      builder: () {
+        whenListen(
+          nameCubit,
+          Stream<KycUpdateShareRegisterNameState>.value(
+            const KycUpdateShareRegisterNameFailure(_sendFailed),
           ),
           initialState: const KycUpdateShareRegisterNameReady(_userData, _shareRegisterName),
         );
