@@ -311,9 +311,6 @@ void applyBootNavAction(
         }
       }
       unawaited(bindPendingReferralCode(router));
-      if (path == '/dashboard') {
-        unawaited(promptShareRegisterNameUpdate(router));
-      }
       return;
   }
 }

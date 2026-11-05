@@ -86,6 +86,7 @@ class KycUpdateShareRegisterNameView extends StatelessWidget {
             if (context.mounted && result == true) {
               context.read<KycUpdateShareRegisterNameCubit>().retrySubmit(
                 shareRegisterNameFailed: S.of(context).shareRegisterNameFailed,
+                shareRegisterNameSendFailed: S.of(context).shareRegisterNameSendFailed,
                 registrationDateUnavailable: S.of(context).registrationDateUnavailable,
                 signingCancelled: S.of(context).signingCancelled,
               );
@@ -145,6 +146,7 @@ class _UpdateShareRegisterNameBody extends StatelessWidget {
                   ? null
                   : () => context.read<KycUpdateShareRegisterNameCubit>().submit(
                       shareRegisterNameFailed: S.of(context).shareRegisterNameFailed,
+                      shareRegisterNameSendFailed: S.of(context).shareRegisterNameSendFailed,
                       registrationDateUnavailable: S.of(context).registrationDateUnavailable,
                       signingCancelled: S.of(context).signingCancelled,
                     ),
