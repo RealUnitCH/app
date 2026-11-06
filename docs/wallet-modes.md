@@ -19,26 +19,32 @@ enum WalletType { software, bitbox, debug }
 |---|---|---|---|
 | `software` | yes (12-word seed, encrypted at rest) | signs in the background, near-zero user friction | full app — register, link wallet, trade |
 | `bitbox` | yes (on the hardware device) | requires confirmation on the connected unlocked BitBox | full app — register, link wallet, trade |
-| `debug` | no (address only, plus a stored signature attestation) | **cannot sign** — `DebugWalletAccount.signMessage` throws `UnsupportedError` | read-only browsing of a known address, plus any flow that the API accepts without a fresh signature (`AlreadyRegistered`) |
+| `debug` | no (address only, plus a stored signature attestation) | **cannot sign** — `DebugWalletAccount.signMessage` throws `UnsupportedError` | read-only browsing of a known address, plus any flow that the API accepts without a fresh signature (`AlreadyRegistered` only when no approved name still has to be signed) |
 
 ## Features that require signing
 
 The RealUnit registration flow signs an EIP-712 envelope so the backend can
-prove the user owns the wallet. Two API-driven sub-flows reach the signer:
+prove the user owns the wallet. Three API-driven sub-flows reach the signer:
 
 - `RealUnitRegistrationState.newRegistration` — full registration form,
   `KycRegistrationPage`
 - `RealUnitRegistrationState.addWallet` — one-tap "Add this wallet" page,
   `KycLinkWalletPage`
+- `RealUnitRegistrationState.alreadyRegistered` — when `nameUpdateRequired`
+  is exactly `true` and `manualReview` is not set,
+  `KycUpdateShareRegisterNamePage`
 
-Both are gated in `KycCubit._runCheckKyc` directly after the
+All three are gated in `KycCubit._runCheckKyc` directly after the
 `RealUnitRegistrationService.getRegistrationInfo()` round-trip. When the
-current wallet is `WalletType.debug` and the API has routed to either of the
+current wallet is `WalletType.debug` and the API has routed to any of the
 above states, the cubit emits `KycSignatureUnsupportedFailure` instead of
 `KycSuccess`, and `KycPageManager` renders `KycSignatureUnsupportedPage`.
 
-`AlreadyRegistered` does not invoke the signer, so debug-mode
-users flow through it unchanged.
+`AlreadyRegistered` invokes the signer only when `nameUpdateRequired` is
+exactly `true` and `manualReview` is not set. Otherwise debug-mode wallets
+flow through unchanged. When the name update requires a signature, a
+debug-mode wallet ends in `KycSignatureUnsupportedFailure`, as with a new
+registration or an added wallet.
 
 ## Why this gate is local
 

@@ -231,5 +231,25 @@ void main() {
         return buildView();
       },
     );
+
+    goldenTest(
+      'BitBox required — the connect sheet opened over the name page',
+      fileName: 'kyc_update_share_register_name_page_bitbox_required',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pumpAndSettle();
+      },
+      builder: () {
+        whenListen(
+          nameCubit,
+          Stream.fromIterable([
+            const KycUpdateShareRegisterNameBitboxRequired(_userData, _shareRegisterName),
+          ]),
+          initialState: const KycUpdateShareRegisterNameReady(_userData, _shareRegisterName),
+        );
+        return buildView();
+      },
+    );
   });
 }
