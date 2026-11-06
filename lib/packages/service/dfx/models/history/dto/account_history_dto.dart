@@ -1,6 +1,4 @@
-import 'dart:convert';
-
-import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 
 class AccountHistoryDto {
   final String address;
@@ -29,7 +27,7 @@ class HistoryEventDto {
   final String txHash;
   final TransferDto? transfer;
   final String? category;
-  final PayQuoteBreakdown? payment;
+  final PayQuoteDto? payment;
 
   const HistoryEventDto({
     required this.timestamp,
@@ -47,26 +45,8 @@ class HistoryEventDto {
           ? TransferDto.fromJson(json['transfer'] as Map<String, dynamic>)
           : null,
       category: json['category'] as String?,
-      payment: _paymentBreakdown(json['payment']),
+      payment: PayQuoteDto.tryFromJson(json['payment']),
     );
-  }
-}
-
-PayQuoteBreakdown? _paymentBreakdown(Object? raw) {
-  if (raw is! Map) return null;
-  final payload = <String, Object?>{};
-  for (final entry in raw.entries) {
-    final key = entry.key;
-    if (key is! String) return null;
-    payload[key] = entry.value;
-  }
-  if (payload['kind'] == null) {
-    payload['kind'] = 'payQuote';
-  }
-  try {
-    return PayQuoteBreakdown.tryParse(jsonEncode(payload));
-  } catch (_) {
-    return null;
   }
 }
 

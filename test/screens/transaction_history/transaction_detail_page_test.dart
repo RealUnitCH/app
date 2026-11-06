@@ -11,6 +11,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
@@ -89,7 +90,7 @@ Transaction _paymentWithQuote() => Transaction(
   type: TransactionTypes.tokenTransfer,
   category: TransferCategory.payment,
   note: '',
-  data: const PayQuoteBreakdown(
+  data: const PayQuoteDto(
     merchantName: 'Café Zürich',
     billChf: 2,
     shares: 3,

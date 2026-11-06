@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
 
 void main() {
@@ -22,17 +23,17 @@ void main() {
   });
 
   test('tryParse rejects a referral amount, empty text, and the wrong shape', () {
-    expect(PayQuoteBreakdown.tryParse('246.50'), isNull);
-    expect(PayQuoteBreakdown.tryParse(''), isNull);
-    expect(PayQuoteBreakdown.tryParse(null), isNull);
-    expect(PayQuoteBreakdown.tryParse('[]'), isNull);
-    expect(PayQuoteBreakdown.tryParse('not json'), isNull);
-    expect(PayQuoteBreakdown.tryParse('{}'), isNull);
-    expect(PayQuoteBreakdown.tryParse('{"kind":"other"}'), isNull);
+    expect(PayQuoteDto.tryParse('246.50'), isNull);
+    expect(PayQuoteDto.tryParse(''), isNull);
+    expect(PayQuoteDto.tryParse(null), isNull);
+    expect(PayQuoteDto.tryParse('[]'), isNull);
+    expect(PayQuoteDto.tryParse('not json'), isNull);
+    expect(PayQuoteDto.tryParse('{}'), isNull);
+    expect(PayQuoteDto.tryParse('{"kind":"other"}'), isNull);
   });
 
   test('encode and tryParse keep the numbers', () {
-    const breakdown = PayQuoteBreakdown(
+    const breakdown = PayQuoteDto(
       merchantName: 'Café Zürich',
       billChf: 2,
       shares: 3,
@@ -41,7 +42,7 @@ void main() {
       feeRealu: 0.05 / 1.2,
     );
 
-    final parsed = PayQuoteBreakdown.tryParse(breakdown.encode());
+    final parsed = PayQuoteDto.tryParse(breakdown.encode());
 
     expect(parsed, isNotNull);
     expect(parsed!.merchantName, breakdown.merchantName);
@@ -53,7 +54,7 @@ void main() {
   });
 
   test('encode omits a null or blank merchant name', () {
-    const blank = PayQuoteBreakdown(
+    const blank = PayQuoteDto(
       merchantName: '   ',
       billChf: 2,
       shares: 3,
@@ -61,7 +62,7 @@ void main() {
       feeChf: 0.05,
       feeRealu: 0.05 / 1.2,
     );
-    const missing = PayQuoteBreakdown(
+    const missing = PayQuoteDto(
       merchantName: null,
       billChf: 2,
       shares: 3,

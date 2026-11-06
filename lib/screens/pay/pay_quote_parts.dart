@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -66,96 +64,6 @@ String formatPayRealu(double amount) {
     text = '${text}0';
   }
   return '$text ${realUnitAsset.symbol}';
-}
-
-class PayQuoteBreakdown {
-  final String? merchantName;
-  final double billChf;
-  final double shares;
-  final double proceedsChf;
-  final double feeChf;
-  final double feeRealu;
-
-  const PayQuoteBreakdown({
-    required this.merchantName,
-    required this.billChf,
-    required this.shares,
-    required this.proceedsChf,
-    required this.feeChf,
-    required this.feeRealu,
-  });
-
-  String encode() {
-    final payload = <String, Object>{'kind': 'payQuote'};
-    final name = merchantName;
-    if (name != null && name.trim().isNotEmpty) {
-      payload['merchantName'] = name;
-    }
-    payload['billChf'] = billChf;
-    payload['shares'] = shares;
-    payload['proceedsChf'] = proceedsChf;
-    payload['feeChf'] = feeChf;
-    payload['feeRealu'] = feeRealu;
-    return jsonEncode(payload);
-  }
-
-  static PayQuoteBreakdown? tryParse(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    final Object? decoded;
-    try {
-      decoded = jsonDecode(raw);
-    } catch (_) {
-      return null;
-    }
-    if (decoded is! Map) return null;
-    if (decoded['kind'] != 'payQuote') return null;
-    return _fromDecoded(decoded);
-  }
-
-  static PayQuoteBreakdown? _fromDecoded(Map<dynamic, dynamic> decoded) {
-    final billChf = _finite(decoded['billChf']);
-    final shares = _finite(decoded['shares']);
-    final proceedsChf = _finite(decoded['proceedsChf']);
-    final feeChf = _finite(decoded['feeChf']);
-    final feeRealu = _finite(decoded['feeRealu']);
-    if (billChf == null ||
-        shares == null ||
-        proceedsChf == null ||
-        feeChf == null ||
-        feeRealu == null) {
-      return null;
-    }
-    final merchant = decoded['merchantName'];
-    final String? merchantName;
-    if (merchant == null) {
-      merchantName = null;
-    } else if (merchant is String) {
-      merchantName = merchant;
-    } else {
-      return null;
-    }
-    return PayQuoteBreakdown(
-      merchantName: merchantName,
-      billChf: billChf,
-      shares: shares,
-      proceedsChf: proceedsChf,
-      feeChf: feeChf,
-      feeRealu: feeRealu,
-    );
-  }
-
-  static double? _finite(Object? value) {
-    if (value is int) {
-      final asDouble = value.toDouble();
-      if (!asDouble.isFinite) return null;
-      return asDouble;
-    }
-    if (value is double) {
-      if (!value.isFinite) return null;
-      return value;
-    }
-    return null;
-  }
 }
 
 class PayQuoteReceiptCard extends StatelessWidget {

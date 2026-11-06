@@ -5,6 +5,7 @@ import 'package:open_file/open_file.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -92,7 +93,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
         final transaction = widget.args.transaction;
         final fieldRows = _fieldRows(context);
         final payQuote = transaction.category == TransferCategory.payment
-            ? PayQuoteBreakdown.tryParse(transaction.data)
+            ? PayQuoteDto.tryParse(transaction.data)
             : null;
         final centerPaymentHeader = transaction.category == TransferCategory.payment;
         final content = Padding(
@@ -358,7 +359,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
 class _PaymentQuoteBreakdown extends StatelessWidget {
   const _PaymentQuoteBreakdown({required this.breakdown});
 
-  final PayQuoteBreakdown breakdown;
+  final PayQuoteDto breakdown;
 
   @override
   Widget build(BuildContext context) {
