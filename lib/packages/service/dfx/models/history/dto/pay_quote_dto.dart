@@ -53,7 +53,8 @@ class PayQuoteDto {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return null;
       final json = Map<String, dynamic>.from(decoded);
-      if (json['kind'] != 'payQuote') return null;
+      final kind = json['kind'] as String?;
+      if (kind != 'payQuote') return null;
       return PayQuoteDto.fromJson(json);
     } catch (_) {
       return null;
