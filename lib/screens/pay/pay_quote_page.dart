@@ -7,9 +7,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
-import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_process_page.dart';
+import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_detail_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -60,9 +60,7 @@ class PayQuoteView extends StatelessWidget {
                 message: S.of(context).payQuoteUnavailable,
               ),
               PayQuoteError(:final message) => _PayQuoteMessage(
-                message: message.isNotEmpty
-                    ? message
-                    : S.of(context).payFailureGeneric,
+                message: message.isNotEmpty ? message : S.of(context).payFailureGeneric,
                 onRetry: () => context.read<PayQuoteCubit>().load(),
               ),
             },
@@ -132,7 +130,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
     // A fee line is shown when the quote carries one. The signed quote itself
     // is not changed.
     final showFee = feeChf != null || feeRealu != null;
-    final parts = _quoteParts(
+    final parts = payQuoteParts(
       billChf: state.fiatAmount,
       shares: swap.amount,
       proceedsChf: swap.estimatedAmount,
@@ -144,10 +142,16 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
     final useEur = settings.currency == Currency.eur && state.hasEurReceipt;
     // The till asked for this franc amount. It stays on the requested row
     // even when the receipt shows the stored euro figures.
-    final requestedChf = _chf(parts.billChf, 'CHF');
-    final feeFiat = useEur ? _chf(state.feeEur!, 'EUR') : _chf(parts.feeChf, 'CHF');
-    final roundingFiat = useEur ? _chf(state.roundingEur!, 'EUR') : _chf(parts.roundingChf, 'CHF');
-    final totalFiat = useEur ? _chf(state.totalEur!, 'EUR') : _chf(parts.totalChf, 'CHF');
+    final requestedChf = formatPayFiat(parts.billChf, 'CHF');
+    final feeFiat = useEur
+        ? formatPayFiat(state.feeEur!, 'EUR')
+        : formatPayFiat(parts.feeChf, 'CHF');
+    final roundingFiat = useEur
+        ? formatPayFiat(state.roundingEur!, 'EUR')
+        : formatPayFiat(parts.roundingChf, 'CHF');
+    final totalFiat = useEur
+        ? formatPayFiat(state.totalEur!, 'EUR')
+        : formatPayFiat(parts.totalChf, 'CHF');
     return ScrollableActionsLayout(
       centerBody: true,
       body: Column(
@@ -185,7 +189,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                 ),
               ),
               Text(
-                _wholeRealu(swap.amount),
+                formatWholeRealu(swap.amount),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w700,
@@ -193,28 +197,28 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
               ),
             ],
           ),
-          _ReceiptCard(
+          PayQuoteReceiptCard(
             children: [
-              _AmountRow(
+              PayQuoteAmountRow(
                 label: S.of(context).payQuoteRequested,
-                realu: _realu(parts.billRealu),
+                realu: formatPayRealu(parts.billRealu),
                 chf: requestedChf,
-                also: useEur ? _chf(state.billEur!, 'EUR') : null,
+                also: useEur ? formatPayFiat(state.billEur!, 'EUR') : null,
               ),
               if (showFee)
-                _AmountRow(
+                PayQuoteAmountRow(
                   label: S.of(context).payQuoteRealuFees,
-                  realu: _realu(parts.feeRealu),
+                  realu: formatPayRealu(parts.feeRealu),
                   chf: feeFiat,
                 ),
-              _AmountRow(
+              PayQuoteAmountRow(
                 label: S.of(context).payQuoteRounding,
-                realu: _realu(parts.roundingRealu),
+                realu: formatPayRealu(parts.roundingRealu),
                 chf: roundingFiat,
               ),
-              _AmountRow(
+              PayQuoteAmountRow(
                 label: S.of(context).payQuoteTotal,
-                realu: _realu(parts.totalRealu),
+                realu: formatPayRealu(parts.totalRealu),
                 chf: totalFiat,
               ),
             ],
@@ -231,9 +235,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
       actions: [
         AppFilledButton(
           label: S.of(context).payConfirmButton,
-          state: _navigating
-              ? FilledButtonState.loading
-              : FilledButtonState.idle,
+          state: _navigating ? FilledButtonState.loading : FilledButtonState.idle,
           onPressed: _navigating
               ? null
               : () async {
@@ -275,163 +277,6 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                 },
         ),
       ],
-    );
-  }
-}
-
-String _chf(double amount, String asset) =>
-    '${amount.toStringAsFixed(2)} $asset';
-
-String _wholeRealu(double shares) =>
-    '${shares.toStringAsFixed(0)} ${realUnitAsset.symbol}';
-
-/// At least two decimals, up to eight, without a tail of zeros.
-String _realu(double amount) {
-  final rounded = (amount * 1e8).round() / 1e8;
-  var text = rounded.toStringAsFixed(8);
-  text = text.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
-  if (!text.contains('.')) {
-    text = '$text.00';
-  } else if (text.split('.').last.length == 1) {
-    text = '${text}0';
-  }
-  return '$text ${realUnitAsset.symbol}';
-}
-
-class _QuoteParts {
-  final double billChf;
-  final double billRealu;
-  final double feeChf;
-  final double feeRealu;
-  final double roundingChf;
-  final double roundingRealu;
-  final double totalChf;
-  final double totalRealu;
-
-  const _QuoteParts({
-    required this.billChf,
-    required this.billRealu,
-    required this.feeChf,
-    required this.feeRealu,
-    required this.roundingChf,
-    required this.roundingRealu,
-    required this.totalChf,
-    required this.totalRealu,
-  });
-}
-
-/// Splits the sold shares into the bill, the fee, and the whole-share round-up.
-/// The round-up is the remainder, so the three REALU lines add up to [shares].
-_QuoteParts _quoteParts({
-  required double billChf,
-  required double shares,
-  required double proceedsChf,
-  required double feeChf,
-  required double feeRealu,
-}) {
-  final price = shares == 0 ? 0.0 : proceedsChf / shares;
-  final billRealu = price == 0 ? 0.0 : billChf / price;
-  final roundingChf = proceedsChf - billChf - feeChf;
-  final roundingRealu = shares - billRealu - feeRealu;
-  return _QuoteParts(
-    billChf: billChf,
-    billRealu: billRealu,
-    feeChf: feeChf,
-    feeRealu: feeRealu,
-    roundingChf: roundingChf,
-    roundingRealu: roundingRealu,
-    totalChf: billChf + feeChf + roundingChf,
-    totalRealu: billRealu + feeRealu + roundingRealu,
-  );
-}
-
-class _ReceiptCard extends StatelessWidget {
-  final List<Widget> children;
-
-  const _ReceiptCard({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = <Widget>[];
-    for (var i = 0; i < children.length; i++) {
-      rows.add(children[i]);
-      if (i < children.length - 1) {
-        rows.add(
-          const Divider(
-            height: 1,
-            indent: 16,
-            endIndent: 16,
-            color: RealUnitColors.neutral200,
-          ),
-        );
-      }
-    }
-    return Container(
-      decoration: BoxDecoration(
-        color: RealUnitColors.neutral50,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(children: rows),
-    );
-  }
-}
-
-class _AmountRow extends StatelessWidget {
-  final String label;
-  final String realu;
-  final String chf;
-  final String? also;
-
-  const _AmountRow({
-    required this.label,
-    required this.realu,
-    required this.chf,
-    this.also,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final small = Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35);
-    final fiatStyle = small?.copyWith(color: RealUnitColors.neutral600);
-    final Widget fiat = also == null
-        ? Text(chf, textAlign: TextAlign.end, softWrap: true, style: fiatStyle)
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(chf, textAlign: TextAlign.end, softWrap: true, style: fiatStyle),
-              Text(also!, textAlign: TextAlign.end, softWrap: true, style: fiatStyle),
-            ],
-          );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 4,
-        children: [
-          Text(
-            label,
-            softWrap: true,
-            style: small?.copyWith(color: RealUnitColors.neutral500),
-          ),
-          Row(
-            spacing: 12,
-            children: [
-              Flexible(
-                child: Text(
-                  realu,
-                  softWrap: true,
-                  style: small?.copyWith(
-                    color: RealUnitColors.realUnitBlack,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Flexible(child: fiat),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

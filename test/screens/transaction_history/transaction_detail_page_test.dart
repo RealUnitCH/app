@@ -13,6 +13,7 @@ import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
+import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_detail_page.dart';
@@ -27,8 +28,7 @@ import 'package:realunit_wallet/widgets/frozen_chf_label.dart';
 class _MockReceiptCubit extends MockCubit<TransactionHistoryReceiptState>
     implements TransactionHistoryReceiptCubit {}
 
-class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState>
-    implements SettingsBloc {}
+class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState> implements SettingsBloc {}
 
 Transaction _tx({
   TransferCategory? category,
@@ -76,6 +76,28 @@ DfxTransaction _dfxTx({
   note: '',
   data: null,
   timestamp: DateTime.utc(2026, 8, 24, 10),
+);
+
+Transaction _paymentWithQuote() => Transaction(
+  height: 0,
+  txId: 'tx-payment-detail',
+  chainId: realUnitAsset.chainId,
+  senderAddress: '0x1111111111111111111111111111111111111111',
+  receiverAddress: '0x3333333333333333333333333333333333333333',
+  amount: BigInt.from(3),
+  asset: realUnitAsset,
+  type: TransactionTypes.tokenTransfer,
+  category: TransferCategory.payment,
+  note: '',
+  data: const PayQuoteBreakdown(
+    merchantName: 'Café Zürich',
+    billChf: 2,
+    shares: 3,
+    proceedsChf: 3.6,
+    feeChf: 0.05,
+    feeRealu: 0.05 / 1.2,
+  ).encode(),
+  timestamp: DateTime.utc(2026, 5, 14, 11, 5),
 );
 
 Transaction _referral() => Transaction(
@@ -275,6 +297,73 @@ void main() {
       verifyNever(() => receiptCubit.generateExchangeReceipt(any()));
     },
   );
+
+  testWidgets(
+    'payment with a pay quote breakdown shows the quote figures',
+    (tester) async {
+      await pumpDetail(tester, _paymentWithQuote());
+
+      expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+      expect(find.text('- 3 REALU'), findsOneWidget);
+      expect(find.text('Empfänger'), findsOneWidget);
+      expect(find.text('Café Zürich'), findsOneWidget);
+      expect(find.text('Sie verkaufen'), findsOneWidget);
+      expect(find.text('Geforderter Betrag'), findsOneWidget);
+      expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+      expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+      expect(find.text('Total'), findsOneWidget);
+      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+      expect(find.text('Zahlungsbeleg'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'payment quote figures are masked when amounts are hidden',
+    (tester) async {
+      const hidden = SettingsState(language: Language.de, hideAmounts: true);
+      when(() => settings.state).thenReturn(hidden);
+      whenListen(
+        settings,
+        const Stream<SettingsState>.empty(),
+        initialState: hidden,
+      );
+
+      await pumpDetail(tester, _paymentWithQuote());
+
+      expect(find.text('Empfänger'), findsOneWidget);
+      expect(find.text('Café Zürich'), findsOneWidget);
+      expect(find.text('Sie verkaufen'), findsOneWidget);
+      expect(find.text('Geforderter Betrag'), findsOneWidget);
+      expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+      expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+      expect(find.text('Total'), findsOneWidget);
+      expect(find.text('3 REALU'), findsNothing);
+      expect(find.text('1.66666667 REALU'), findsNothing);
+      expect(find.text('2.00 CHF'), findsNothing);
+      expect(find.text('0.04166667 REALU'), findsNothing);
+      expect(find.text('0.05 CHF'), findsNothing);
+      expect(find.text('1.29166667 REALU'), findsNothing);
+      expect(find.text('1.55 CHF'), findsNothing);
+      expect(find.text('3.00 REALU'), findsNothing);
+      expect(find.text('3.60 CHF'), findsNothing);
+      expect(find.text('***.**'), findsWidgets);
+    },
+  );
+
+  testWidgets('payment without a breakdown does not show the requested amount', (
+    tester,
+  ) async {
+    await pumpDetail(tester, _tx(category: TransferCategory.payment));
+
+    expect(find.text('Geforderter Betrag'), findsNothing);
+    expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+  });
+
+  testWidgets('sale does not show the requested amount', (tester) async {
+    await pumpDetail(tester, _tx(category: TransferCategory.sale));
+
+    expect(find.text('Geforderter Betrag'), findsNothing);
+  });
 
   testWidgets(
     'sale DfxTransaction names the sale proceeds and the payout, without sender or tx id',

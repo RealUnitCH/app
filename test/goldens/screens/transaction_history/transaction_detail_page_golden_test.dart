@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_detail_page.dart';
@@ -14,8 +15,7 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockTransactionHistoryReceiptCubit
-    extends MockCubit<TransactionHistoryReceiptState>
+class _MockTransactionHistoryReceiptCubit extends MockCubit<TransactionHistoryReceiptState>
     implements TransactionHistoryReceiptCubit {}
 
 void main() {
@@ -96,7 +96,14 @@ void main() {
     type: TransactionTypes.tokenTransfer,
     category: TransferCategory.payment,
     note: '',
-    data: null,
+    data: const PayQuoteBreakdown(
+      merchantName: 'Café Zürich',
+      billChf: 2,
+      shares: 3,
+      proceedsChf: 3.6,
+      feeChf: 0.05,
+      feeRealu: 0.05 / 1.2,
+    ).encode(),
     timestamp: DateTime.utc(2026, 5, 14, 11, 5),
   );
 
@@ -356,6 +363,22 @@ void main() {
         expect(find.text('Beleg'), findsNothing);
         expect(find.text('Auszahlung (DFX AG)'), findsNothing);
         expect(find.text('tx-payment-detail'), findsNothing);
+        expect(find.text('Empfänger'), findsOneWidget);
+        expect(find.text('Café Zürich'), findsOneWidget);
+        expect(find.text('Sie verkaufen'), findsOneWidget);
+        expect(find.text('3 REALU'), findsOneWidget);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+        expect(find.text('0.04166667 REALU'), findsOneWidget);
+        expect(find.text('0.05 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.29166667 REALU'), findsOneWidget);
+        expect(find.text('1.55 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
       },
       builder: () => wrapForGolden(
         MultiBlocProvider(

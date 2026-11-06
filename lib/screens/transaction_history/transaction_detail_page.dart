@@ -6,6 +6,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/completed_transaction.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
@@ -52,8 +53,7 @@ class TransactionDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          TransactionHistoryReceiptCubit(getIt<RealUnitPdfService>()),
+      create: (_) => TransactionHistoryReceiptCubit(getIt<RealUnitPdfService>()),
       child: TransactionDetailView(args: args),
     );
   }
@@ -74,10 +74,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<
-      TransactionHistoryReceiptCubit,
-      TransactionHistoryReceiptState
-    >(
+    return BlocConsumer<TransactionHistoryReceiptCubit, TransactionHistoryReceiptState>(
       listener: (context, state) async {
         if (state is TransactionHistoryReceiptFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -94,6 +91,9 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
       builder: (context, state) {
         final transaction = widget.args.transaction;
         final fieldRows = _fieldRows(context);
+        final payQuote = transaction.category == TransferCategory.payment
+            ? PayQuoteBreakdown.tryParse(transaction.data)
+            : null;
         final content = Padding(
           padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 0.0),
           child: Column(
@@ -122,6 +122,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
                   ),
                 ],
               ),
+              if (payQuote case final breakdown?) _PaymentQuoteBreakdown(breakdown: breakdown),
               if (fieldRows.isNotEmpty)
                 Container(
                   width: double.infinity,
@@ -165,8 +166,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
                     child: AppFilledButton(
                       label: S.of(context).transactionDetailBackToMain,
-                      onPressed: () =>
-                          context.goNamed(AppRoutes.dashboard),
+                      onPressed: () => context.goNamed(AppRoutes.dashboard),
                     ),
                   ),
                 ],
@@ -345,6 +345,100 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     setState(() => _pending = .exchange);
     context.read<TransactionHistoryReceiptCubit>().generateExchangeReceipt(
       widget.args.transaction.txId,
+    );
+  }
+}
+
+class _PaymentQuoteBreakdown extends StatelessWidget {
+  const _PaymentQuoteBreakdown({required this.breakdown});
+
+  final PayQuoteBreakdown breakdown;
+
+  @override
+  Widget build(BuildContext context) {
+    final hideAmounts = context.watch<SettingsBloc>().state.hideAmounts;
+    final parts = payQuoteParts(
+      billChf: breakdown.billChf,
+      shares: breakdown.shares,
+      proceedsChf: breakdown.proceedsChf,
+      feeChf: breakdown.feeChf,
+      feeRealu: breakdown.feeRealu,
+    );
+    String figure(String formatted) => hideAmounts ? '***.**' : formatted;
+    final merchant = breakdown.merchantName?.trim();
+    final showFee = breakdown.feeChf != 0 || breakdown.feeRealu != 0;
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: .stretch,
+        spacing: 20,
+        children: [
+          if (merchant != null && merchant.isNotEmpty)
+            Column(
+              spacing: 2,
+              children: [
+                Text(
+                  S.of(context).payQuoteMerchant,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: RealUnitColors.neutral500,
+                  ),
+                ),
+                Text(
+                  merchant,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          Column(
+            spacing: 4,
+            children: [
+              Text(
+                S.of(context).youSell,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: RealUnitColors.neutral500,
+                ),
+              ),
+              Text(
+                figure(formatWholeRealu(breakdown.shares)),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          PayQuoteReceiptCard(
+            children: [
+              PayQuoteAmountRow(
+                label: S.of(context).payQuoteRequested,
+                realu: figure(formatPayRealu(parts.billRealu)),
+                chf: figure(formatPayFiat(parts.billChf, 'CHF')),
+              ),
+              if (showFee)
+                PayQuoteAmountRow(
+                  label: S.of(context).payQuoteRealuFees,
+                  realu: figure(formatPayRealu(parts.feeRealu)),
+                  chf: figure(formatPayFiat(parts.feeChf, 'CHF')),
+                ),
+              PayQuoteAmountRow(
+                label: S.of(context).payQuoteRounding,
+                realu: figure(formatPayRealu(parts.roundingRealu)),
+                chf: figure(formatPayFiat(parts.roundingChf, 'CHF')),
+              ),
+              PayQuoteAmountRow(
+                label: S.of(context).payQuoteTotal,
+                realu: figure(formatPayRealu(parts.totalRealu)),
+                chf: figure(formatPayFiat(parts.totalChf, 'CHF')),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

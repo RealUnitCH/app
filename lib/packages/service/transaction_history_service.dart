@@ -73,7 +73,7 @@ class TransactionHistoryService extends DFXAuthService {
             type: TransactionTypes.tokenTransfer,
             category: TransferCategory.fromValue(entry.category),
             note: '',
-            data: null,
+            data: entry.payment?.encode(),
             timestamp: entry.timestamp,
           );
 
@@ -94,7 +94,7 @@ class TransactionHistoryService extends DFXAuthService {
             type: TransactionTypes.tokenTransfer,
             category: TransferCategory.fromValue(entry.category),
             note: '',
-            data: null,
+            data: entry.payment?.encode(),
             timestamp: entry.timestamp,
           );
 

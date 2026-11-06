@@ -54,6 +54,44 @@ void main() {
 
       expect(dto.category, 'transferIn');
     });
+
+    test('without payment leaves payment null', () {
+      final dto = HistoryEventDto.fromJson({
+        'timestamp': '2026-05-15T10:00:00Z',
+        'txHash': '0xabc',
+      });
+
+      expect(dto.payment, isNull);
+    });
+
+    test('payment object of the five numbers plus merchantName parses', () {
+      final dto = HistoryEventDto.fromJson({
+        'timestamp': '2026-05-15T10:00:00Z',
+        'txHash': '0xabc',
+        'payment': {
+          'merchantName': 'Café Zürich',
+          'billChf': 2,
+          'shares': 3,
+          'proceedsChf': 3.6,
+          'feeChf': 0.05,
+          'feeRealu': 0.05 / 1.2,
+        },
+      });
+
+      expect(dto.payment, isNotNull);
+      expect(dto.payment!.merchantName, 'Café Zürich');
+      expect(dto.payment!.encode(), contains('payQuote'));
+    });
+
+    test('malformed payment stays null', () {
+      final dto = HistoryEventDto.fromJson({
+        'timestamp': '2026-05-15T10:00:00Z',
+        'txHash': '0xabc',
+        'payment': '246.50',
+      });
+
+      expect(dto.payment, isNull);
+    });
   });
 
   group('$AccountHistoryDto.fromJson', () {
