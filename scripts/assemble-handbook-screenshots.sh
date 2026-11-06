@@ -506,6 +506,7 @@ MAPPING=(
   "452-settings-user-data-page-email-only-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_email_only_name_update.png"
   "453-settings-user-data-page-empty-name-update=screens/settings_user_data/goldens/macos/settings_user_data_page_empty_name_update.png"
   "456-kyc-update-share-register-name-page-submitting=screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png"
+  "457-kyc-update-share-register-name-page-bitbox-required=screens/kyc/goldens/macos/kyc_update_share_register_name_page_bitbox_required.png"
 )
 
 missing=()
