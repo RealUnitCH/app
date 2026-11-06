@@ -31,58 +31,46 @@ class PayQuoteDto {
     return jsonEncode(payload);
   }
 
+  factory PayQuoteDto.fromJson(Map<String, dynamic> json) {
+    final kind = json['kind'] as String?;
+    if (kind != null && kind != 'payQuote') {
+      throw const FormatException();
+    }
+    return PayQuoteDto(
+      merchantName: json['merchantName'] as String?,
+      billChf: _finite(json['billChf'] as num),
+      shares: _finite(json['shares'] as num),
+      proceedsChf: _finite(json['proceedsChf'] as num),
+      feeChf: _finite(json['feeChf'] as num),
+      feeRealu: _finite(json['feeRealu'] as num),
+    );
+  }
+
   /// A stored booking is a JSON string and must name `payQuote`.
   static PayQuoteDto? tryParse(String? raw) {
     if (raw == null || raw.isEmpty) return null;
     try {
-      return _fromRaw(jsonDecode(raw), assumeKind: false);
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      final json = Map<String, dynamic>.from(decoded);
+      if (json['kind'] != 'payQuote') return null;
+      return PayQuoteDto.fromJson(json);
     } catch (_) {
       return null;
     }
   }
 
   /// History may omit `kind`. A non-object, including a referral decimal, stays null.
-  static PayQuoteDto? tryFromJson(Object? raw) => _fromRaw(raw, assumeKind: true);
-
-  static PayQuoteDto? _fromRaw(Object? raw, {required bool assumeKind}) {
+  static PayQuoteDto? tryFromJson(Object? raw) {
     if (raw is! Map) return null;
-    final Map<String, dynamic> json;
     try {
-      json = Map<String, dynamic>.from(raw);
-    } catch (_) {
-      return null;
-    }
-    try {
-      final kind = json['kind'];
-      if (kind == null) {
-        if (!assumeKind) return null;
-      } else if (kind as String != 'payQuote') {
-        return null;
-      }
-      final merchant = json['merchantName'];
-      final String? merchantName;
-      if (merchant == null) {
-        merchantName = null;
-      } else {
-        merchantName = merchant as String;
-      }
-      return PayQuoteDto(
-        merchantName: merchantName,
-        billChf: _number(json['billChf']),
-        shares: _number(json['shares']),
-        proceedsChf: _number(json['proceedsChf']),
-        feeChf: _number(json['feeChf']),
-        feeRealu: _number(json['feeRealu']),
-      );
+      return PayQuoteDto.fromJson(Map<String, dynamic>.from(raw));
     } catch (_) {
       return null;
     }
   }
 
-  static double _number(Object? value) {
-    if (value is! num) {
-      throw const FormatException();
-    }
+  static double _finite(num value) {
     final asDouble = value.toDouble();
     if (!asDouble.isFinite) {
       throw const FormatException();

@@ -53,6 +53,41 @@ void main() {
     expect(parsed.feeRealu, breakdown.feeRealu);
   });
 
+  test('tryFromJson rejects a non-finite number and a non-string merchant', () {
+    expect(
+      PayQuoteDto.tryFromJson({
+        'billChf': double.nan,
+        'shares': 3,
+        'proceedsChf': 3.6,
+        'feeChf': 0.05,
+        'feeRealu': 0.04,
+      }),
+      isNull,
+    );
+    expect(
+      PayQuoteDto.tryFromJson({
+        'merchantName': 1,
+        'billChf': 2,
+        'shares': 3,
+        'proceedsChf': 3.6,
+        'feeChf': 0.05,
+        'feeRealu': 0.04,
+      }),
+      isNull,
+    );
+    expect(
+      PayQuoteDto.tryFromJson({
+        'kind': 'payQuote',
+        'billChf': double.infinity,
+        'shares': 3,
+        'proceedsChf': 3.6,
+        'feeChf': 0.05,
+        'feeRealu': 0.04,
+      }),
+      isNull,
+    );
+  });
+
   test('encode omits a null or blank merchant name', () {
     const blank = PayQuoteDto(
       merchantName: '   ',
