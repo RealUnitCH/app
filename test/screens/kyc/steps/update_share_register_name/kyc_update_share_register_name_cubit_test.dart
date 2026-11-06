@@ -103,6 +103,31 @@ void main() {
     );
 
     blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+      'retrySubmit triggers the same post as submit',
+      setUp: () {
+        whenResponse(
+          const RealUnitRegistrationResponseDto(status: RegistrationStatus.completed),
+        );
+      },
+      build: build,
+      act: (cubit) => cubit.retrySubmit(
+        shareRegisterNameFailed: _failed,
+        shareRegisterNameSendFailed: _sendFailed,
+        registrationDateUnavailable: _dateUnavailable,
+        signingCancelled: _signingCancelled,
+      ),
+      expect: () => [
+        const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+        const KycUpdateShareRegisterNameSuccess(),
+      ],
+      verify: (_) {
+        verify(
+          () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+        ).called(1);
+      },
+    );
+
+    blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
       'alreadyRegistered → Success',
       setUp: () {
         whenResponse(
