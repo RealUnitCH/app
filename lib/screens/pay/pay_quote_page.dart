@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_process_page.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_parts.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/transaction_history/completed_transaction.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_detail_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
@@ -263,10 +265,23 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                   }
                   if (!context.mounted) return;
                   if (swapCompleted is PayProcessCompleted) {
+                    final quote = PayQuoteDto(
+                      merchantName: state.merchantName,
+                      billChf: state.fiatAmount,
+                      shares: swap.amount,
+                      proceedsChf: swap.estimatedAmount,
+                      feeChf: feeChf ?? 0,
+                      feeRealu: feeRealu ?? 0,
+                    );
+                    final booked = await attachPayQuote(
+                      swapCompleted.transaction,
+                      quote,
+                    );
+                    if (!context.mounted) return;
                     context.goNamed(
                       AppRoutes.transactionDetail,
                       extra: TransactionDetailArgs(
-                        transaction: swapCompleted.transaction,
+                        transaction: booked,
                         walletAddress: swapCompleted.walletAddress,
                         returnToDashboard: true,
                       ),

@@ -253,6 +253,17 @@ void main() {
       expect(await repo.findTxIdIgnoreCase('0xdef'), isNull);
     });
 
+    test('transactionDataIgnoreCase returns stored text and ignores case', () async {
+      await repo.insertTransaction(
+        buildTokenTransfer(txId: '0xAbC', height: 1, data: '{"kind":"payQuote"}'),
+      );
+      await repo.insertTransaction(buildTokenTransfer(txId: '0xempty', height: 2));
+
+      expect(await repo.transactionDataIgnoreCase('0xabc'), '{"kind":"payQuote"}');
+      expect(await repo.transactionDataIgnoreCase('0xempty'), isNull);
+      expect(await repo.transactionDataIgnoreCase('0xmissing'), isNull);
+    });
+
     test('isReferralPayoutIgnoreCase is true only for stored prize rows', () async {
       await repo.insertTransaction(
         buildTokenTransfer(

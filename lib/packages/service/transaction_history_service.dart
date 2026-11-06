@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/io/format_frozen_chf.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/history/dto/account_history_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_payout_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/referral_json_list.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/transactions/dto/transactions_dto.dart';
@@ -52,6 +53,11 @@ class TransactionHistoryService extends DFXAuthService {
         final matchingTransaction = transactions.firstWhereOrNull(
           (t) => t.inputTxId == txId || t.outputTxId == txId,
         );
+        final bookingData = await _payQuoteData(
+          payment: entry.payment,
+          exists: exists,
+          txId: txId,
+        );
 
         if (matchingTransaction != null && matchingTransaction.id != null) {
           final dfxTransaction = DfxTransaction(
@@ -73,7 +79,7 @@ class TransactionHistoryService extends DFXAuthService {
             type: TransactionTypes.tokenTransfer,
             category: TransferCategory.fromValue(entry.category),
             note: '',
-            data: entry.payment?.encode(),
+            data: bookingData,
             timestamp: entry.timestamp,
           );
 
@@ -94,7 +100,7 @@ class TransactionHistoryService extends DFXAuthService {
             type: TransactionTypes.tokenTransfer,
             category: TransferCategory.fromValue(entry.category),
             note: '',
-            data: entry.payment?.encode(),
+            data: bookingData,
             timestamp: entry.timestamp,
           );
 
@@ -108,6 +114,21 @@ class TransactionHistoryService extends DFXAuthService {
     }
 
     await _syncReferralPayouts();
+  }
+
+  /// The history API does not send the confirmation quote. Keep a booking
+  /// this app already stored. A payment object from the API replaces it.
+  /// A referral decimal and any other non-quote stay out of this field.
+  Future<String?> _payQuoteData({
+    required PayQuoteDto? payment,
+    required bool exists,
+    required String txId,
+  }) async {
+    if (payment != null) return payment.encode();
+    if (!exists) return null;
+    final stored = await _transactionRepository.transactionDataIgnoreCase(txId);
+    if (PayQuoteDto.tryParse(stored) == null) return null;
+    return stored;
   }
 
   Future<void> _syncReferralPayouts() async {
