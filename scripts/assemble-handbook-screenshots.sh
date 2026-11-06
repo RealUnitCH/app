@@ -493,6 +493,7 @@ MAPPING=(
   "441-pay-locations-detail-none=screens/pay/goldens/macos/pay_locations_detail_none.png"
   "442-pay-locations-detail-others=screens/pay/goldens/macos/pay_locations_detail_others.png"
   "443-pay-locations-detail-photo=screens/pay/goldens/macos/pay_locations_detail_photo.png"
+  "444-transaction-detail-payment-no-quote=screens/transaction_history/goldens/macos/transaction_detail_payment_no_quote.png"
   "445-sell-failure-generic=screens/sell/goldens/macos/sell_failure_generic.png"
 )
 
