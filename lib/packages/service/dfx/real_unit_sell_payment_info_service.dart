@@ -67,6 +67,10 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
         amountWei: responseDto.eip7702.amountWei,
         decimals: appStore.apiConfig.asset.decimals,
       );
+      final depositAddress = responseDto.depositAddress;
+      if (responseDto.isValid && (depositAddress == null || depositAddress.isEmpty)) {
+        throw const FormatException('A tradable sell quote has no deposit address');
+      }
 
       return SellPaymentInfo(
         id: responseDto.id,
@@ -77,7 +81,7 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
         estimatedAmount: responseDto.estimatedAmount,
         exchangeRate: responseDto.exchangeRate,
         rate: responseDto.rate,
-        depositAddress: responseDto.depositAddress,
+        depositAddress: depositAddress ?? '',
         tokenAddress: responseDto.tokenAddress,
         chainId: responseDto.chainId,
         ethBalance: responseDto.ethBalance,
