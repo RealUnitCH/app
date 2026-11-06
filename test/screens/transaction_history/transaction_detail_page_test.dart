@@ -347,7 +347,9 @@ void main() {
       expect(find.text('1.55 CHF'), findsNothing);
       expect(find.text('3.00 REALU'), findsNothing);
       expect(find.text('3.60 CHF'), findsNothing);
-      expect(find.text('***.**'), findsWidgets);
+      expect(find.text('- 3 REALU'), findsNothing);
+      expect(find.text('- ***.**'), findsOneWidget);
+      expect(find.text('***.**'), findsNWidgets(8));
     },
   );
 

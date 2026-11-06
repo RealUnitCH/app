@@ -453,6 +453,98 @@ void main() {
       ),
     );
 
+    Future<void> expectHiddenQuote(
+      WidgetTester tester, {
+      required bool receipts,
+      required bool backToMain,
+    }) async {
+      await tester.pumpAndSettle();
+      expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+      expect(find.text('- ***.**'), findsOneWidget);
+      expect(find.text('- 3 REALU'), findsNothing);
+      expect(find.text('Empfänger'), findsOneWidget);
+      expect(find.text('Café Zürich'), findsOneWidget);
+      expect(find.text('Geforderter Betrag'), findsOneWidget);
+      expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+      expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+      expect(find.text('Total'), findsOneWidget);
+      expect(find.text('***.**'), findsNWidgets(8));
+      expect(find.text('2.00 CHF'), findsNothing);
+      expect(find.text('3.60 CHF'), findsNothing);
+      expect(find.text('1.66666667 REALU'), findsNothing);
+      expect(find.text('0.04166667 REALU'), findsNothing);
+      expect(find.text('0.05 CHF'), findsNothing);
+      expect(find.text('1.29166667 REALU'), findsNothing);
+      expect(find.text('1.55 CHF'), findsNothing);
+      expect(find.text('3.00 REALU'), findsNothing);
+      expect(find.text('Sie verkaufen'), findsNothing);
+      expect(find.text('Belege'), receipts ? findsOneWidget : findsNothing);
+      expect(
+        find.text('RealUnit-Verkauf'),
+        receipts ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.text('Zahlungsbeleg'),
+        receipts ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.text('Zurück zum Hauptscreen'),
+        backToMain ? findsOneWidget : findsNothing,
+      );
+      expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+      expect(find.text('Beleg'), findsNothing);
+    }
+
+    hiddenPaymentDetail(
+      Transaction transaction, {
+      bool returnToDashboard = false,
+    }) {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(language: Language.de, hideAmounts: true),
+      );
+      return wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: transaction,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+              returnToDashboard: returnToDashboard,
+            ),
+          ),
+        ),
+      );
+    }
+
+    goldenTest(
+      'payment detail page with hidden amounts',
+      fileName: 'transaction_detail_payment_hidden',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) => expectHiddenQuote(tester, receipts: true, backToMain: false),
+      builder: () => hiddenPaymentDetail(payment),
+    );
+
+    goldenTest(
+      'payment detail page with the back-to-main button and hidden amounts',
+      fileName: 'transaction_detail_back_to_main_hidden',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) => expectHiddenQuote(tester, receipts: true, backToMain: true),
+      builder: () => hiddenPaymentDetail(payment, returnToDashboard: true),
+    );
+
+    goldenTest(
+      'payment detail without receipts, with the back-to-main button and hidden amounts',
+      fileName: 'transaction_detail_sale_no_receipt_back_to_main_hidden',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) => expectHiddenQuote(tester, receipts: false, backToMain: true),
+      builder: () => hiddenPaymentDetail(paymentWithoutHash, returnToDashboard: true),
+    );
+
     // This test does not commit a PNG; the regenerate workflow writes it.
     goldenTest(
       'referral payout detail page',
