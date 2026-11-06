@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/setup/routing/effective_location.dart';
+import 'package:realunit_wallet/setup/routing/gate_locations.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
@@ -11,6 +12,7 @@ import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/share_register_name_prompt.dart';
 
 export 'package:realunit_wallet/setup/routing/effective_location.dart';
+export 'package:realunit_wallet/setup/routing/gate_locations.dart';
 
 /// The outcome of the boot/lock navigation decision (see
 /// [resolveBootNavigation]) driven by `main.dart`'s `_navigate`. The decision
@@ -50,29 +52,6 @@ final class BootNavRestore extends BootNavAction {
 final class BootNavStay extends BootNavAction {
   const BootNavStay();
 }
-
-/// Locations that are boot/lock gates: `_navigate` re-derives them from state
-/// and must never treat one as an in-flight route to restore. What *is*
-/// restorable is governed by the [restorableLocations] allowlist below — not
-/// by "anything that is not a gate".
-const Set<String> gateLocations = {
-  '/home',
-  '/welcome',
-  '/createWallet',
-  '/restoreWallet',
-  '/verifySeed',
-  '/onboardingComplete',
-  '/pinGate',
-  '/setupPin',
-  '/verifyPin',
-  '/bitboxAddressRecovery',
-  '/debugAuth',
-  '/updateRequired',
-};
-
-/// Whether [loc] resolves to one of the [gateLocations] gates. Compares the
-/// path only, so a query string cannot defeat the check.
-bool isGateLocation(String loc) => gateLocations.contains(Uri.parse(loc).path);
 
 /// Maps the location the app was backgrounded on to what the resume capture
 /// should store: gate locations map to null so a nested re-lock — backgrounded

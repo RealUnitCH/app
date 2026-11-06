@@ -659,5 +659,94 @@ void main() {
 
       expect(matchesOf(router), ['/dashboard', '/kyc']);
     });
+
+    testWidgets(
+      'does not cover /verifyPin when the registration info arrives late',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+
+        router.go('/verifyPin');
+        await tester.pump();
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/verifyPin']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        when(() => service.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+      },
+    );
+
+    testWidgets(
+      'does not cover /updateRequired when the registration info arrives late',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+
+        router.go('/updateRequired');
+        await tester.pump();
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/updateRequired']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
   });
 }
