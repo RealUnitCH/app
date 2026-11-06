@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/effective_location.dart';
+import 'package:realunit_wallet/setup/routing/gate_locations.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 bool _shareRegisterNamePromptInFlight = false;
@@ -15,13 +16,16 @@ void debugResetShareRegisterNamePromptInFlight() {
 /// After a dashboard landing, asks the API whether an approved name still has
 /// to be signed into the share register and opens KYC only when it does.
 /// A second call while one is in flight returns. Any failure returns without
-/// blocking boot.
+/// blocking boot. A gate visible when the response arrives is not covered
+/// with KYC.
 Future<void> promptShareRegisterNameUpdate(GoRouter router) async {
   if (_shareRegisterNamePromptInFlight) return;
   _shareRegisterNamePromptInFlight = true;
   try {
     final info = await getIt<RealUnitRegistrationService>().getRegistrationInfo();
     if (info.nameUpdateRequired != true) return;
+    final location = effectiveLocation(router.routerDelegate.currentConfiguration);
+    if (isGateLocation(location)) return;
     if (_locationIsKyc(router)) return;
     await router.pushNamed(AppRoutes.kyc);
   } catch (_) {
