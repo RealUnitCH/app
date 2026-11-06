@@ -97,7 +97,7 @@ void main() {
         pendingSteps: const {KycStepName.contactData},
       );
       expect(a, equals(b));
-      expect(a.props.length, 4);
+      expect(a.props.length, 5);
     });
 
     test('different pendingSteps is unequal', () {
