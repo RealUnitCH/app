@@ -94,33 +94,39 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
         final payQuote = transaction.category == TransferCategory.payment
             ? PayQuoteBreakdown.tryParse(transaction.data)
             : null;
+        final centerPaymentHeader = transaction.category == TransferCategory.payment;
         final content = Padding(
           padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 0.0),
           child: Column(
             crossAxisAlignment: .start,
             spacing: 16.0,
             children: [
-              Column(
-                crossAxisAlignment: .start,
-                children: [
-                  HideAmountText(
-                    leadingSymbol: _leadingSymbol(),
-                    amount: transaction.amount,
-                    decimals: transaction.asset.decimals,
-                    fractionalDigits: _fractionalDigits(),
-                    trimZeros: false,
-                    trailingSymbol: transaction.asset.symbol,
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: centerPaymentHeader ? .center : .start,
+                  children: [
+                    HideAmountText(
+                      leadingSymbol: _leadingSymbol(),
+                      amount: transaction.amount,
+                      decimals: transaction.asset.decimals,
+                      fractionalDigits: _fractionalDigits(),
+                      trimZeros: false,
+                      trailingSymbol: transaction.asset.symbol,
+                      textAlign: centerPaymentHeader ? .center : null,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
                     ),
-                  ),
-                  Text(
-                    transactionDateLabel(transaction.timestamp),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: RealUnitColors.neutral500,
+                    Text(
+                      transactionDateLabel(transaction.timestamp),
+                      textAlign: centerPaymentHeader ? .center : null,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: RealUnitColors.neutral500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               if (payQuote case final breakdown?) _PaymentQuoteBreakdown(breakdown: breakdown),
               if (fieldRows.isNotEmpty)
@@ -393,25 +399,6 @@ class _PaymentQuoteBreakdown extends StatelessWidget {
                 ),
               ],
             ),
-          Column(
-            spacing: 4,
-            children: [
-              Text(
-                S.of(context).youSell,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: RealUnitColors.neutral500,
-                ),
-              ),
-              Text(
-                figure(formatWholeRealu(breakdown.shares)),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
           PayQuoteReceiptCard(
             children: [
               PayQuoteAmountRow(

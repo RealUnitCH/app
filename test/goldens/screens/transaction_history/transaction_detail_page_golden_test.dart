@@ -365,8 +365,8 @@ void main() {
         expect(find.text('tx-payment-detail'), findsNothing);
         expect(find.text('Empfänger'), findsOneWidget);
         expect(find.text('Café Zürich'), findsOneWidget);
-        expect(find.text('Sie verkaufen'), findsOneWidget);
-        expect(find.text('3 REALU'), findsOneWidget);
+        expect(find.text('Sie verkaufen'), findsNothing);
+        expect(find.text('3 REALU'), findsNothing);
         expect(find.text('Geforderter Betrag'), findsOneWidget);
         expect(find.text('1.66666667 REALU'), findsOneWidget);
         expect(find.text('2.00 CHF'), findsOneWidget);
@@ -449,7 +449,8 @@ void main() {
         expect(find.text('Zurück zum Hauptscreen'), findsOneWidget);
         expect(find.text('Empfänger'), findsOneWidget);
         expect(find.text('Café Zürich'), findsOneWidget);
-        expect(find.text('Sie verkaufen'), findsOneWidget);
+        expect(find.text('Sie verkaufen'), findsNothing);
+        expect(find.text('3 REALU'), findsNothing);
         expect(find.text('Geforderter Betrag'), findsOneWidget);
         expect(find.text('1.66666667 REALU'), findsOneWidget);
         expect(find.text('2.00 CHF'), findsOneWidget);

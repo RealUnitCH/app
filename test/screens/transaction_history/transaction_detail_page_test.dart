@@ -307,7 +307,8 @@ void main() {
       expect(find.text('- 3 REALU'), findsOneWidget);
       expect(find.text('Empfänger'), findsOneWidget);
       expect(find.text('Café Zürich'), findsOneWidget);
-      expect(find.text('Sie verkaufen'), findsOneWidget);
+      expect(find.text('Sie verkaufen'), findsNothing);
+      expect(find.text('3 REALU'), findsNothing);
       expect(find.text('Geforderter Betrag'), findsOneWidget);
       expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
       expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
@@ -332,7 +333,7 @@ void main() {
 
       expect(find.text('Empfänger'), findsOneWidget);
       expect(find.text('Café Zürich'), findsOneWidget);
-      expect(find.text('Sie verkaufen'), findsOneWidget);
+      expect(find.text('Sie verkaufen'), findsNothing);
       expect(find.text('Geforderter Betrag'), findsOneWidget);
       expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
       expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
