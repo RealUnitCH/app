@@ -1,10 +1,15 @@
+import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_state.dart';
@@ -16,6 +21,12 @@ class _MockNameCubit extends MockCubit<KycUpdateShareRegisterNameState>
     implements KycUpdateShareRegisterNameCubit {}
 
 class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
+
+class _MockBitboxService extends Mock implements BitboxService {}
+
+class _MockWalletService extends Mock implements WalletService {}
+
+class _MockDfxKycService extends Mock implements DfxKycService {}
 
 const _kycData = KycPersonalData(
   accountType: KycAccountType.personal,
@@ -69,6 +80,18 @@ void main() {
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) async {});
   });
+
+  setUpAll(() {
+    final getIt = GetIt.instance;
+    final bitboxService = _MockBitboxService();
+    when(() => bitboxService.startScan()).thenAnswer((_) async => false);
+    when(() => bitboxService.getAllUsbDevices()).thenAnswer((_) async => <sdk.BitboxDevice>[]);
+    getIt.registerSingleton<BitboxService>(bitboxService);
+    getIt.registerSingleton<WalletService>(_MockWalletService());
+    getIt.registerSingleton<DfxKycService>(_MockDfxKycService());
+  });
+
+  tearDownAll(() async => GetIt.instance.reset());
 
   Widget buildView() => wrapForGolden(
     MultiBlocProvider(
