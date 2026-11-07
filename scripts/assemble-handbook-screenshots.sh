@@ -497,6 +497,8 @@ MAPPING=(
   "446-transaction-detail-payment-hidden=screens/transaction_history/goldens/macos/transaction_detail_payment_hidden.png"
   "447-transaction-detail-back-to-main-hidden=screens/transaction_history/goldens/macos/transaction_detail_back_to_main_hidden.png"
   "448-transaction-detail-sale-no-receipt-back-to-main-hidden=screens/transaction_history/goldens/macos/transaction_detail_sale_no_receipt_back_to_main_hidden.png"
+  "449-transaction-detail-payment-no-merchant=screens/transaction_history/goldens/macos/transaction_detail_payment_no_merchant.png"
+  "450-transaction-detail-payment-no-fee=screens/transaction_history/goldens/macos/transaction_detail_payment_no_fee.png"
   "445-sell-failure-generic=screens/sell/goldens/macos/sell_failure_generic.png"
 )
 

@@ -124,6 +124,50 @@ void main() {
     timestamp: DateTime.utc(2026, 5, 14, 11, 5),
   );
 
+  final paymentNoMerchant = Transaction(
+    height: 0,
+    txId: 'tx-payment-no-merchant',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x3333333333333333333333333333333333333333',
+    amount: BigInt.from(3),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.payment,
+    note: '',
+    data: const PayQuoteDto(
+      merchantName: null,
+      billChf: 2,
+      shares: 3,
+      proceedsChf: 3.6,
+      feeChf: 0.05,
+      feeRealu: 0.05 / 1.2,
+    ).encode(),
+    timestamp: DateTime.utc(2026, 5, 14, 11, 5),
+  );
+
+  final paymentNoFee = Transaction(
+    height: 0,
+    txId: 'tx-payment-no-fee',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x3333333333333333333333333333333333333333',
+    amount: BigInt.from(3),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.payment,
+    note: '',
+    data: const PayQuoteDto(
+      merchantName: 'Café Zürich',
+      billChf: 2,
+      shares: 3,
+      proceedsChf: 3.6,
+      feeChf: 0,
+      feeRealu: 0,
+    ).encode(),
+    timestamp: DateTime.utc(2026, 5, 14, 11, 5),
+  );
+
   final paymentWithoutHash = Transaction(
     height: 0,
     txId: '',
@@ -446,6 +490,106 @@ void main() {
           child: TransactionDetailView(
             args: TransactionDetailArgs(
               transaction: paymentWithoutQuote,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'payment detail page with a stored quote and no merchant name',
+      fileName: 'transaction_detail_payment_no_merchant',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+        expect(find.text('- 3 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+        expect(find.text('Zahlungsbeleg'), findsOneWidget);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+        expect(find.text('0.04166667 REALU'), findsOneWidget);
+        expect(find.text('0.05 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.29166667 REALU'), findsOneWidget);
+        expect(find.text('1.55 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
+        expect(find.text('Beleg'), findsNothing);
+        expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+        expect(find.text('tx-payment-no-merchant'), findsNothing);
+        expect(find.text('Empfänger'), findsNothing);
+        expect(find.text('Café Zürich'), findsNothing);
+        expect(find.text('Sie verkaufen'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: paymentNoMerchant,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'payment detail page with a stored quote and a zero fee',
+      fileName: 'transaction_detail_payment_no_fee',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+        expect(find.text('- 3 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+        expect(find.text('Zahlungsbeleg'), findsOneWidget);
+        expect(find.text('Empfänger'), findsOneWidget);
+        expect(find.text('Café Zürich'), findsOneWidget);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.33333333 REALU'), findsOneWidget);
+        expect(find.text('1.60 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
+        expect(find.text('Beleg'), findsNothing);
+        expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+        expect(find.text('tx-payment-no-fee'), findsNothing);
+        expect(find.text('Sie verkaufen'), findsNothing);
+        expect(find.text('Ethereum Transaction Fee'), findsNothing);
+        expect(find.text('0.05 CHF'), findsNothing);
+        expect(find.text('0.04166667 REALU'), findsNothing);
+        expect(find.text('1.55 CHF'), findsNothing);
+        expect(find.text('1.29166667 REALU'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: paymentNoFee,
               walletAddress: '0x1111111111111111111111111111111111111111',
             ),
           ),

@@ -45,7 +45,7 @@ class HistoryEventDto {
           ? TransferDto.fromJson(json['transfer'] as Map<String, dynamic>)
           : null,
       category: json['category'] as String?,
-      payment: PayQuoteDto.tryFromJson(json['payment']),
+      payment: PayQuoteDto.tryFromJson(json['payment'] as Object?),
     );
   }
 }
