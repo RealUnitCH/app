@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
@@ -14,8 +15,7 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockTransactionHistoryReceiptCubit
-    extends MockCubit<TransactionHistoryReceiptState>
+class _MockTransactionHistoryReceiptCubit extends MockCubit<TransactionHistoryReceiptState>
     implements TransactionHistoryReceiptCubit {}
 
 void main() {
@@ -85,6 +85,15 @@ void main() {
 
   // A payment: 3 whole shares sold by the DFX pay relay for a bill. On-chain it is a sale to the
   // Brokerbot; the API marks it as a payment, which has a sale receipt and a payment receipt.
+  final paymentQuote = const PayQuoteDto(
+    merchantName: 'Café Zürich',
+    billChf: 2,
+    shares: 3,
+    proceedsChf: 3.6,
+    feeChf: 0.05,
+    feeRealu: 0.05 / 1.2,
+  ).encode();
+
   final payment = Transaction(
     height: 0,
     txId: 'tx-payment-detail',
@@ -96,7 +105,66 @@ void main() {
     type: TransactionTypes.tokenTransfer,
     category: TransferCategory.payment,
     note: '',
+    data: paymentQuote,
+    timestamp: DateTime.utc(2026, 5, 14, 11, 5),
+  );
+
+  final paymentWithoutQuote = Transaction(
+    height: 0,
+    txId: 'tx-payment-no-quote',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x3333333333333333333333333333333333333333',
+    amount: BigInt.from(3),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.payment,
+    note: '',
     data: null,
+    timestamp: DateTime.utc(2026, 5, 14, 11, 5),
+  );
+
+  final paymentNoMerchant = Transaction(
+    height: 0,
+    txId: 'tx-payment-no-merchant',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x3333333333333333333333333333333333333333',
+    amount: BigInt.from(3),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.payment,
+    note: '',
+    data: const PayQuoteDto(
+      merchantName: null,
+      billChf: 2,
+      shares: 3,
+      proceedsChf: 3.6,
+      feeChf: 0.05,
+      feeRealu: 0.05 / 1.2,
+    ).encode(),
+    timestamp: DateTime.utc(2026, 5, 14, 11, 5),
+  );
+
+  final paymentNoFee = Transaction(
+    height: 0,
+    txId: 'tx-payment-no-fee',
+    chainId: realUnitAsset.chainId,
+    senderAddress: '0x1111111111111111111111111111111111111111',
+    receiverAddress: '0x3333333333333333333333333333333333333333',
+    amount: BigInt.from(3),
+    asset: realUnitAsset,
+    type: TransactionTypes.tokenTransfer,
+    category: TransferCategory.payment,
+    note: '',
+    data: const PayQuoteDto(
+      merchantName: 'Café Zürich',
+      billChf: 2,
+      shares: 3,
+      proceedsChf: 3.6,
+      feeChf: 0,
+      feeRealu: 0,
+    ).encode(),
     timestamp: DateTime.utc(2026, 5, 14, 11, 5),
   );
 
@@ -111,7 +179,7 @@ void main() {
     type: TransactionTypes.tokenTransfer,
     category: TransferCategory.payment,
     note: '',
-    data: null,
+    data: paymentQuote,
     timestamp: DateTime.utc(2026, 5, 14, 11, 5),
   );
 
@@ -356,6 +424,22 @@ void main() {
         expect(find.text('Beleg'), findsNothing);
         expect(find.text('Auszahlung (DFX AG)'), findsNothing);
         expect(find.text('tx-payment-detail'), findsNothing);
+        expect(find.text('Empfänger'), findsOneWidget);
+        expect(find.text('Café Zürich'), findsOneWidget);
+        expect(find.text('Sie verkaufen'), findsNothing);
+        expect(find.text('3 REALU'), findsNothing);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+        expect(find.text('0.04166667 REALU'), findsOneWidget);
+        expect(find.text('0.05 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.29166667 REALU'), findsOneWidget);
+        expect(find.text('1.55 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
       },
       builder: () => wrapForGolden(
         MultiBlocProvider(
@@ -373,6 +457,236 @@ void main() {
           ),
         ),
       ),
+    );
+
+    // A hashed payment the API synced without a quote still has both receipts.
+    goldenTest(
+      'payment detail page without a stored quote',
+      fileName: 'transaction_detail_payment_no_quote',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+        expect(find.text('- 3 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+        expect(find.text('Zahlungsbeleg'), findsOneWidget);
+        expect(find.text('Beleg'), findsNothing);
+        expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+        expect(find.text('tx-payment-no-quote'), findsNothing);
+        expect(find.text('Empfänger'), findsNothing);
+        expect(find.text('Café Zürich'), findsNothing);
+        expect(find.text('Geforderter Betrag'), findsNothing);
+        expect(find.text('Sie verkaufen'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: paymentWithoutQuote,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'payment detail page with a stored quote and no merchant name',
+      fileName: 'transaction_detail_payment_no_merchant',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+        expect(find.text('- 3 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+        expect(find.text('Zahlungsbeleg'), findsOneWidget);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+        expect(find.text('0.04166667 REALU'), findsOneWidget);
+        expect(find.text('0.05 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.29166667 REALU'), findsOneWidget);
+        expect(find.text('1.55 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
+        expect(find.text('Beleg'), findsNothing);
+        expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+        expect(find.text('tx-payment-no-merchant'), findsNothing);
+        expect(find.text('Empfänger'), findsNothing);
+        expect(find.text('Café Zürich'), findsNothing);
+        expect(find.text('Sie verkaufen'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: paymentNoMerchant,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // This test does not commit a PNG; the regenerate workflow writes it.
+    goldenTest(
+      'payment detail page with a stored quote and a zero fee',
+      fileName: 'transaction_detail_payment_no_fee',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+        expect(find.text('- 3 REALU'), findsOneWidget);
+        expect(find.text('Belege'), findsOneWidget);
+        expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+        expect(find.text('Zahlungsbeleg'), findsOneWidget);
+        expect(find.text('Empfänger'), findsOneWidget);
+        expect(find.text('Café Zürich'), findsOneWidget);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.33333333 REALU'), findsOneWidget);
+        expect(find.text('1.60 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
+        expect(find.text('Beleg'), findsNothing);
+        expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+        expect(find.text('tx-payment-no-fee'), findsNothing);
+        expect(find.text('Sie verkaufen'), findsNothing);
+        expect(find.text('Ethereum Transaction Fee'), findsNothing);
+        expect(find.text('0.05 CHF'), findsNothing);
+        expect(find.text('0.04166667 REALU'), findsNothing);
+        expect(find.text('1.55 CHF'), findsNothing);
+        expect(find.text('1.29166667 REALU'), findsNothing);
+      },
+      builder: () => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: paymentNoFee,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Future<void> expectHiddenQuote(
+      WidgetTester tester, {
+      required bool receipts,
+      required bool backToMain,
+    }) async {
+      await tester.pumpAndSettle();
+      expect(find.text('Verkauf und Zahlung'), findsOneWidget);
+      expect(find.text('- ***.**'), findsOneWidget);
+      expect(find.text('- 3 REALU'), findsNothing);
+      expect(find.text('Empfänger'), findsOneWidget);
+      expect(find.text('Café Zürich'), findsOneWidget);
+      expect(find.text('Geforderter Betrag'), findsOneWidget);
+      expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+      expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+      expect(find.text('Total'), findsOneWidget);
+      expect(find.text('***.**'), findsNWidgets(8));
+      expect(find.text('2.00 CHF'), findsNothing);
+      expect(find.text('3.60 CHF'), findsNothing);
+      expect(find.text('1.66666667 REALU'), findsNothing);
+      expect(find.text('0.04166667 REALU'), findsNothing);
+      expect(find.text('0.05 CHF'), findsNothing);
+      expect(find.text('1.29166667 REALU'), findsNothing);
+      expect(find.text('1.55 CHF'), findsNothing);
+      expect(find.text('3.00 REALU'), findsNothing);
+      expect(find.text('Sie verkaufen'), findsNothing);
+      expect(find.text('Belege'), receipts ? findsOneWidget : findsNothing);
+      expect(
+        find.text('RealUnit-Verkauf'),
+        receipts ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.text('Zahlungsbeleg'),
+        receipts ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.text('Zurück zum Hauptscreen'),
+        backToMain ? findsOneWidget : findsNothing,
+      );
+      expect(find.text('Auszahlung (DFX AG)'), findsNothing);
+      expect(find.text('Beleg'), findsNothing);
+    }
+
+    hiddenPaymentDetail(
+      Transaction transaction, {
+      bool returnToDashboard = false,
+    }) {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(language: Language.de, hideAmounts: true),
+      );
+      return wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<TransactionHistoryReceiptCubit>.value(
+              value: receiptCubit,
+            ),
+          ],
+          child: TransactionDetailView(
+            args: TransactionDetailArgs(
+              transaction: transaction,
+              walletAddress: '0x1111111111111111111111111111111111111111',
+              returnToDashboard: returnToDashboard,
+            ),
+          ),
+        ),
+      );
+    }
+
+    goldenTest(
+      'payment detail page with hidden amounts',
+      fileName: 'transaction_detail_payment_hidden',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) => expectHiddenQuote(tester, receipts: true, backToMain: false),
+      builder: () => hiddenPaymentDetail(payment),
+    );
+
+    goldenTest(
+      'payment detail page with the back-to-main button and hidden amounts',
+      fileName: 'transaction_detail_back_to_main_hidden',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) => expectHiddenQuote(tester, receipts: true, backToMain: true),
+      builder: () => hiddenPaymentDetail(payment, returnToDashboard: true),
+    );
+
+    goldenTest(
+      'payment detail without receipts, with the back-to-main button and hidden amounts',
+      fileName: 'transaction_detail_sale_no_receipt_back_to_main_hidden',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) => expectHiddenQuote(tester, receipts: false, backToMain: true),
+      builder: () => hiddenPaymentDetail(paymentWithoutHash, returnToDashboard: true),
     );
 
     // This test does not commit a PNG; the regenerate workflow writes it.
@@ -424,6 +738,22 @@ void main() {
         expect(find.text('Zahlungsbeleg'), findsOneWidget);
         expect(find.text('Auszahlung (DFX AG)'), findsNothing);
         expect(find.text('Zurück zum Hauptscreen'), findsOneWidget);
+        expect(find.text('Empfänger'), findsOneWidget);
+        expect(find.text('Café Zürich'), findsOneWidget);
+        expect(find.text('Sie verkaufen'), findsNothing);
+        expect(find.text('3 REALU'), findsNothing);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+        expect(find.text('0.04166667 REALU'), findsOneWidget);
+        expect(find.text('0.05 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.29166667 REALU'), findsOneWidget);
+        expect(find.text('1.55 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
       },
       builder: () => wrapForGolden(
         MultiBlocProvider(
@@ -494,6 +824,21 @@ void main() {
         expect(find.text('RealUnit-Verkauf'), findsNothing);
         expect(find.text('Auszahlung (DFX AG)'), findsNothing);
         expect(find.text('Beleg'), findsNothing);
+        expect(find.text('Empfänger'), findsOneWidget);
+        expect(find.text('Café Zürich'), findsOneWidget);
+        expect(find.text('Sie verkaufen'), findsNothing);
+        expect(find.text('Geforderter Betrag'), findsOneWidget);
+        expect(find.text('1.66666667 REALU'), findsOneWidget);
+        expect(find.text('2.00 CHF'), findsOneWidget);
+        expect(find.text('Ethereum Transaction Fee'), findsOneWidget);
+        expect(find.text('0.04166667 REALU'), findsOneWidget);
+        expect(find.text('0.05 CHF'), findsOneWidget);
+        expect(find.text('Aufrundung auf ganze REALU'), findsOneWidget);
+        expect(find.text('1.29166667 REALU'), findsOneWidget);
+        expect(find.text('1.55 CHF'), findsOneWidget);
+        expect(find.text('Total'), findsOneWidget);
+        expect(find.text('3.60 CHF'), findsOneWidget);
+        expect(find.text('3.00 REALU'), findsOneWidget);
       },
       builder: () => wrapForGolden(
         MultiBlocProvider(

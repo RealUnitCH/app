@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/transaction_history/completed_transaction.dart';
@@ -269,5 +270,135 @@ void main() {
         },
       );
     }
+  });
+
+  group('attachPayQuote', () {
+    late _MockRepository repository;
+
+    const quote = PayQuoteDto(
+      merchantName: 'Café Zürich',
+      billChf: 2,
+      shares: 2,
+      proceedsChf: 2,
+      feeChf: 0.05,
+      feeRealu: 0.04,
+    );
+
+    setUpAll(() {
+      registerFallbackValue(_FakeTransaction());
+      registerFallbackValue(_FakeDfxTransaction());
+    });
+
+    setUp(() {
+      repository = _MockRepository();
+      when(() => repository.insertTransaction(any())).thenAnswer((_) async => 1);
+      when(() => repository.insertDfxTransaction(any())).thenAnswer((_) async {});
+    });
+
+    test('persists the encoded quote on a plain transaction', () async {
+      final tx = buildFallbackTransaction(
+        asset: realUnitAsset,
+        walletAddress: _wallet,
+        txHash: '0xpay',
+        amount: BigInt.from(2),
+        receiverAddress: _receiver,
+        category: TransferCategory.payment,
+        timestamp: _now,
+      );
+
+      final booked = await attachPayQuote(tx, quote, repository: repository);
+
+      expect(booked, isNot(isA<DfxTransaction>()));
+      expect(booked.data, quote.encode());
+      final captured =
+          verify(
+                () => repository.insertTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
+      expect(captured.data, quote.encode());
+      expect(captured.txId, '0xpay');
+      verifyNever(() => repository.insertDfxTransaction(any()));
+    });
+
+    test('keeps the DFX legs and persists through insertDfxTransaction', () async {
+      final tx = DfxTransaction(
+        dfxId: 7,
+        rate: 1.2,
+        inputTxId: '0xin',
+        outputTxId: '0xout',
+        inputAmount: 2,
+        inputAsset: 'CHF',
+        outputAmount: 2,
+        outputAsset: 'ZCHF',
+        height: 4,
+        txId: '0xpay',
+        chainId: realUnitAsset.chainId,
+        senderAddress: _wallet,
+        receiverAddress: _receiver,
+        amount: BigInt.from(3),
+        asset: realUnitAsset,
+        type: TransactionTypes.tokenTransfer,
+        category: TransferCategory.payment,
+        note: 'dfx',
+        data: null,
+        timestamp: _now,
+      );
+
+      final booked = await attachPayQuote(tx, quote, repository: repository);
+
+      expect(booked, isA<DfxTransaction>());
+      final dfx = booked as DfxTransaction;
+      expect(dfx.dfxId, 7);
+      expect(dfx.rate, 1.2);
+      expect(dfx.inputTxId, '0xin');
+      expect(dfx.outputTxId, '0xout');
+      expect(dfx.inputAmount, 2);
+      expect(dfx.outputAmount, 2);
+      expect(dfx.data, quote.encode());
+      final captured =
+          verify(
+                () => repository.insertDfxTransaction(captureAny()),
+              ).captured.single
+              as DfxTransaction;
+      expect(captured.dfxId, 7);
+      expect(captured.data, quote.encode());
+      verifyNever(() => repository.insertTransaction(any()));
+    });
+
+    test('returns the quote without writing when the hash is unusable', () async {
+      final tx = buildFallbackTransaction(
+        asset: realUnitAsset,
+        walletAddress: _wallet,
+        txHash: 'confirmed',
+        amount: BigInt.from(2),
+        receiverAddress: _receiver,
+        category: TransferCategory.payment,
+        timestamp: _now,
+      );
+
+      final booked = await attachPayQuote(tx, quote, repository: repository);
+
+      expect(booked.txId, '');
+      expect(booked.data, quote.encode());
+      verifyNever(() => repository.insertTransaction(any()));
+      verifyNever(() => repository.insertDfxTransaction(any()));
+    });
+
+    test('still returns the quote when persistence throws', () async {
+      when(() => repository.insertTransaction(any())).thenThrow(Exception('db'));
+      final tx = buildFallbackTransaction(
+        asset: realUnitAsset,
+        walletAddress: _wallet,
+        txHash: '0xpay',
+        amount: BigInt.from(2),
+        receiverAddress: _receiver,
+        category: TransferCategory.payment,
+        timestamp: _now,
+      );
+
+      final booked = await attachPayQuote(tx, quote, repository: repository);
+
+      expect(booked.data, quote.encode());
+    });
   });
 }

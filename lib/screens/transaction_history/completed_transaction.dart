@@ -1,7 +1,9 @@
 import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
@@ -39,6 +41,69 @@ Transaction buildFallbackTransaction({
   );
 }
 
+/// Same row, with [data] replaced. A DFX payment keeps its off-chain legs.
+Transaction transactionWithData(Transaction source, String? data) {
+  if (source is DfxTransaction) {
+    return DfxTransaction(
+      dfxId: source.dfxId,
+      rate: source.rate,
+      inputTxId: source.inputTxId,
+      outputTxId: source.outputTxId,
+      inputAmount: source.inputAmount,
+      inputAsset: source.inputAsset,
+      outputAmount: source.outputAmount,
+      outputAsset: source.outputAsset,
+      height: source.height,
+      txId: source.txId,
+      chainId: source.chainId,
+      senderAddress: source.senderAddress,
+      receiverAddress: source.receiverAddress,
+      amount: source.amount,
+      asset: source.asset,
+      type: source.type,
+      category: source.category,
+      note: source.note,
+      data: data,
+      timestamp: source.timestamp,
+    );
+  }
+  return Transaction(
+    height: source.height,
+    txId: source.txId,
+    chainId: source.chainId,
+    senderAddress: source.senderAddress,
+    receiverAddress: source.receiverAddress,
+    amount: source.amount,
+    asset: source.asset,
+    type: source.type,
+    category: source.category,
+    note: source.note,
+    data: data,
+    timestamp: source.timestamp,
+  );
+}
+
+/// Stores the confirmation quote on the completed payment when the hash can
+/// identify the row later. Without a usable hash the in-memory booking is
+/// still returned, so the detail can show the quote once.
+Future<Transaction> attachPayQuote(
+  Transaction transaction,
+  PayQuoteDto quote, {
+  TransactionRepository? repository,
+}) async {
+  final booked = transactionWithData(transaction, quote.encode());
+  if (usableTxHash(booked.txId) == null) return booked;
+  try {
+    final repo = repository ?? getIt<TransactionRepository>();
+    if (booked is DfxTransaction) {
+      await repo.insertDfxTransaction(booked);
+    } else {
+      await repo.insertTransaction(booked);
+    }
+  } catch (_) {}
+  return booked;
+}
+
 class CompletedTransactionRequest {
   final String? txHash;
   final BigInt amount;
@@ -61,9 +126,10 @@ class CompletedTransaction {
   });
 }
 
-typedef CompletedTransactionResolver = Future<CompletedTransaction> Function(
-  CompletedTransactionRequest request,
-);
+typedef CompletedTransactionResolver =
+    Future<CompletedTransaction> Function(
+      CompletedTransactionRequest request,
+    );
 
 Future<CompletedTransaction> resolveCompletedTransaction(
   CompletedTransactionRequest request, {

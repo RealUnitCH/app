@@ -1,3 +1,5 @@
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
+
 class AccountHistoryDto {
   final String address;
   final List<HistoryEventDto> history;
@@ -25,12 +27,14 @@ class HistoryEventDto {
   final String txHash;
   final TransferDto? transfer;
   final String? category;
+  final PayQuoteDto? payment;
 
   const HistoryEventDto({
     required this.timestamp,
     required this.txHash,
     this.transfer,
     this.category,
+    this.payment,
   });
 
   factory HistoryEventDto.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,7 @@ class HistoryEventDto {
           ? TransferDto.fromJson(json['transfer'] as Map<String, dynamic>)
           : null,
       category: json['category'] as String?,
+      payment: PayQuoteDto.tryFromJson(json['payment'] as Object?),
     );
   }
 }

@@ -142,6 +142,14 @@ class TransactionRepository {
   Future<String?> findTxIdIgnoreCase(String txId) =>
       _appDatabase.getTransactionIgnoreCase(txId).then((row) => row?.txId);
 
+  /// Stored booking text when [txId] matches ignoring case, otherwise null.
+  /// An empty column is null so a missing quote is not kept.
+  Future<String?> transactionDataIgnoreCase(String txId) async {
+    final data = (await _appDatabase.getTransactionIgnoreCase(txId))?.data;
+    if (data == null || data.isEmpty) return null;
+    return data;
+  }
+
   /// True when the stored row is already a prize (Offerte Punkt 2).
   /// Account history must not rewrite it as a buy and drop frozen CHF.
   Future<bool> isReferralPayoutIgnoreCase(String txId) async {

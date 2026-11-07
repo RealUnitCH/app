@@ -12,6 +12,7 @@ import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/history/dto/pay_quote_dto.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -38,17 +39,46 @@ Map<String, dynamic> _historyEntry({
   String value = '1000000',
   String timestamp = '2026-01-01T00:00:00Z',
   String? category,
-}) =>
-    {
-      'timestamp': timestamp,
-      'txHash': txHash,
-      'transfer': {
-        'from': from,
-        'to': to,
-        'value': value,
-      },
-      if (category != null) 'category': category,
-    };
+  Map<String, dynamic>? payment,
+}) => {
+  'timestamp': timestamp,
+  'txHash': txHash,
+  'transfer': {
+    'from': from,
+    'to': to,
+    'value': value,
+  },
+  if (category != null) 'category': category,
+  if (payment != null) 'payment': payment,
+};
+
+const _storedQuote = PayQuoteDto(
+  merchantName: 'Café Zürich',
+  billChf: 2,
+  shares: 2,
+  proceedsChf: 2,
+  feeChf: 0.05,
+  feeRealu: 0.04,
+);
+
+const _apiQuote = PayQuoteDto(
+  merchantName: 'Café Zürich',
+  billChf: 3,
+  shares: 3,
+  proceedsChf: 3,
+  feeChf: 0.05,
+  feeRealu: 0.04,
+);
+
+Map<String, dynamic> _paymentJson(PayQuoteDto quote) => {
+  'kind': 'payQuote',
+  'merchantName': quote.merchantName,
+  'billChf': quote.billChf,
+  'shares': quote.shares,
+  'proceedsChf': quote.proceedsChf,
+  'feeChf': quote.feeChf,
+  'feeRealu': quote.feeRealu,
+};
 
 Map<String, dynamic> _accountHistory(List<Map<String, dynamic>> events) => {
   'address': _wallet,
@@ -107,6 +137,7 @@ void main() {
     when(() => txRepo.insertDfxTransaction(any())).thenAnswer((_) async {});
     when(() => txRepo.updateTransaction(any())).thenAnswer((_) async => 1);
     when(() => txRepo.updateDfxTransaction(any())).thenAnswer((_) async {});
+    when(() => txRepo.transactionDataIgnoreCase(any())).thenAnswer((_) async => null);
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
@@ -199,9 +230,11 @@ void main() {
 
       await build(client).apiBasedSync();
 
-      final captured = verify(
-        () => txRepo.insertTransaction(captureAny()),
-      ).captured.single as Transaction;
+      final captured =
+          verify(
+                () => txRepo.insertTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
       expect(captured.category, TransferCategory.transferIn);
     });
 
@@ -218,9 +251,11 @@ void main() {
 
       await build(client).apiBasedSync();
 
-      final captured = verify(
-        () => txRepo.insertTransaction(captureAny()),
-      ).captured.single as Transaction;
+      final captured =
+          verify(
+                () => txRepo.insertTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
       expect(captured.category, isNull);
     });
 
@@ -394,8 +429,7 @@ void main() {
       await build(client).apiBasedSync();
 
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, 'referral-payout-9');
       expect(captured.type, TransactionTypes.referralPayout);
     });
@@ -545,8 +579,7 @@ void main() {
 
       await build(client).apiBasedSync();
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, '0xgood');
     });
 
@@ -587,8 +620,7 @@ void main() {
         throwsA(isA<FormatException>()),
       );
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, '0xgood');
       expect(captured.type, TransactionTypes.referralPayout);
     });
@@ -835,6 +867,115 @@ void main() {
       await build(client).apiBasedSync();
 
       verifyNever(() => txRepo.insertTransaction(any()));
+    });
+
+    test('keeps a stored pay quote when history has no payment', () async {
+      when(() => txRepo.existsTransaction('0xabc')).thenAnswer((_) async => true);
+      when(
+        () => txRepo.transactionDataIgnoreCase('0xabc'),
+      ).thenAnswer((_) async => _storedQuote.encode());
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/history')) {
+          return http.Response(
+            jsonEncode(_accountHistory([_historyEntry(txHash: '0xabc')])),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      });
+
+      await build(client).apiBasedSync();
+
+      final captured =
+          verify(
+                () => txRepo.updateTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
+      expect(captured.data, _storedQuote.encode());
+    });
+
+    test('keeps a stored pay quote on the DFX update path', () async {
+      when(() => txRepo.existsTransaction('0xabc')).thenAnswer((_) async => true);
+      when(
+        () => txRepo.transactionDataIgnoreCase('0xabc'),
+      ).thenAnswer((_) async => _storedQuote.encode());
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/history')) {
+          return http.Response(
+            jsonEncode(_accountHistory([_historyEntry(txHash: '0xabc')])),
+            200,
+          );
+        }
+        return http.Response(
+          jsonEncode([_txJson(id: 42, inputTxId: '0xabc')]),
+          200,
+        );
+      });
+
+      await build(client).apiBasedSync();
+
+      final captured =
+          verify(
+                () => txRepo.updateDfxTransaction(captureAny()),
+              ).captured.single
+              as DfxTransaction;
+      expect(captured.data, _storedQuote.encode());
+      verifyNever(() => txRepo.updateTransaction(any()));
+    });
+
+    test('drops a stored non-quote when history has no payment', () async {
+      when(() => txRepo.existsTransaction('0xabc')).thenAnswer((_) async => true);
+      when(
+        () => txRepo.transactionDataIgnoreCase('0xabc'),
+      ).thenAnswer((_) async => '246.50');
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/history')) {
+          return http.Response(
+            jsonEncode(_accountHistory([_historyEntry(txHash: '0xabc')])),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      });
+
+      await build(client).apiBasedSync();
+
+      final captured =
+          verify(
+                () => txRepo.updateTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
+      expect(captured.data, isNull);
+    });
+
+    test('lets an API payment replace a stored pay quote', () async {
+      when(() => txRepo.existsTransaction('0xabc')).thenAnswer((_) async => true);
+      when(
+        () => txRepo.transactionDataIgnoreCase('0xabc'),
+      ).thenAnswer((_) async => _storedQuote.encode());
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/history')) {
+          return http.Response(
+            jsonEncode(
+              _accountHistory([
+                _historyEntry(txHash: '0xabc', payment: _paymentJson(_apiQuote)),
+              ]),
+            ),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      });
+
+      await build(client).apiBasedSync();
+
+      final captured =
+          verify(
+                () => txRepo.updateTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
+      expect(captured.data, _apiQuote.encode());
+      verifyNever(() => txRepo.transactionDataIgnoreCase(any()));
     });
   });
 }
