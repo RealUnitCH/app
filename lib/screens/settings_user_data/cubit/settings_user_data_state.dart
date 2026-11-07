@@ -32,13 +32,19 @@ class SettingsUserDataSuccess extends SettingsUserDataState {
   // local `pendingSteps == inReview` interpretation.
   final UserCapabilitiesDto capabilities;
 
+  /// API gate from registration info. Only an explicit `true` shows the
+  /// share-register name action. `null` and `false` add no widget, so the
+  /// default user-data screen stays unchanged.
+  final bool? nameUpdateRequired;
+
   const SettingsUserDataSuccess({
     this.userData,
     this.email,
     this.pendingSteps = const {},
     this.capabilities = const UserCapabilitiesDto(),
+    this.nameUpdateRequired,
   });
 
   @override
-  List<Object?> get props => [userData, email, pendingSteps, capabilities];
+  List<Object?> get props => [userData, email, pendingSteps, capabilities, nameUpdateRequired];
 }

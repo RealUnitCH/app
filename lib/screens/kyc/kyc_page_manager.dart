@@ -15,6 +15,7 @@ import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_pa
 import 'package:realunit_wallet/screens/kyc/steps/personal_data/kyc_personal_data_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/signature_unsupported/kyc_signature_unsupported_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/kyc_update_share_register_name_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_account_merge_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_completed_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
@@ -62,7 +63,12 @@ class KycViewManager extends StatelessWidget {
           KycManualReviewPage(rejectionMessage: rejectionMessage),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
-        KycSuccess(:final currentStep, :final urlOrToken, :final realUnitUserData) =>
+        KycSuccess(
+          :final currentStep,
+          :final urlOrToken,
+          :final realUnitUserData,
+          :final shareRegisterName,
+        ) =>
           switch (currentStep) {
             KycStep.email => const KycEmailPage(),
             KycStep.confirmEmail => const KycConfirmEmailPage(),
@@ -79,6 +85,10 @@ class KycViewManager extends StatelessWidget {
               initialUserData: realUnitUserData,
             ),
             KycStep.linkWallet => KycLinkWalletPage(userData: realUnitUserData),
+            KycStep.updateShareRegisterName => KycUpdateShareRegisterNamePage(
+              userData: realUnitUserData,
+              shareRegisterName: shareRegisterName,
+            ),
             KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),
             KycStep.twoFa => const Kyc2FaPage(),
             KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),

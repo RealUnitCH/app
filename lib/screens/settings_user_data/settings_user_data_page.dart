@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
@@ -49,6 +50,7 @@ class SettingsUserDataView extends StatelessWidget {
               :final email,
               :final pendingSteps,
               :final capabilities,
+              :final nameUpdateRequired,
             ) =>
               userData != null
                   ? SingleChildScrollView(
@@ -122,6 +124,8 @@ class SettingsUserDataView extends StatelessWidget {
                                       }
                                     : null,
                               ),
+                              if (nameUpdateRequired == true)
+                                const _ShareRegisterNameUpdateButton(),
                             ],
                           ),
                         ),
@@ -131,9 +135,35 @@ class SettingsUserDataView extends StatelessWidget {
                   ? SafeArea(
                       child: Padding(
                         padding: const .symmetric(horizontal: 12.0),
-                        child: _UserDataRow(
-                          label: S.of(context).email,
-                          value: email,
+                        child: nameUpdateRequired == true
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                spacing: 24,
+                                children: [
+                                  _UserDataRow(
+                                    label: S.of(context).email,
+                                    value: email,
+                                  ),
+                                  const _ShareRegisterNameUpdateButton(),
+                                ],
+                              )
+                            : _UserDataRow(
+                                label: S.of(context).email,
+                                value: email,
+                              ),
+                      ),
+                    )
+                  : nameUpdateRequired == true
+                  ? SafeArea(
+                      child: Padding(
+                        padding: const .symmetric(horizontal: 12.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 24,
+                          children: [
+                            Text(S.of(context).userDataNotFound),
+                            const _ShareRegisterNameUpdateButton(),
+                          ],
                         ),
                       ),
                     )
@@ -154,6 +184,23 @@ class SettingsUserDataView extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ShareRegisterNameUpdateButton extends StatelessWidget {
+  const _ShareRegisterNameUpdateButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppFilledButton(
+      onPressed: () async {
+        await context.pushNamed(AppRoutes.kyc);
+        if (context.mounted) {
+          await context.read<SettingsUserDataCubit>().getUserData();
+        }
+      },
+      label: S.of(context).shareRegisterNameAction,
     );
   }
 }

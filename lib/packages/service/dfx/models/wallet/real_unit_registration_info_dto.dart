@@ -44,6 +44,20 @@ class RealUnitRegistrationInfoDto {
   /// stored as null.
   final String? rejectionMessage;
 
+  /// Whether DFX has approved a new personal name that must be signed into the
+  /// existing Aktionariat registration. Nullable on purpose: `null` means a
+  /// pre-rollout backend (the field does not exist yet) or no gate. Only an
+  /// explicit JSON `true` opens the gate — a missing key, JSON null, or a
+  /// non-bool is stored as null. Same legacy rule as [emailConfirmed] and
+  /// [manualReview]. See CONTRIBUTING.md "API as Decision Authority".
+  final bool? nameUpdateRequired;
+
+  /// Exact `name` field to sign when [nameUpdateRequired] is true. The API
+  /// already sends BitBox ASCII. A missing key, JSON null, a non-string, or
+  /// an empty string is stored as null. The value is not trimmed: it is the
+  /// string that gets signed.
+  final String? shareRegisterName;
+
   RealUnitRegistrationInfoDto({
     required this.state,
     this.realUnitUserDataDto,
@@ -51,6 +65,8 @@ class RealUnitRegistrationInfoDto {
     this.confirmedDate,
     this.manualReview,
     this.rejectionMessage,
+    this.nameUpdateRequired,
+    this.shareRegisterName,
   });
 
   factory RealUnitRegistrationInfoDto.fromJson(Map<String, dynamic> json) {
@@ -65,8 +81,20 @@ class RealUnitRegistrationInfoDto {
           : null,
       manualReview: json['manualReview'] as bool?,
       rejectionMessage: _optionalRejectionMessage(json['rejectionMessage']),
+      nameUpdateRequired: _optionalBool(json['nameUpdateRequired']),
+      shareRegisterName: _optionalNonEmptyString(json['shareRegisterName']),
     );
   }
+}
+
+/// Wire bool: only a JSON bool is kept. Missing, null, or a non-bool is null.
+bool? _optionalBool(Object? value) => value is bool ? value : null;
+
+/// Wire string that must be signed as-is. Missing, null, non-string, or empty
+/// is null. A non-empty string is returned unchanged.
+String? _optionalNonEmptyString(Object? value) {
+  if (value is! String || value.isEmpty) return null;
+  return value;
 }
 
 /// Wire `rejectionMessage`: missing, JSON null, non-string, or blank → null.

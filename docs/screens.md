@@ -105,7 +105,7 @@ Column meaning:
 | Settings | `ReferralCreatePage` | `settingsReferralCreate` | `/settings/referral/create` | `280`, `284`, `343`, `344`, `345`, `346`, `347`, `405`, `406`, `407` |
 | Settings | `ReferralOverviewPage` | — | — | `276`, `351`, `352`, `353`, `354`, `355`, `408`, `409` |
 | Settings | `ReferralTermsPage` | `referralTerms` | `/referralTerms` | `281`, `283`, `358` |
-| Settings | `SettingsUserDataPage` | `settingsUserData` | `/settings/userData` | `227`, `228`, `229`, `230`, `231`, `232`, `233`, `234`, `235` |
+| Settings | `SettingsUserDataPage` | `settingsUserData` | `/settings/userData` | `227`, `228`, `229`, `230`, `231`, `232`, `233`, `234`, `235`, `451`, `452`, `453` |
 | Settings | `SettingsEditNamePage` | `settingsEditName` | `/settings/userData/editName` | `236` |
 | Settings | `SettingsEditAddressPage` | `settingsEditAddress` | `/settings/userData/editAddress` | `238` |
 | Settings | `SettingsEditPhoneNumberPage` | `settingsEditPhone` | `/settings/userData/editPhoneNumber` | `237` |
@@ -132,6 +132,7 @@ Column meaning:
 | KYC | `Kyc2faPage` | — | — | `156`, `157`, `158`, `159`, `160` |
 | KYC | `KycIdentPage` | — | — | `193`, `194`, `195`, `196` |
 | KYC | `KycLinkWalletPage` | — | — | `197`, `198`, `199`, `200`, `201`, `202` |
+| KYC | `KycUpdateShareRegisterNamePage` | — | — | `444`, `446`, `447`, `448`, `449`, `450`, `454`, `455`, `456`, `457` |
 | KYC | `KycSignatureUnsupportedPage` | — | — | `203` |
 | KYC | `KycFinancialDataPage` | — | — | `180`, `182`, `184` |
 | KYC | `KycFinancialDataQuestionsPage` | — | — | `185`, `186`, `187`, `188`, `189`, `190`, `191`, `192` |
