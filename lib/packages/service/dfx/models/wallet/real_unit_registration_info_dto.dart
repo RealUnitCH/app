@@ -58,6 +58,18 @@ class RealUnitRegistrationInfoDto {
   /// string that gets signed.
   final String? shareRegisterName;
 
+  /// Whether the app must open the share-register name signing step.
+  ///
+  /// Derived only from API fields: the registration must be
+  /// [RealUnitRegistrationState.alreadyRegistered], [manualReview] must not be
+  /// true (manual review has precedence), and [nameUpdateRequired] must be an
+  /// explicit true. Nullable fields use legacy tolerance: null/false do not
+  /// open the signing step. See CONTRIBUTING.md "API as Decision Authority".
+  bool get shareRegisterNameSigningRequired =>
+      state == RealUnitRegistrationState.alreadyRegistered &&
+      manualReview != true &&
+      nameUpdateRequired == true;
+
   RealUnitRegistrationInfoDto({
     required this.state,
     this.realUnitUserDataDto,

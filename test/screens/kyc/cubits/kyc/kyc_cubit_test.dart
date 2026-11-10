@@ -787,10 +787,10 @@ void main() {
       ],
     );
 
-    // Share-register name gate. Only an explicit `nameUpdateRequired == true`
-    // opens the sign step. A missing name or user record still opens it.
-    // `false`, `null`, and an absent field do not. Manual review is above
-    // the gate and still wins.
+    // Share-register name gate. Only `shareRegisterNameSigningRequired` opens
+    // the sign step: AlreadyRegistered + nameUpdateRequired=true + no manual
+    // review. A missing name or user record still opens it. `false`, `null`,
+    // and an absent field do not. Manual review is above the gate and wins.
     blocTest<KycCubit, KycState>(
       'emits KycSuccess(updateShareRegisterName) when AlreadyRegistered and nameUpdateRequired=true',
       setUp: () {

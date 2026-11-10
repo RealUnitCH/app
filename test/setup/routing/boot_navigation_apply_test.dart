@@ -660,6 +660,32 @@ void main() {
       expect(matchesOf(router), ['/dashboard', '/kyc']);
     });
 
+    testWidgets('manualReview=true does not open /kyc', (tester) async {
+      final service = GetIt.instance<RealUnitRegistrationService>();
+      when(() => service.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          manualReview: true,
+          nameUpdateRequired: true,
+          shareRegisterName: 'Ada Lovelace',
+        ),
+      );
+
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavGoNamed(AppRoutes.dashboard),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(matchesOf(router), ['/dashboard']);
+    });
+
     testWidgets(
       'does not cover /verifyPin when the registration info arrives late',
       (tester) async {

@@ -83,9 +83,95 @@ void main() {
     kycService: kycService,
   );
 
+  void stubUserData(
+    RealUnitRegistrationInfoDto registrationInfo, {
+    UserDto user = const UserDto(
+      mail: 'a@b.com',
+      kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
+    ),
+  }) {
+    when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async => registrationInfo);
+    when(() => kycService.getKycStatus()).thenAnswer(
+      (_) async => const KycLevelDto(kycLevel: KycLevel.level20, kycSteps: []),
+    );
+    when(() => kycService.getUser()).thenAnswer((_) async => user);
+  }
+
   // Cubit fires getUserData() in its constructor; we assert the final
   // state via stream.firstWhere rather than the full sequence.
   group('$SettingsUserDataCubit', () {
+    group('shareRegisterNameSigningRequired', () {
+      final cases = <String, ({RealUnitRegistrationInfoDto info, bool expected})>{
+        'true for nameUpdateRequired=true on AlreadyRegistered': (
+          info: RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+          ),
+          expected: true,
+        ),
+        'false for nameUpdateRequired=false': (
+          info: RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: false,
+          ),
+          expected: false,
+        ),
+        'false for nameUpdateRequired=null': (
+          info: RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+          ),
+          expected: false,
+        ),
+        'false when manualReview=true despite nameUpdateRequired=true': (
+          info: RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            manualReview: true,
+            nameUpdateRequired: true,
+          ),
+          expected: false,
+        ),
+        'false for another registration state': (
+          info: RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.addWallet,
+            nameUpdateRequired: true,
+          ),
+          expected: false,
+        ),
+      };
+
+      for (final entry in cases.entries) {
+        test(entry.key, () async {
+          stubUserData(entry.value.info);
+
+          final cubit = build();
+          await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
+
+          final success = cubit.state as SettingsUserDataSuccess;
+          expect(success.shareRegisterNameSigningRequired, entry.value.expected);
+        });
+      }
+
+      test('false for the email-only Success branch as well', () async {
+        stubUserData(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+          ),
+          user: const UserDto(
+            mail: 'fallback@b.com',
+            kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
+          ),
+        );
+
+        final cubit = build();
+        await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
+
+        final success = cubit.state as SettingsUserDataSuccess;
+        expect(success.userData, isNull);
+        expect(success.shareRegisterNameSigningRequired, isFalse);
+      });
+    });
+
     test('full Success when userData is present and no change steps are pending', () async {
       when(() => registrationService.getRegistrationInfo()).thenAnswer(
         (_) async => RealUnitRegistrationInfoDto(

@@ -356,6 +356,52 @@ void main() {
       expect(dto.shareRegisterName, 'Ada Lovelace');
     });
 
+    group('shareRegisterNameSigningRequired', () {
+      test('true only for AlreadyRegistered + nameUpdateRequired=true + no manual review', () {
+        final dto = RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          nameUpdateRequired: true,
+        );
+
+        expect(dto.shareRegisterNameSigningRequired, isTrue);
+      });
+
+      test('false for every other API combination', () {
+        final cases = <RealUnitRegistrationInfoDto>[
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            manualReview: true,
+            nameUpdateRequired: true,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: false,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: null,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.addWallet,
+            nameUpdateRequired: true,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.newRegistration,
+            nameUpdateRequired: true,
+          ),
+        ];
+
+        for (final dto in cases) {
+          expect(
+            dto.shareRegisterNameSigningRequired,
+            isFalse,
+            reason: 'state=${dto.state}, manualReview=${dto.manualReview}, '
+                'nameUpdateRequired=${dto.nameUpdateRequired}',
+          );
+        }
+      });
+    });
+
     test('nameUpdateRequired JSON false stays false; null or a non-bool stays null', () {
       expect(
         RealUnitRegistrationInfoDto.fromJson({

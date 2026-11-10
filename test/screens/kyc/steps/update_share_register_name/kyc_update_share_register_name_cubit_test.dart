@@ -232,6 +232,55 @@ void main() {
       ],
     );
 
+    for (final (label, message) in [
+      ('missing', ''),
+      ('empty', '   '),
+      ('whitespace-only', '\n\t  '),
+      ('generic API placeholder', 'Unknown error'),
+    ]) {
+      blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+        'RegistrationRejectedException with $label message → Failure with the rejection sentence',
+        setUp: () {
+          when(
+            () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+          ).thenThrow(
+            RegistrationRejectedException(
+              statusCode: 422,
+              code: 'REJECTED',
+              message: message,
+            ),
+          );
+        },
+        build: build,
+        act: submit,
+        expect: () => [
+          const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+          const KycUpdateShareRegisterNameFailure(_failed),
+        ],
+      );
+    }
+
+    blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+      'RegistrationRejectedException trims a valid message',
+      setUp: () {
+        when(
+          () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+        ).thenThrow(
+          const RegistrationRejectedException(
+            statusCode: 422,
+            code: 'REJECTED',
+            message: '  Name abgelehnt  ',
+          ),
+        );
+      },
+      build: build,
+      act: submit,
+      expect: () => [
+        const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+        const KycUpdateShareRegisterNameFailure('Name abgelehnt'),
+      ],
+    );
+
     blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
       'ApiException → Failure with its user-facing message and returns to idle',
       setUp: () {
@@ -253,6 +302,55 @@ void main() {
       expect: () => [
         const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
         const KycUpdateShareRegisterNameFailure('Zu viele Anfragen'),
+        const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+        const KycUpdateShareRegisterNameFailure('Zu viele Anfragen'),
+      ],
+    );
+
+    for (final (label, message) in [
+      ('missing', ''),
+      ('empty', '   '),
+      ('whitespace-only', '\n\t  '),
+      ('generic API placeholder', 'Unknown error'),
+    ]) {
+      blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+        'ApiException with $label message → Failure with the send sentence',
+        setUp: () {
+          when(
+            () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+          ).thenThrow(
+            ApiException(
+              statusCode: 500,
+              code: 'UNKNOWN',
+              message: message,
+            ),
+          );
+        },
+        build: build,
+        act: submit,
+        expect: () => [
+          const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+          const KycUpdateShareRegisterNameFailure(_sendFailed),
+        ],
+      );
+    }
+
+    blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+      'ApiException trims a valid message',
+      setUp: () {
+        when(
+          () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+        ).thenThrow(
+          const ApiException(
+            statusCode: 429,
+            code: 'RATE_LIMITED',
+            message: '  Zu viele Anfragen  ',
+          ),
+        );
+      },
+      build: build,
+      act: submit,
+      expect: () => [
         const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
         const KycUpdateShareRegisterNameFailure('Zu viele Anfragen'),
       ],

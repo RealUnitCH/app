@@ -167,6 +167,13 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
         'lib/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart',
   ),
   ResponsiveSurface(
+    id: 'settings_user_data_page',
+    description: 'Settings account data page (share-register name signing CTA)',
+    matrixTestPath:
+        'test/screens/settings_user_data/settings_user_data_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/settings_user_data/settings_user_data_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'settings_edit_phone_number_page',
     description: 'Settings edit phone number form',
     matrixTestPath:

@@ -171,8 +171,8 @@ void main() {
       builder: () => buildSubject(const SettingsUserDataFailure()),
     );
 
-    // nameUpdateRequired true adds the sign button under the data column.
-    // Existing cases above leave the flag unset, so their pixels stay put.
+    // The API-derived signing gate adds the sign button under the data column.
+    // Existing cases above leave the flag false, so their pixels stay put.
     goldenTest(
       'success with the share-register name button',
       fileName: 'settings_user_data_page_name_update',
@@ -180,7 +180,7 @@ void main() {
       builder: () => buildSubject(
         SettingsUserDataSuccess(
           userData: buildUserData(birthday: DateTime.utc(1990, 1, 1)),
-          nameUpdateRequired: true,
+          shareRegisterNameSigningRequired: true,
         ),
       ),
     );
@@ -192,7 +192,7 @@ void main() {
       builder: () => buildSubject(
         const SettingsUserDataSuccess(
           email: 'test-direct@dfx.swiss',
-          nameUpdateRequired: true,
+          shareRegisterNameSigningRequired: true,
         ),
       ),
     );
@@ -202,7 +202,7 @@ void main() {
       fileName: 'settings_user_data_page_empty_name_update',
       constraints: phoneConstraints,
       builder: () => buildSubject(
-        const SettingsUserDataSuccess(nameUpdateRequired: true),
+        const SettingsUserDataSuccess(shareRegisterNameSigningRequired: true),
       ),
     );
   });

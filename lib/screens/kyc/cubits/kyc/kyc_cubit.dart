@@ -173,10 +173,7 @@ class KycCubit extends Cubit<KycState> {
       // Manual review still wins: a debug wallet parked in review must see
       // the review screen, not a signature failure for a sign step it will
       // not reach.
-      final nameUpdateRequiresSignature =
-          registrationInfo.state == RealUnitRegistrationState.alreadyRegistered &&
-          registrationInfo.manualReview != true &&
-          registrationInfo.nameUpdateRequired == true;
+      final nameUpdateRequiresSignature = registrationInfo.shareRegisterNameSigningRequired;
 
       // Signing capability is a physical property of the wallet implementation
       // (debug mode is address-only, cannot produce EIP-712 signatures) and
@@ -210,13 +207,14 @@ class KycCubit extends Cubit<KycState> {
             );
             return;
           }
-          // The API owns the share-register name gate. Only an explicit
-          // `nameUpdateRequired == true` opens it. A missing name or user
-          // record still routes here: the page shows its retry surface
+          // The API owns the share-register name gate. Only
+          // `shareRegisterNameSigningRequired` opens it (AlreadyRegistered +
+          // nameUpdateRequired=true + no manual review). A missing name or
+          // user record still routes here: the page shows its retry surface
           // instead of falling through to completed. The gate sits under
           // manual review and above the e-mail gate. See CONTRIBUTING.md
           // "API as Decision Authority".
-          if (registrationInfo.nameUpdateRequired == true) {
+          if (registrationInfo.shareRegisterNameSigningRequired) {
             emit(
               KycSuccess(
                 currentStep: KycStep.updateShareRegisterName,

@@ -15,6 +15,7 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class SettingsUserDataPage extends StatelessWidget {
   const SettingsUserDataPage({super.key});
@@ -50,7 +51,7 @@ class SettingsUserDataView extends StatelessWidget {
               :final email,
               :final pendingSteps,
               :final capabilities,
-              :final nameUpdateRequired,
+              :final shareRegisterNameSigningRequired,
             ) =>
               userData != null
                   ? SingleChildScrollView(
@@ -124,7 +125,7 @@ class SettingsUserDataView extends StatelessWidget {
                                       }
                                     : null,
                               ),
-                              if (nameUpdateRequired == true)
+                              if (shareRegisterNameSigningRequired)
                                 const _ShareRegisterNameUpdateButton(),
                             ],
                           ),
@@ -133,42 +134,28 @@ class SettingsUserDataView extends StatelessWidget {
                     )
                   : email != null
                   ? SafeArea(
-                      child: Padding(
+                      child: ScrollableActionsLayout(
                         padding: const .symmetric(horizontal: 12.0),
-                        child: nameUpdateRequired == true
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                spacing: 24,
-                                children: [
-                                  _UserDataRow(
-                                    label: S.of(context).email,
-                                    value: email,
-                                  ),
-                                  const _ShareRegisterNameUpdateButton(),
-                                ],
-                              )
-                            : _UserDataRow(
-                                label: S.of(context).email,
-                                value: email,
-                              ),
-                      ),
-                    )
-                  : nameUpdateRequired == true
-                  ? SafeArea(
-                      child: Padding(
-                        padding: const .symmetric(horizontal: 12.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          spacing: 24,
-                          children: [
-                            Text(S.of(context).userDataNotFound),
-                            const _ShareRegisterNameUpdateButton(),
-                          ],
+                        body: _UserDataRow(
+                          label: S.of(context).email,
+                          value: email,
                         ),
+                        actions: [
+                          if (shareRegisterNameSigningRequired)
+                            const _ShareRegisterNameUpdateButton(),
+                        ],
                       ),
                     )
-                  : Center(
-                      child: Text(S.of(context).userDataNotFound),
+                  : SafeArea(
+                      child: ScrollableActionsLayout(
+                        padding: const .symmetric(horizontal: 12.0),
+                        centerBody: true,
+                        body: Text(S.of(context).userDataNotFound),
+                        actions: [
+                          if (shareRegisterNameSigningRequired)
+                            const _ShareRegisterNameUpdateButton(),
+                        ],
+                      ),
                     ),
             SettingsUserDataLoading() => const Center(
               child: CupertinoActivityIndicator(),

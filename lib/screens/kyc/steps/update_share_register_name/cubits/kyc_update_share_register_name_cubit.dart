@@ -72,18 +72,21 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
       emit(KycUpdateShareRegisterNameFailure(signingCancelled));
     } on RegistrationRejectedException catch (e) {
       if (isClosed) return;
-      emit(KycUpdateShareRegisterNameFailure(e.message));
+      emit(
+        KycUpdateShareRegisterNameFailure(
+          _normalizedErrorMessage(e.message, shareRegisterNameFailed),
+        ),
+      );
     } on BitboxNotConnectedException {
       if (isClosed) return;
       emit(KycUpdateShareRegisterNameBitboxRequired(_userData, _shareRegisterName));
     } on ApiException catch (e) {
       if (isClosed) return;
-      final message = ApiException.userFacingMessage(e);
-      emit(
-        KycUpdateShareRegisterNameFailure(
-          message.isEmpty ? shareRegisterNameSendFailed : message,
-        ),
+      final message = _normalizedErrorMessage(
+        ApiException.userFacingMessage(e),
+        shareRegisterNameSendFailed,
       );
+      emit(KycUpdateShareRegisterNameFailure(message));
     } catch (_) {
       if (isClosed) return;
       emit(KycUpdateShareRegisterNameFailure(shareRegisterNameSendFailed));
@@ -102,4 +105,11 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
     registrationDateUnavailable: registrationDateUnavailable,
     signingCancelled: signingCancelled,
   );
+
+  /// API errors without user-facing text must not render as a blank failure.
+  String _normalizedErrorMessage(String message, String fallback) {
+    final normalized = message.trim();
+    if (normalized.isEmpty || normalized == 'Unknown error') return fallback;
+    return normalized;
+  }
 }

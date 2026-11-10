@@ -23,7 +23,7 @@ Future<void> promptShareRegisterNameUpdate(GoRouter router) async {
   _shareRegisterNamePromptInFlight = true;
   try {
     final info = await getIt<RealUnitRegistrationService>().getRegistrationInfo();
-    if (info.nameUpdateRequired != true) return;
+    if (!info.shareRegisterNameSigningRequired) return;
     final location = effectiveLocation(router.routerDelegate.currentConfiguration);
     final path = Uri.tryParse(location)?.path ?? location;
     if (path != Uri.parse(router.namedLocation(AppRoutes.dashboard)).path) return;

@@ -57,7 +57,7 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
           SettingsUserDataSuccess(
             email: user.mail,
             capabilities: user.capabilities,
-            nameUpdateRequired: result.nameUpdateRequired,
+            shareRegisterNameSigningRequired: result.shareRegisterNameSigningRequired,
           ),
         );
         return;
@@ -101,7 +101,7 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
           ),
           pendingSteps: pendingSteps,
           capabilities: user.capabilities,
-          nameUpdateRequired: result.nameUpdateRequired,
+          shareRegisterNameSigningRequired: result.shareRegisterNameSigningRequired,
         ),
       );
     } on BitboxNotConnectedException {
