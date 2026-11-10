@@ -197,14 +197,16 @@ Vorab-Anschauen während eines Template-Refactors.)
 
 ## Transaktionsbelege
 
-Die Sektion **B — Transaktionsbelege** verlinkt zwölf Muster-PDFs, die das
+Die Sektion **B — Transaktionsbelege** verlinkt sechzehn Muster-PDFs, die das
 Backend erzeugt — Transaktionshistorie, Transaktionsbestätigung,
 Verkauf-Bestätigung und Übertragung, jeweils in DE und EN, sowie den
 DFX-Beleg für den Tausch von ZCHF in CHF und von ZCHF in EUR, jeweils DE
-und EN.
+und EN, und den Händler-Zahlungsbeleg (DE, EN, FR, IT).
 Anders als die Mail-Previews werden diese PDFs **nicht** hier generiert — sie
 liegen bereits committet im api-Repo unter `docs/examples/realunit-receipt/`
-(die acht `transaction-*.pdf` gerendert vom `SwissQRService` via `realunit-receipt-example.spec.ts`, die vier `exchange-zchf-*.pdf` via `realunit-exchange-receipt-example.spec.ts`) und
+(die acht `transaction-*.pdf` und vier `payment-merchant-*.pdf` gerendert vom
+`SwissQRService` via `realunit-receipt-example.spec.ts`, die vier
+`exchange-zchf-*.pdf` via `realunit-exchange-receipt-example.spec.ts`) und
 werden beim Handbook-Build nur ins Image kopiert (Step "Stage RealUnit receipt
 examples from api repo" in `handbook.yaml`; Zielverzeichnis
 `docs/handbook/receipts/` ist gitignored). Single Source of Truth ist das
