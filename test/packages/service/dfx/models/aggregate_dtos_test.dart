@@ -402,7 +402,7 @@ void main() {
       });
     });
 
-    test('nameUpdateRequired JSON false stays false; null or a non-bool stays null', () {
+    test('nameUpdateRequired keeps false, accepts null, and rejects a wrong type', () {
       expect(
         RealUnitRegistrationInfoDto.fromJson({
           'state': 'AlreadyRegistered',
@@ -420,16 +420,16 @@ void main() {
         isNull,
       );
       expect(
-        RealUnitRegistrationInfoDto.fromJson({
+        () => RealUnitRegistrationInfoDto.fromJson({
           'state': 'AlreadyRegistered',
           'userData': null,
           'nameUpdateRequired': 'true',
-        }).nameUpdateRequired,
-        isNull,
+        }),
+        throwsA(isA<TypeError>()),
       );
     });
 
-    test('shareRegisterName empty, null, or non-string stays null', () {
+    test('shareRegisterName maps only empty or null to null and rejects a wrong type', () {
       expect(
         RealUnitRegistrationInfoDto.fromJson({
           'state': 'AlreadyRegistered',
@@ -450,9 +450,17 @@ void main() {
         RealUnitRegistrationInfoDto.fromJson({
           'state': 'AlreadyRegistered',
           'userData': null,
-          'shareRegisterName': 1,
+          'shareRegisterName': '  Ada Lovelace  ',
         }).shareRegisterName,
-        isNull,
+        '  Ada Lovelace  ',
+      );
+      expect(
+        () => RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': 1,
+        }),
+        throwsA(isA<TypeError>()),
       );
     });
 

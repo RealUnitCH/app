@@ -94,7 +94,7 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
     }
   }
 
-  /// Re-runs [submit] after the BitBox was linked from `ConnectBitboxPage`.
+  /// Re-runs [submit] after the shared BitBox reconnect sheet completed.
   Future<void> retrySubmit({
     required String shareRegisterNameFailed,
     required String shareRegisterNameSendFailed,
@@ -111,6 +111,6 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
   String _normalizedErrorMessage(String message, String fallback) {
     final normalized = message.trim();
     if (normalized.isEmpty || normalized == 'Unknown error') return fallback;
-    return normalized;
+    return message;
   }
 }

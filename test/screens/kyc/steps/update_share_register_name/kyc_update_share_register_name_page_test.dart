@@ -112,6 +112,7 @@ void main() {
     when(() => nameCubit.state).thenReturn(
       const KycUpdateShareRegisterNameReady(_userData, _shareRegisterName),
     );
+    when(() => nameCubit.isClosed).thenReturn(false);
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) async {});
     when(
@@ -136,6 +137,7 @@ void main() {
     providers: [
       BlocProvider<KycCubit>.value(value: kycCubit),
       BlocProvider<KycUpdateShareRegisterNameCubit>.value(value: nameCubit),
+      BlocProvider<HomeBloc>.value(value: homeBloc),
     ],
     child: const KycUpdateShareRegisterNameView(shareRegisterName: _shareRegisterName),
   );
@@ -250,11 +252,11 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('onFinish syncs the wallet and retries the submit', (tester) async {
+    testWidgets('helper onFinish syncs the wallet and retries the submit', (tester) async {
       emitBitboxRequired();
 
-      // `onFinish` calls `context.pop(true)` (go_router), so host the view in a
-      // GoRouter stack; with the sheet route on top, canPop is true.
+      // Keep a router host to exercise the same navigator shape used by the
+      // page while the shared helper owns the sheet callback.
       final router = GoRouter(
         routes: [
           GoRoute(
@@ -291,7 +293,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350)); // sheet open animation
       expect(find.byType(ConnectBitboxView), findsOneWidget);
 
-      // ConnectBitboxPage forwards the page's onFinish straight to the view;
+      // ConnectBitboxPage forwards the helper's onFinish straight to the view;
       // invoke it exactly as the connect flow does on BitboxFinishSetup.
       final view = tester.widget<ConnectBitboxView>(find.byType(ConnectBitboxView));
       view.onFinish(_FakeBitboxWallet());
@@ -415,7 +417,7 @@ void main() {
   });
 
   group('$KycUpdateShareRegisterNamePage unmounted with BitBox sheet open', () {
-    testWidgets('a true sheet result after removal does not retry the service', (tester) async {
+    testWidgets('helper onFinish after page removal does not retry the service', (tester) async {
       when(
         () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
       ).thenThrow(const BitboxNotConnectedException());
@@ -437,8 +439,11 @@ void main() {
       );
 
       final pageRoute = MaterialPageRoute<void>(
-        builder: (_) => BlocProvider<KycCubit>.value(
-          value: kycCubit,
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider<KycCubit>.value(value: kycCubit),
+            BlocProvider<HomeBloc>.value(value: homeBloc),
+          ],
           child: const KycUpdateShareRegisterNamePage(
             userData: _userData,
             shareRegisterName: _shareRegisterName,
@@ -452,6 +457,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       expect(find.byType(ConnectBitboxPage), findsOneWidget);
+      clearInteractions(registrationService);
 
       // Remove only the page route underneath; the modal sheet stays alive.
       navigatorKey.currentState!.removeRoute(pageRoute);
@@ -459,12 +465,14 @@ void main() {
       expect(find.text('base'), findsOneWidget);
       expect(find.byType(ConnectBitboxPage), findsOneWidget);
 
-      Navigator.of(tester.element(find.byType(ConnectBitboxPage))).pop(true);
+      final view = tester.widget<ConnectBitboxView>(find.byType(ConnectBitboxView));
+      view.onFinish(_FakeBitboxWallet());
       await tester.pumpAndSettle();
 
-      verify(
+      verify(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>()))).called(1);
+      verifyNever(
         () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
-      ).called(1);
+      );
       expect(tester.takeException(), isNull);
     });
   });

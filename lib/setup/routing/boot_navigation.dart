@@ -219,8 +219,13 @@ void applyBootNavAction(
         if (payload != null) {
           router.goNamed(routeName);
           unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
-          unawaited(bindPendingReferralCode(router));
-          unawaited(promptShareRegisterNameUpdate(router));
+          // The bind future waits for an attached referral dialog to close.
+          // Delaying the name prompt until then is intentional: neither popup
+          // can be placed above the other.
+          unawaited(() async {
+            await bindPendingReferralCode(router);
+            await promptShareRegisterNameUpdate(router);
+          }());
           return;
         }
       }
@@ -231,8 +236,12 @@ void applyBootNavAction(
       // the pending-payment stash here.
       router.goNamed(routeName);
       if (routeName == AppRoutes.dashboard) {
-        unawaited(bindPendingReferralCode(router));
-        unawaited(promptShareRegisterNameUpdate(router));
+        // See the payload branch above: an attached referral dialog is awaited
+        // before the KYC name prompt is considered.
+        unawaited(() async {
+          await bindPendingReferralCode(router);
+          await promptShareRegisterNameUpdate(router);
+        }());
       }
       return;
     case BootNavRestore(:final location):
@@ -265,9 +274,14 @@ void applyBootNavAction(
       final restoreIsKyc = restorePath == '/kyc' || restorePath.startsWith('/kyc/');
       if (!restoreIsKyc) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          unawaited(bindPendingReferralCode(router));
           if (restorePath == '/dashboard') {
-            unawaited(promptShareRegisterNameUpdate(router));
+            // Preserve the same popup ordering as a fresh dashboard landing.
+            unawaited(() async {
+              await bindPendingReferralCode(router);
+              await promptShareRegisterNameUpdate(router);
+            }());
+          } else {
+            unawaited(bindPendingReferralCode(router));
           }
         });
       }

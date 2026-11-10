@@ -174,7 +174,7 @@ void main() {
       act: submit,
       expect: () => [
         const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
-        const KycUpdateShareRegisterNameFailure('Name abgelehnt'),
+        const KycUpdateShareRegisterNameFailure('  Name abgelehnt  '),
       ],
     );
 
@@ -286,7 +286,7 @@ void main() {
     }
 
     blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
-      'RegistrationRejectedException trims a valid message',
+      'RegistrationRejectedException preserves a valid message verbatim',
       setUp: () {
         when(
           () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
@@ -302,7 +302,7 @@ void main() {
       act: submit,
       expect: () => [
         const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
-        const KycUpdateShareRegisterNameFailure('Name abgelehnt'),
+        const KycUpdateShareRegisterNameFailure('  Name abgelehnt  '),
       ],
     );
 
@@ -361,7 +361,7 @@ void main() {
     }
 
     blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
-      'ApiException trims a valid message',
+      'ApiException preserves a valid message verbatim',
       setUp: () {
         when(
           () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
@@ -377,7 +377,7 @@ void main() {
       act: submit,
       expect: () => [
         const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
-        const KycUpdateShareRegisterNameFailure('Zu viele Anfragen'),
+        const KycUpdateShareRegisterNameFailure('  Zu viele Anfragen  '),
       ],
     );
 

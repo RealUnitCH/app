@@ -1,12 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_state.dart';
@@ -74,18 +72,10 @@ class KycUpdateShareRegisterNameView extends StatelessWidget {
           if (state is KycUpdateShareRegisterNameBitboxRequired) {
             // Disconnected BitBox is not a rejection. Open the shared connect
             // sheet over this page and sign again once the device is linked.
-            final result = await showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              builder: (_) => ConnectBitboxPage(
-                onFinish: (wallet) {
-                  context.read<HomeBloc>().add(SyncWalletServicesEvent(wallet));
-                  context.pop(true);
-                },
-              ),
-            );
-            if (context.mounted && result == true) {
-              context.read<KycUpdateShareRegisterNameCubit>().retrySubmit(
+            final cubit = context.read<KycUpdateShareRegisterNameCubit>();
+            final result = await showBitboxReconnectSheet(context);
+            if (result == true && context.mounted && !cubit.isClosed) {
+              await cubit.retrySubmit(
                 shareRegisterNameFailed: S.of(context).shareRegisterNameFailed,
                 shareRegisterNameSendFailed: S.of(context).shareRegisterNameSendFailed,
                 registrationDateUnavailable: S.of(context).registrationDateUnavailable,

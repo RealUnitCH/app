@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_state.dart';
@@ -21,6 +22,8 @@ class _MockNameCubit extends MockCubit<KycUpdateShareRegisterNameState>
     implements KycUpdateShareRegisterNameCubit {}
 
 class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
+
+class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 class _MockBitboxService extends Mock implements BitboxService {}
 
@@ -73,10 +76,12 @@ const _signingCancelled = 'Signatur abgebrochen — bitte BitBox erneut bestäti
 void main() {
   late _MockNameCubit nameCubit;
   late _MockKycCubit kycCubit;
+  late _MockHomeBloc homeBloc;
 
   setUp(() {
     nameCubit = _MockNameCubit();
     kycCubit = _MockKycCubit();
+    homeBloc = _MockHomeBloc();
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) async {});
   });
@@ -98,6 +103,7 @@ void main() {
       providers: [
         BlocProvider<KycCubit>.value(value: kycCubit),
         BlocProvider<KycUpdateShareRegisterNameCubit>.value(value: nameCubit),
+        BlocProvider<HomeBloc>.value(value: homeBloc),
       ],
       child: const KycUpdateShareRegisterNameView(shareRegisterName: _shareRegisterName),
     ),

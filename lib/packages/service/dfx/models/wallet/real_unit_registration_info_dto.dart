@@ -47,15 +47,15 @@ class RealUnitRegistrationInfoDto {
   /// Whether DFX has approved a new personal name that must be signed into the
   /// existing Aktionariat registration. Nullable on purpose: `null` means a
   /// pre-rollout backend (the field does not exist yet) or no gate. Only an
-  /// explicit JSON `true` opens the gate — a missing key, JSON null, or a
-  /// non-bool is stored as null. Same legacy rule as [emailConfirmed] and
-  /// [manualReview]. See CONTRIBUTING.md "API as Decision Authority".
+  /// explicit JSON `true` opens the gate. A missing key or JSON null is stored
+  /// as null; a non-bool fails decoding with [TypeError], like [emailConfirmed]
+  /// and [manualReview]. See CONTRIBUTING.md "API as Decision Authority".
   final bool? nameUpdateRequired;
 
   /// Exact `name` field to sign when [nameUpdateRequired] is true. The API
-  /// already sends BitBox ASCII. A missing key, JSON null, a non-string, or
-  /// an empty string is stored as null. The value is not trimmed: it is the
-  /// string that gets signed.
+  /// already sends BitBox ASCII. A missing key, JSON null, or an empty string
+  /// is stored as null; a non-string fails decoding with [TypeError]. The value
+  /// is not trimmed: it is the string that gets signed.
   final String? shareRegisterName;
 
   /// Whether the app must open the share-register name signing step.
@@ -78,8 +78,8 @@ class RealUnitRegistrationInfoDto {
     this.manualReview,
     this.rejectionMessage,
     this.nameUpdateRequired,
-    this.shareRegisterName,
-  });
+    String? shareRegisterName,
+  }) : shareRegisterName = shareRegisterName == '' ? null : shareRegisterName;
 
   factory RealUnitRegistrationInfoDto.fromJson(Map<String, dynamic> json) {
     return RealUnitRegistrationInfoDto(
@@ -93,20 +93,10 @@ class RealUnitRegistrationInfoDto {
           : null,
       manualReview: json['manualReview'] as bool?,
       rejectionMessage: _optionalRejectionMessage(json['rejectionMessage']),
-      nameUpdateRequired: _optionalBool(json['nameUpdateRequired']),
-      shareRegisterName: _optionalNonEmptyString(json['shareRegisterName']),
+      nameUpdateRequired: json['nameUpdateRequired'] as bool?,
+      shareRegisterName: json['shareRegisterName'] as String?,
     );
   }
-}
-
-/// Wire bool: only a JSON bool is kept. Missing, null, or a non-bool is null.
-bool? _optionalBool(Object? value) => value is bool ? value : null;
-
-/// Wire string that must be signed as-is. Missing, null, non-string, or empty
-/// is null. A non-empty string is returned unchanged.
-String? _optionalNonEmptyString(Object? value) {
-  if (value is! String || value.isEmpty) return null;
-  return value;
 }
 
 /// Wire `rejectionMessage`: missing, JSON null, non-string, or blank → null.
