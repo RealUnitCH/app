@@ -201,7 +201,7 @@ Die Sektion **B — Transaktionsbelege** verlinkt sechzehn Muster-PDFs, die das
 Backend erzeugt — Transaktionshistorie, Transaktionsbestätigung,
 Verkauf-Bestätigung und Übertragung, jeweils in DE und EN, sowie den
 DFX-Beleg für den Tausch von ZCHF in CHF und von ZCHF in EUR, jeweils DE
-und EN, und den Händler-Zahlungsbeleg (DE, EN, FR, IT).
+und EN, und den Zahlungsbeleg für eine Zahlung in einem Shop (DE, EN, FR, IT).
 Anders als die Mail-Previews werden diese PDFs **nicht** hier generiert — sie
 liegen bereits committet im api-Repo unter `docs/examples/realunit-receipt/`
 (die acht `transaction-*.pdf` und vier `payment-merchant-*.pdf` gerendert vom
