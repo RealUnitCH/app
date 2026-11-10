@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -188,7 +189,7 @@ void main() {
     });
 
     group('share-register name signing action', () {
-      testWidgets('button is visible only when the API signing gate is true', (tester) async {
+      testWidgets('button is visible when the API signing gate is true', (tester) async {
         when(() => settingsUserDataCubit.state).thenReturn(
           const SettingsUserDataSuccess(
             userData: _behaviorUserData,
@@ -197,7 +198,9 @@ void main() {
         );
         await tester.pumpApp(buildSubject(const SettingsUserDataView()));
         expect(find.text(S.current.shareRegisterNameAction), findsOne);
+      });
 
+      testWidgets('button is hidden when the API signing gate is false', (tester) async {
         when(() => settingsUserDataCubit.state).thenReturn(
           const SettingsUserDataSuccess(userData: _behaviorUserData),
         );
@@ -232,7 +235,18 @@ void main() {
         );
         addTearDown(router.dispose);
 
-        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpWidget(
+          MaterialApp.router(
+            routerConfig: router,
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+          ),
+        );
         await tester.pumpAndSettle();
 
         await expectFullyTappable(

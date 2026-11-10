@@ -54,82 +54,82 @@ class SettingsUserDataView extends StatelessWidget {
               :final shareRegisterNameSigningRequired,
             ) =>
               userData != null
-                  ? SingleChildScrollView(
-                      child: Padding(
+                  ? SafeArea(
+                      child: ScrollableActionsLayout(
                         padding: const .symmetric(horizontal: 12.0),
-                        child: SafeArea(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 24,
-                            children: [
-                              _UserDataRow(
-                                label: S.of(context).registerAccountType,
-                                value: userData.type.name(context),
-                              ),
-                              _UserDataRow(
-                                label: S.of(context).name,
-                                value: userData.name,
-                                statusLabel: pendingSteps.contains(KycStepName.nameChange)
-                                    ? S.of(context).changeInReview
-                                    : null,
-                                onEdit: capabilities.canEditName
-                                    ? () async {
-                                        final isEdited = await context.pushNamed<bool>(
-                                          SettingsRoutes.editName,
-                                        );
-                                        if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
-                                        }
+                        body: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 24,
+                          children: [
+                            _UserDataRow(
+                              label: S.of(context).registerAccountType,
+                              value: userData.type.name(context),
+                            ),
+                            _UserDataRow(
+                              label: S.of(context).name,
+                              value: userData.name,
+                              statusLabel: pendingSteps.contains(KycStepName.nameChange)
+                                  ? S.of(context).changeInReview
+                                  : null,
+                              onEdit: capabilities.canEditName
+                                  ? () async {
+                                      final isEdited = await context.pushNamed<bool>(
+                                        SettingsRoutes.editName,
+                                      );
+                                      if (isEdited == true && context.mounted) {
+                                        context.read<SettingsUserDataCubit>().getUserData();
                                       }
-                                    : null,
-                              ),
-                              if (userData.birthday != null)
-                                _UserDataRow(
-                                  label: S.of(context).birthday,
-                                  value: DateFormat('dd.MM.yyyy').format(userData.birthday!),
-                                ),
+                                    }
+                                  : null,
+                            ),
+                            if (userData.birthday != null)
                               _UserDataRow(
-                                label: S.of(context).registerCitizenship,
-                                value: userData.nationality.name,
+                                label: S.of(context).birthday,
+                                value: DateFormat('dd.MM.yyyy').format(userData.birthday!),
                               ),
-                              _UserDataRow(label: S.of(context).email, value: userData.email),
-                              _UserDataRow(
-                                label: S.of(context).phoneNumber,
-                                value: userData.phoneNumber,
-                                onEdit: capabilities.canEditPhone
-                                    ? () async {
-                                        final isEdited = await context.pushNamed<bool>(
-                                          SettingsRoutes.editPhone,
-                                        );
-                                        if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
-                                        }
+                            _UserDataRow(
+                              label: S.of(context).registerCitizenship,
+                              value: userData.nationality.name,
+                            ),
+                            _UserDataRow(label: S.of(context).email, value: userData.email),
+                            _UserDataRow(
+                              label: S.of(context).phoneNumber,
+                              value: userData.phoneNumber,
+                              onEdit: capabilities.canEditPhone
+                                  ? () async {
+                                      final isEdited = await context.pushNamed<bool>(
+                                        SettingsRoutes.editPhone,
+                                      );
+                                      if (isEdited == true && context.mounted) {
+                                        context.read<SettingsUserDataCubit>().getUserData();
                                       }
-                                    : null,
-                              ),
-                              _UserDataRow(
-                                label: S.of(context).residence,
-                                value:
-                                    '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
-                                statusLabel: pendingSteps.contains(KycStepName.addressChange)
-                                    ? S.of(context).changeInReview
-                                    : null,
-                                onEdit: capabilities.canEditAddress
-                                    ? () async {
-                                        final isEdited = await context.pushNamed<bool>(
-                                          SettingsRoutes.editAddress,
-                                        );
-                                        if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
-                                        }
+                                    }
+                                  : null,
+                            ),
+                            _UserDataRow(
+                              label: S.of(context).residence,
+                              value:
+                                  '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
+                              statusLabel: pendingSteps.contains(KycStepName.addressChange)
+                                  ? S.of(context).changeInReview
+                                  : null,
+                              onEdit: capabilities.canEditAddress
+                                  ? () async {
+                                      final isEdited = await context.pushNamed<bool>(
+                                        SettingsRoutes.editAddress,
+                                      );
+                                      if (isEdited == true && context.mounted) {
+                                        context.read<SettingsUserDataCubit>().getUserData();
                                       }
-                                    : null,
-                              ),
-                              if (shareRegisterNameSigningRequired)
-                                const _ShareRegisterNameUpdateButton(),
-                            ],
-                          ),
+                                    }
+                                  : null,
+                            ),
+                          ],
                         ),
+                        actions: [
+                          if (shareRegisterNameSigningRequired)
+                            const _ShareRegisterNameUpdateButton(),
+                        ],
                       ),
                     )
                   : email != null
