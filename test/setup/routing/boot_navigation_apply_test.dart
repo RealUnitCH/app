@@ -51,6 +51,7 @@ void main() {
   GoRouter buildRouter() {
     final router = GoRouter(
       initialLocation: '/verifyPin',
+      observers: [ShareRegisterNameRouteObserver()],
       routes: [
         GoRoute(
           name: PinRoutes.verify,
@@ -811,6 +812,87 @@ void main() {
 
         expect(matchesOf(router), ['/dashboard', '/pay']);
         expect(find.text('pay pay-me'), findsOneWidget);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not cover a dialog over the dashboard when the registration info '
+      'arrives late, and closing it does not navigate again',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        // showDialog needs MaterialLocalizations; the production app always
+        // has them, including when the referral bind opens its dialog.
+        await tester.pumpWidget(
+          MaterialApp.router(
+            locale: const Locale('de'),
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            routerConfig: router,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Dashboard landing starts the prompt; its registration-info request
+        // stays pending until the dialog is already on screen.
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        // Shows the popup exactly where bindPendingReferralCode shows it: on
+        // the router's navigator context, over the dashboard.
+        final navigatorContext = router.routerDelegate.navigatorKey.currentContext!;
+        unawaited(
+          showDialog<void>(
+            context: navigatorContext,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              content: const Text('referral-bound'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('close'),
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('referral-bound'), findsOneWidget);
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The dialog stays on top; KYC must not be pushed underneath it.
+        expect(find.text('referral-bound'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        await tester.tap(find.text('close'));
+        await tester.pumpAndSettle();
+
+        // Closing reveals the dashboard only — no deferred/duplicate push.
+        expect(find.text('dashboard'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
         expect(find.text('kyc:unscoped'), findsNothing);
       },
     );

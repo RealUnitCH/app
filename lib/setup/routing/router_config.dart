@@ -66,9 +66,11 @@ import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
+import 'package:realunit_wallet/setup/routing/share_register_name_prompt.dart';
 
 final GoRouter routerConfig = GoRouter(
   navigatorKey: navigatorKey,
+  observers: [ShareRegisterNameRouteObserver()],
   initialLocation: '/home',
   // Custom-scheme opens (realunit-wallet://…, canonical realunit-wallet://open)
   // only foreground the app; they must not force any navigation. Cold start:

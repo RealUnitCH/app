@@ -1,7 +1,7 @@
 /// Locations that are boot/lock gates: `_navigate` re-derives them from state
 /// and must never treat one as an in-flight route to restore. What *is*
-/// restorable is governed by the [restorableLocations] allowlist below — not
-/// by "anything that is not a gate".
+/// restorable is governed by the `restorableLocations` allowlist in
+/// `boot_navigation.dart` — not by "anything that is not a gate".
 const Set<String> gateLocations = {
   '/home',
   '/welcome',

@@ -164,7 +164,7 @@ void main() {
         whenResponse(
           const RealUnitRegistrationResponseDto(
             status: RegistrationStatus.forwardingFailed,
-            rejectionMessage: 'Name abgelehnt',
+            rejectionMessage: '  Name abgelehnt  ',
           ),
         );
       },
@@ -175,6 +175,29 @@ void main() {
         const KycUpdateShareRegisterNameFailure('Name abgelehnt'),
       ],
     );
+
+    for (final (label, message) in [
+      ('Unknown error', 'Unknown error'),
+      ('whitespace-only', '   '),
+    ]) {
+      blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+        'forwardingFailed with $label → Failure with the generic copy',
+        setUp: () {
+          whenResponse(
+            RealUnitRegistrationResponseDto(
+              status: RegistrationStatus.forwardingFailed,
+              rejectionMessage: message,
+            ),
+          );
+        },
+        build: build,
+        act: submit,
+        expect: () => [
+          const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+          const KycUpdateShareRegisterNameFailure(_failed),
+        ],
+      );
+    }
 
     blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
       'forwardingFailed without a rejection sentence → Failure with the generic copy',

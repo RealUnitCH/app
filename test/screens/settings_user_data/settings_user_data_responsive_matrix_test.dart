@@ -24,7 +24,9 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/user_data.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
@@ -522,6 +524,31 @@ void main() {
       ),
       'empty with signing CTA': (
         state: const SettingsUserDataSuccess(shareRegisterNameSigningRequired: true),
+        hasCta: true,
+      ),
+      'editable with pending changes without signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _settingsUserData,
+          capabilities: UserCapabilitiesDto(
+            canEditName: true,
+            canEditPhone: true,
+            canEditAddress: true,
+          ),
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+        ),
+        hasCta: false,
+      ),
+      'editable with pending changes with signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _settingsUserData,
+          capabilities: UserCapabilitiesDto(
+            canEditName: true,
+            canEditPhone: true,
+            canEditAddress: true,
+          ),
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+          shareRegisterNameSigningRequired: true,
+        ),
         hasCta: true,
       ),
     };

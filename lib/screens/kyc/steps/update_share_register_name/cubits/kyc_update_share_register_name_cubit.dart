@@ -59,9 +59,10 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
           // and the stored registration stays. Success would call
           // checkKyc(), reopen this gate, and drop the sentence. Failure
           // returns the button to idle so the user can sign again.
-          final rejection = response.rejectionMessage;
           emit(
-            KycUpdateShareRegisterNameFailure(rejection ?? shareRegisterNameFailed),
+            KycUpdateShareRegisterNameFailure(
+              _normalizedErrorMessage(response.rejectionMessage ?? '', shareRegisterNameFailed),
+            ),
           );
       }
     } on RegistrationDateUnavailableException {
