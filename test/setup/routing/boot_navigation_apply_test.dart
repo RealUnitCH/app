@@ -748,5 +748,83 @@ void main() {
         expect(find.text('kyc:unscoped'), findsNothing);
       },
     );
+
+    testWidgets(
+      'does not cover /pay when the registration info arrives after the '
+      'payment deeplink is pushed',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+        addTearDown(clearPendingPaymentDeeplink);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('pay-me');
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('pay pay-me'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard', '/pay']);
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/pay']);
+        expect(find.text('pay pay-me'), findsOneWidget);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not cover another non-dashboard route when the registration info '
+      'arrives late',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+
+        router.go('/settings');
+        await tester.pump();
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/settings']);
+        expect(find.text('settings'), findsOneWidget);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
   });
 }
