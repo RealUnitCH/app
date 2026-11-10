@@ -275,7 +275,7 @@ void main() {
       // the auth wallet accessor, and serve the auth endpoint so the SECOND
       // 401 reaches the mapping.
       when(() => wallet.currentAccount).thenReturn(account);
-      when(() => wallet.signMessage(any())).thenAnswer((_) async => '0xsig');
+      when(() => account.signMessage(any())).thenAnswer((_) async => '0xsig');
       final repo = _MockCacheRepository();
       when(() => repo.read(any())).thenAnswer((_) async => null);
       when(() => repo.write(any(), any())).thenAnswer((_) async => 1);
@@ -300,66 +300,6 @@ void main() {
         throwsA(
           allOf(
             isA<ApiException>(),
-            isNot(isA<RegistrationRejectedException>()),
-          ),
-        ),
-      );
-    });
-
-    for (final status in [403, 429]) {
-      test('keeps $status a plain ApiException, not a rejection', () async {
-        final client = updateErrorClient(status, {
-          'statusCode': status,
-          'message': 'Auth or rate limit',
-        });
-
-        expect(
-          () => build(client).updateShareRegisterName(
-            buildUserData(),
-            shareRegisterName,
-          ),
-          throwsA(
-            allOf(
-              isA<ApiException>().having((e) => e.statusCode, 'statusCode', status),
-              isNot(isA<RegistrationRejectedException>()),
-            ),
-          ),
-        );
-      });
-    }
-
-    test('keeps a 401 a plain ApiException, not a rejection', () async {
-      // A 401 triggers the one-shot auth refresh (re-sign + /v1/auth) before
-      // the retried response is surfaced, so wire that path first.
-      when(() => wallet.currentAccount).thenReturn(account);
-      when(() => account.signMessage(any())).thenAnswer((_) async => '0xsig');
-      final repo = _MockCacheRepository();
-      when(() => repo.read(any())).thenAnswer((_) async => null);
-      when(() => repo.write(any(), any())).thenAnswer((_) async => 1);
-      session = SessionCache(repo)..setAuthToken('jwt-1');
-      when(() => appStore.sessionCache).thenReturn(session);
-
-      final client = MockClient((request) async {
-        if (request.url.path == '/v1/realunit/register/date') {
-          return http.Response('{"date":"2026-07-13"}', 200);
-        }
-        if (request.url.path == '/v1/auth') {
-          return http.Response(jsonEncode({'accessToken': 'jwt-2'}), 201);
-        }
-        return http.Response(
-          jsonEncode({'statusCode': 401, 'message': 'Unauthorized'}),
-          401,
-        );
-      });
-
-      expect(
-        () => build(client).updateShareRegisterName(
-          buildUserData(),
-          shareRegisterName,
-        ),
-        throwsA(
-          allOf(
-            isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
             isNot(isA<RegistrationRejectedException>()),
           ),
         ),
@@ -739,6 +679,68 @@ void main() {
       );
       expect(credentials.signCallCount, 0);
       expect(paths, isNot(contains('/v1/realunit/register/name')));
+    });
+
+    for (final status in [403, 429]) {
+      test('keeps $status a plain ApiException, not a rejection', () async {
+        final client = updateErrorClient(status, {
+          'statusCode': status,
+          'message': 'Auth or rate limit',
+        });
+
+        expect(
+          () => build(client).updateShareRegisterName(
+            buildUserData(),
+            shareRegisterName,
+          ),
+          throwsA(
+            allOf(
+              isA<ApiException>().having((e) => e.statusCode, 'statusCode', status),
+              isNot(isA<RegistrationRejectedException>()),
+            ),
+          ),
+        );
+      });
+    }
+
+    test('keeps a 401 a plain ApiException, not a rejection', () async {
+      // A 401 triggers _authenticated's one-shot refresh (re-sign + /v1/auth)
+      // before the retried response is surfaced — stub the signature cache,
+      // the auth wallet accessor, and serve the auth endpoint so the SECOND
+      // 401 reaches the mapping.
+      when(() => wallet.currentAccount).thenReturn(account);
+      when(() => account.signMessage(any())).thenAnswer((_) async => '0xsig');
+      final repo = _MockCacheRepository();
+      when(() => repo.read(any())).thenAnswer((_) async => null);
+      when(() => repo.write(any(), any())).thenAnswer((_) async => 1);
+      session = SessionCache(repo)..setAuthToken('jwt-1');
+      when(() => appStore.sessionCache).thenReturn(session);
+
+      final client = MockClient((request) async {
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{"date":"2026-07-13"}', 200);
+        }
+        if (request.url.path == '/v1/auth') {
+          return http.Response(jsonEncode({'accessToken': 'jwt-2'}), 201);
+        }
+        return http.Response(
+          jsonEncode({'statusCode': 401, 'message': 'Unauthorized'}),
+          401,
+        );
+      });
+
+      expect(
+        () => build(client).updateShareRegisterName(
+          buildUserData(),
+          shareRegisterName,
+        ),
+        throwsA(
+          allOf(
+            isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+            isNot(isA<RegistrationRejectedException>()),
+          ),
+        ),
+      );
     });
   });
 
