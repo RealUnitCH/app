@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_date_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
@@ -75,6 +76,14 @@ class KycUpdateShareRegisterNameCubit extends Cubit<KycUpdateShareRegisterNameSt
     } on BitboxNotConnectedException {
       if (isClosed) return;
       emit(KycUpdateShareRegisterNameBitboxRequired(_userData, _shareRegisterName));
+    } on ApiException catch (e) {
+      if (isClosed) return;
+      final message = ApiException.userFacingMessage(e);
+      emit(
+        KycUpdateShareRegisterNameFailure(
+          message.isEmpty ? shareRegisterNameSendFailed : message,
+        ),
+      );
     } catch (_) {
       if (isClosed) return;
       emit(KycUpdateShareRegisterNameFailure(shareRegisterNameSendFailed));

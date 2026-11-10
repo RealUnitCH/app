@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_date_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
@@ -228,6 +229,47 @@ void main() {
       expect: () => [
         const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
         const KycUpdateShareRegisterNameFailure('Name abgelehnt'),
+      ],
+    );
+
+    blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+      'ApiException → Failure with its user-facing message and returns to idle',
+      setUp: () {
+        when(
+          () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+        ).thenThrow(
+          const ApiException(
+            statusCode: 429,
+            code: 'RATE_LIMITED',
+            message: 'Zu viele Anfragen',
+          ),
+        );
+      },
+      build: build,
+      act: (cubit) async {
+        await submit(cubit);
+        await submit(cubit);
+      },
+      expect: () => [
+        const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+        const KycUpdateShareRegisterNameFailure('Zu viele Anfragen'),
+        const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+        const KycUpdateShareRegisterNameFailure('Zu viele Anfragen'),
+      ],
+    );
+
+    blocTest<KycUpdateShareRegisterNameCubit, KycUpdateShareRegisterNameState>(
+      'UpgradeRequiredException → Failure with the send sentence',
+      setUp: () {
+        when(
+          () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+        ).thenThrow(const UpgradeRequiredException());
+      },
+      build: build,
+      act: submit,
+      expect: () => [
+        const KycUpdateShareRegisterNameSubmitting(_userData, _shareRegisterName),
+        const KycUpdateShareRegisterNameFailure(_sendFailed),
       ],
     );
 
