@@ -661,6 +661,88 @@ void main() {
       expect(matchesOf(router), ['/dashboard', '/kyc']);
     });
 
+    testWidgets('nameUpdateRequired=false keeps /dashboard', (tester) async {
+      final service = GetIt.instance<RealUnitRegistrationService>();
+      when(() => service.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          nameUpdateRequired: false,
+          shareRegisterName: 'Ada Lovelace',
+        ),
+      );
+
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavGoNamed(AppRoutes.dashboard),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(matchesOf(router), ['/dashboard']);
+      expect(find.text('kyc:unscoped'), findsNothing);
+    });
+
+    testWidgets('a failing registration-info request keeps /dashboard', (tester) async {
+      final service = GetIt.instance<RealUnitRegistrationService>();
+      when(() => service.getRegistrationInfo()).thenThrow(Exception('offline'));
+
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavGoNamed(AppRoutes.dashboard),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(matchesOf(router), ['/dashboard']);
+      expect(find.text('kyc:unscoped'), findsNothing);
+    });
+
+    testWidgets(
+      'a gate go replacing the KYC route releases the in-flight flag so a '
+      'later dashboard landing opens /kyc again',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+
+        // A re-lock replaces the pushed KYC route with the gate. The KYC push
+        // future never completes; the prompt must not stay disabled.
+        router.go('/verifyPin');
+        await tester.pumpAndSettle();
+        expect(matchesOf(router), ['/verifyPin']);
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+      },
+    );
+
     testWidgets('manualReview=true does not open /kyc', (tester) async {
       final service = GetIt.instance<RealUnitRegistrationService>();
       when(() => service.getRegistrationInfo()).thenAnswer(

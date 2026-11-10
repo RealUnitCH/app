@@ -24,6 +24,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/kyc_update_share_register_name_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_manual_review_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
@@ -325,6 +326,38 @@ void main() {
         sentence,
       );
       expect(find.text(sentence), findsOneWidget);
+    },
+  );
+
+  // The updateShareRegisterName arm needs both the registration payload and
+  // the approved share-register name; dropping either silently degrades to the
+  // defensive missing-data page, which can never sign.
+  testWidgets(
+    'KycSuccess(updateShareRegisterName) renders the page with both values',
+    (tester) async {
+      final userData = personalUserData();
+      const shareRegisterName = 'Erika Mueller';
+
+      final getIt = GetIt.instance;
+      getIt.registerSingleton<RealUnitRegistrationService>(registrationService);
+      addTearDown(() async => getIt.reset());
+
+      final cubit = _MockKycCubit();
+      when(() => cubit.state).thenReturn(
+        KycSuccess(
+          currentStep: KycStep.updateShareRegisterName,
+          realUnitUserData: userData,
+          shareRegisterName: shareRegisterName,
+        ),
+      );
+
+      await tester.pumpApp(viewWithState(cubit));
+
+      final page = tester.widget<KycUpdateShareRegisterNamePage>(
+        find.byType(KycUpdateShareRegisterNamePage),
+      );
+      expect(page.userData, same(userData));
+      expect(page.shareRegisterName, shareRegisterName);
     },
   );
 

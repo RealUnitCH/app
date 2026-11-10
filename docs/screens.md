@@ -149,7 +149,7 @@ Column meaning:
 | Shared widgets | `ImageSourceSheet` | — | — | `393` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282`, `356`, `357` |
 
-95 screens — 51 routed (`GoRoute`) + 44 non-routed. The table also carries
+100 screens — 54 routed (`GoRoute`) + 46 non-routed. The table also carries
 three shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`, `ImageSourceSheet`),
 which are not screens.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook

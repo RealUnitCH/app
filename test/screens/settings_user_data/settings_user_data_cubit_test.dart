@@ -212,6 +212,32 @@ void main() {
       expect(success.capabilities.canEditName, isTrue);
     });
 
+    test('full Success keeps userData and signing requirement together', () async {
+      when(() => registrationService.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          realUnitUserDataDto: _userData(),
+          nameUpdateRequired: true,
+        ),
+      );
+      when(() => kycService.getKycStatus()).thenAnswer(
+        (_) async => const KycLevelDto(kycLevel: KycLevel.level20, kycSteps: []),
+      );
+      when(() => kycService.getUser()).thenAnswer(
+        (_) async => const UserDto(
+          mail: 'a@b.com',
+          kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
+        ),
+      );
+
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
+
+      final success = cubit.state as SettingsUserDataSuccess;
+      expect(success.userData, isNotNull);
+      expect(success.shareRegisterNameSigningRequired, isTrue);
+    });
+
     test('Success with unset birthday when the API returns an empty birthday', () async {
       // The API maps a missing birthday to '' for verified-name accounts;
       // parsing it used to throw and surface the failure view.

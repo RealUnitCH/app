@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
@@ -51,7 +53,10 @@ Future<void> promptShareRegisterNameUpdate(GoRouter router) async {
     final path = Uri.tryParse(location)?.path ?? location;
     if (path != Uri.parse(router.namedLocation(AppRoutes.dashboard)).path) return;
     if (_hasPopupRouteOnTop(router)) return;
-    await router.pushNamed(AppRoutes.kyc);
+    // Do not hold the gate across the push future: a gate `go` (re-lock,
+    // updateRequired, ...) can replace the KYC route, in which case the push
+    // future never completes and the prompt would stay disabled until restart.
+    unawaited(router.pushNamed(AppRoutes.kyc));
   } catch (_) {
     return;
   } finally {

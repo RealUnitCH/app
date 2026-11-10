@@ -1063,7 +1063,7 @@
               <a href="#spec-55"><span class="spec-num">55</span>KYC — Finanzdaten</a>
             </li>
             <li>
-              <a href="#spec-56"><span class="spec-num">56</span>KYC — Identitätsprüfung und Wallet-Verknüpfung</a>
+              <a href="#spec-56"><span class="spec-num">56</span>KYC — Identitätsprüfung, Wallet-Verknüpfung und Namenssignatur</a>
             </li>
             <li>
               <a href="#spec-57"><span class="spec-num">57</span>KYC — Status- und Ergebnisseiten</a>
@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 429 Visual-Regression Goldens (429 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 463 Visual-Regression Goldens (463 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 429 App-Screenshots dieser Seite sind Goldens aus
+            Die 463 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 429 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 463 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -7135,7 +7135,7 @@
           <summary>
             <div class="spec-head">
               <div class="lhs">
-                <h2><span class="num">56</span>KYC — Identitätsprüfung und Wallet-Verknüpfung</h2>
+                <h2><span class="num">56</span>KYC — Identitätsprüfung, Wallet-Verknüpfung und Namenssignatur</h2>
                 <div class="file">test/goldens/screens/kyc/</div>
               </div>
               <div class="rhs">
@@ -7150,7 +7150,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Nach der Registrierung folgen die Identitätsprüfung und die Verknüpfung der Wallet mit dem Konto. Diese Einträge decken die Ident-Zustände (Start, Fehler, endgültige Ablehnung), die Wallet-Verknüpfung samt BitBox und die Sonderseite für nicht signierfähige Debug-Wallets ab.
+            Nach der Registrierung folgen die Identitätsprüfung und die Verknüpfung der Wallet mit dem Konto. Diese Einträge decken die Ident-Zustände (Start, Fehler, endgültige Ablehnung), die Wallet-Verknüpfung samt BitBox und die Sonderseite für nicht signierfähige Debug-Wallets ab. Ergänzend wird das Signieren des genehmigten Namens dokumentiert, mit dem Sie die Aktualisierung des Aktienregisters auslösen.
           </p>
 
           <div class="tests cols-2">
@@ -7348,38 +7348,6 @@
                 Die Seite <b>Genehmigten Namen signieren</b>. Sie erscheint, wenn die API meldet, dass im Aktienregister noch der alte Name steht – zum Beispiel nach dem Start, sobald das Dashboard sichtbar ist (nicht über einer bereits geöffneten anderen Seite wie einer Zahlung), über die Kontodaten oder wenn ein Kauf oder Verkauf in die Kontoeröffnung führt. Darüber steht <b>Der genehmigte Name muss signiert werden, damit das Aktienregister aktualisiert werden kann.</b> Darunter der freigegebene Name und der Button <b>Namen signieren</b>.
               </div>
             </div>
-            <div class="test" id="457-kyc-update-share-register-name-page-bitbox-required">
-              <div class="head">
-                <a class="name permalink" href="#457-kyc-update-share-register-name-page-bitbox-required">457-kyc-update-share-register-name-page-bitbox-required</a>
-                <button class="copy-link" type="button" data-target="457-kyc-update-share-register-name-page-bitbox-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_bitbox_required.png</span>
-              </div>
-              <div class="img">
-                <img
-                  src="../screenshots/457-kyc-update-share-register-name-page-bitbox-required.png"
-                  alt="Genehmigten Namen signieren — BitBox verbinden"
-                />
-              </div>
-              <div class="desc">
-                Über der Seite <b>Genehmigten Namen signieren</b> liegt das Sheet <b>BitBox verbinden</b>. Der Text lautet <b>Bitte verbinden Sie Ihre BitBox mit Ihrem Smartphone.</b> Die Signierseite bleibt darunter.
-              </div>
-            </div>
-            <div class="test" id="456-kyc-update-share-register-name-page-submitting">
-              <div class="head">
-                <a class="name permalink" href="#456-kyc-update-share-register-name-page-submitting">456-kyc-update-share-register-name-page-submitting</a>
-                <button class="copy-link" type="button" data-target="456-kyc-update-share-register-name-page-submitting" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
-                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png</span>
-              </div>
-              <div class="img">
-                <img
-                  src="../screenshots/456-kyc-update-share-register-name-page-submitting.png"
-                  alt="Genehmigten Namen signieren — Button lädt"
-                />
-              </div>
-              <div class="desc">
-                Dieselbe Seite <b>Genehmigten Namen signieren</b>, während der Button <b>Namen signieren</b> lädt.
-              </div>
-            </div>
             <div class="test" id="446-kyc-update-share-register-name-page-missing-data">
               <div class="head">
                 <a class="name permalink" href="#446-kyc-update-share-register-name-page-missing-data">446-kyc-update-share-register-name-page-missing-data</a>
@@ -7490,6 +7458,38 @@
               </div>
               <div class="desc">
                 Rote SnackBar: <b>Die Aktualisierung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.</b> Der Button <b>Namen signieren</b> bleibt benutzbar.
+              </div>
+            </div>
+            <div class="test" id="456-kyc-update-share-register-name-page-submitting">
+              <div class="head">
+                <a class="name permalink" href="#456-kyc-update-share-register-name-page-submitting">456-kyc-update-share-register-name-page-submitting</a>
+                <button class="copy-link" type="button" data-target="456-kyc-update-share-register-name-page-submitting" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/456-kyc-update-share-register-name-page-submitting.png"
+                  alt="Genehmigten Namen signieren — Button lädt"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Seite <b>Genehmigten Namen signieren</b>, während der Button <b>Namen signieren</b> lädt.
+              </div>
+            </div>
+            <div class="test" id="457-kyc-update-share-register-name-page-bitbox-required">
+              <div class="head">
+                <a class="name permalink" href="#457-kyc-update-share-register-name-page-bitbox-required">457-kyc-update-share-register-name-page-bitbox-required</a>
+                <button class="copy-link" type="button" data-target="457-kyc-update-share-register-name-page-bitbox-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_bitbox_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/457-kyc-update-share-register-name-page-bitbox-required.png"
+                  alt="Genehmigten Namen signieren — BitBox verbinden"
+                />
+              </div>
+              <div class="desc">
+                Über der Seite <b>Genehmigten Namen signieren</b> liegt das Sheet <b>BitBox verbinden</b>. Der Text lautet <b>Bitte verbinden Sie Ihre BitBox mit Ihrem Smartphone.</b> Die Signierseite bleibt darunter.
               </div>
             </div>
             <div class="test" id="203-kyc-signature-unsupported-page-default">

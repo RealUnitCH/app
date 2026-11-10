@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
@@ -12,7 +13,10 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_view.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/update_share_register_name/cubits/kyc_update_share_register_name_state.dart';
@@ -29,6 +33,10 @@ class _MockBitboxService extends Mock implements BitboxService {}
 class _MockWalletService extends Mock implements WalletService {}
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
+
+class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
+
+class _FakeBitboxWallet extends Fake implements BitboxWallet {}
 
 const _kycData = KycPersonalData(
   accountType: KycAccountType.personal,
@@ -59,9 +67,11 @@ const _shareRegisterName = 'Ada Lovelace';
 void main() {
   late _MockKycUpdateShareRegisterNameCubit nameCubit;
   late _MockKycCubit kycCubit;
+  late _MockHomeBloc homeBloc;
 
   setUpAll(() {
     registerFallbackValue('');
+    registerFallbackValue(SyncWalletServicesEvent(_FakeBitboxWallet()));
     final getIt = GetIt.instance;
 
     // ConnectBitboxPage (opened by the BitboxRequired listener) builds a real
@@ -80,6 +90,7 @@ void main() {
   setUp(() {
     nameCubit = _MockKycUpdateShareRegisterNameCubit();
     kycCubit = _MockKycCubit();
+    homeBloc = _MockHomeBloc();
     when(() => nameCubit.state).thenReturn(
       const KycUpdateShareRegisterNameReady(_userData, _shareRegisterName),
     );
@@ -211,6 +222,64 @@ void main() {
       sheetNavigator(tester).pop(true);
       await tester.pumpAndSettle();
 
+      verify(
+        () => nameCubit.retrySubmit(
+          shareRegisterNameFailed: any(named: 'shareRegisterNameFailed'),
+          shareRegisterNameSendFailed: any(named: 'shareRegisterNameSendFailed'),
+          registrationDateUnavailable: any(named: 'registrationDateUnavailable'),
+          signingCancelled: any(named: 'signingCancelled'),
+        ),
+      ).called(1);
+    });
+
+    testWidgets('onFinish syncs the wallet and retries the submit', (tester) async {
+      emitBitboxRequired();
+
+      // `onFinish` calls `context.pop(true)` (go_router), so host the view in a
+      // GoRouter stack; with the sheet route on top, canPop is true.
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                BlocProvider<KycCubit>.value(value: kycCubit),
+                BlocProvider<KycUpdateShareRegisterNameCubit>.value(value: nameCubit),
+                BlocProvider<HomeBloc>.value(value: homeBloc),
+              ],
+              child: const KycUpdateShareRegisterNameView(
+                shareRegisterName: _shareRegisterName,
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('de'),
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+        ),
+      );
+      await tester.pump(); // deliver BitboxRequired to the listener
+      await tester.pump(const Duration(milliseconds: 350)); // sheet open animation
+      expect(find.byType(ConnectBitboxView), findsOneWidget);
+
+      // ConnectBitboxPage forwards the page's onFinish straight to the view;
+      // invoke it exactly as the connect flow does on BitboxFinishSetup.
+      final view = tester.widget<ConnectBitboxView>(find.byType(ConnectBitboxView));
+      view.onFinish(_FakeBitboxWallet());
+      await tester.pumpAndSettle();
+
+      verify(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>()))).called(1);
       verify(
         () => nameCubit.retrySubmit(
           shareRegisterNameFailed: any(named: 'shareRegisterNameFailed'),
