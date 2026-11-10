@@ -151,7 +151,7 @@ void main() {
         });
       }
 
-      test('false for the email-only Success branch as well', () async {
+      test('true for the email-only Success branch when the API requires signing', () async {
         stubUserData(
           RealUnitRegistrationInfoDto(
             state: RealUnitRegistrationState.alreadyRegistered,
@@ -168,7 +168,7 @@ void main() {
 
         final success = cubit.state as SettingsUserDataSuccess;
         expect(success.userData, isNull);
-        expect(success.shareRegisterNameSigningRequired, isFalse);
+        expect(success.shareRegisterNameSigningRequired, isTrue);
       });
     });
 

@@ -250,37 +250,40 @@ class _UserDataRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: .spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: .start,
-          spacing: 4,
-          children: [
-            Row(
-              spacing: 8.0,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: .bold,
-                    color: RealUnitColors.neutral900,
-                  ),
-                ),
-                if (statusLabel != null)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: .start,
+            spacing: 4,
+            children: [
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: [
                   Text(
-                    statusLabel!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: RealUnitColors.realUnitBlue,
-                      fontStyle: .italic,
+                    label,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: .bold,
+                      color: RealUnitColors.neutral900,
                     ),
                   ),
-              ],
-            ),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: RealUnitColors.neutral500,
+                  if (statusLabel != null)
+                    Text(
+                      statusLabel!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.realUnitBlue,
+                        fontStyle: .italic,
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ],
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: RealUnitColors.neutral500,
+                ),
+              ),
+            ],
+          ),
         ),
         // `onEdit == null` is now the authoritative signal: the cubit only
         // wires it up when `UserCapabilitiesDto.canEdit*` is true. The
