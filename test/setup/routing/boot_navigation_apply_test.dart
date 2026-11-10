@@ -709,6 +709,56 @@ void main() {
     });
 
     testWidgets(
+      'a hanging registration-info request times out, releases the in-flight '
+      'flag, and a later dashboard landing opens /kyc again',
+      (tester) async {
+        final never = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => never.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+        expect(matchesOf(router), ['/dashboard']);
+
+        // Advance past the prompt's local 20s timeout. The request itself stays
+        // pending, so only the local `.timeout` can release the flag.
+        await tester.pump(const Duration(seconds: 21));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        when(() => service.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+        expect(find.text('kyc:unscoped'), findsOneWidget);
+        verify(() => service.getRegistrationInfo()).called(2);
+      },
+    );
+
+    testWidgets(
       'a gate go replacing the KYC route releases the in-flight flag so a '
       'later dashboard landing opens /kyc again',
       (tester) async {

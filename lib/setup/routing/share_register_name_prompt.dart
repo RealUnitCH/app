@@ -31,6 +31,10 @@ class ShareRegisterNameRouteObserver extends NavigatorObserver {
 
 bool _shareRegisterNamePromptInFlight = false;
 
+/// Upper bound for the boot-time registration lookup so a hanging connection
+/// cannot keep the prompt in flight for the rest of the session.
+const _registrationInfoTimeout = Duration(seconds: 20);
+
 @visibleForTesting
 void debugResetShareRegisterNamePromptInFlight() {
   _shareRegisterNamePromptInFlight = false;
@@ -47,7 +51,9 @@ Future<void> promptShareRegisterNameUpdate(GoRouter router) async {
   if (_shareRegisterNamePromptInFlight) return;
   _shareRegisterNamePromptInFlight = true;
   try {
-    final info = await getIt<RealUnitRegistrationService>().getRegistrationInfo();
+    final info = await getIt<RealUnitRegistrationService>()
+        .getRegistrationInfo()
+        .timeout(_registrationInfoTimeout);
     if (!info.shareRegisterNameSigningRequired) return;
     final location = effectiveLocation(router.routerDelegate.currentConfiguration);
     final path = Uri.tryParse(location)?.path ?? location;

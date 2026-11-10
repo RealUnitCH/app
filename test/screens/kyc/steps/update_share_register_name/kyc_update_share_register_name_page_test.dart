@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +12,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
@@ -33,6 +39,8 @@ class _MockBitboxService extends Mock implements BitboxService {}
 class _MockWalletService extends Mock implements WalletService {}
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
+
+class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
@@ -68,6 +76,7 @@ void main() {
   late _MockKycUpdateShareRegisterNameCubit nameCubit;
   late _MockKycCubit kycCubit;
   late _MockHomeBloc homeBloc;
+  late _MockRegistrationService registrationService;
 
   setUpAll(() {
     registerFallbackValue('');
@@ -83,6 +92,8 @@ void main() {
     getIt.registerSingleton<BitboxService>(bitboxService);
     getIt.registerSingleton<WalletService>(_MockWalletService());
     getIt.registerSingleton<DfxKycService>(_MockDfxKycService());
+    registrationService = _MockRegistrationService();
+    getIt.registerSingleton<RealUnitRegistrationService>(registrationService);
   });
 
   tearDownAll(() async => await GetIt.instance.reset());
@@ -91,6 +102,13 @@ void main() {
     nameCubit = _MockKycUpdateShareRegisterNameCubit();
     kycCubit = _MockKycCubit();
     homeBloc = _MockHomeBloc();
+    when(
+      () => registrationService.updateShareRegisterName(_userData, any()),
+    ).thenAnswer(
+      (_) async => const RealUnitRegistrationResponseDto(
+        status: RegistrationStatus.completed,
+      ),
+    );
     when(() => nameCubit.state).thenReturn(
       const KycUpdateShareRegisterNameReady(_userData, _shareRegisterName),
     );
@@ -353,6 +371,101 @@ void main() {
       await tester.tap(find.byType(FilledButton));
       await tester.pump();
       verify(() => kycCubit.checkKyc()).called(1);
+    });
+  });
+
+  group('$KycUpdateShareRegisterNamePage payload binding', () {
+    Widget buildPage(String name) => MaterialApp(
+      locale: const Locale('de'),
+      localizationsDelegates: const [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: S.delegate.supportedLocales,
+      home: BlocProvider<KycCubit>.value(
+        value: kycCubit,
+        child: KycUpdateShareRegisterNamePage(
+          userData: _userData,
+          shareRegisterName: name,
+        ),
+      ),
+    );
+
+    testWidgets('rebuilding with a new approved name submits the new name', (tester) async {
+      await tester.pumpWidget(buildPage('Ada Lovelace'));
+      await tester.pump();
+
+      await tester.pumpWidget(buildPage('Grace Hopper'));
+      await tester.pump();
+      expect(find.text('Grace Hopper'), findsOneWidget);
+
+      await tester.tap(find.byType(FilledButton));
+      await tester.pump();
+      await tester.pump();
+
+      verify(
+        () => registrationService.updateShareRegisterName(_userData, 'Grace Hopper'),
+      ).called(1);
+      verifyNever(
+        () => registrationService.updateShareRegisterName(_userData, 'Ada Lovelace'),
+      );
+    });
+  });
+
+  group('$KycUpdateShareRegisterNamePage unmounted with BitBox sheet open', () {
+    testWidgets('a true sheet result after removal does not retry the service', (tester) async {
+      when(
+        () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+      ).thenThrow(const BitboxNotConnectedException());
+
+      final navigatorKey = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigatorKey,
+          locale: const Locale('de'),
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+          home: const Scaffold(body: Text('base')),
+        ),
+      );
+
+      final pageRoute = MaterialPageRoute<void>(
+        builder: (_) => BlocProvider<KycCubit>.value(
+          value: kycCubit,
+          child: const KycUpdateShareRegisterNamePage(
+            userData: _userData,
+            shareRegisterName: _shareRegisterName,
+          ),
+        ),
+      );
+      unawaited(navigatorKey.currentState!.push(pageRoute));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(FilledButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.byType(ConnectBitboxPage), findsOneWidget);
+
+      // Remove only the page route underneath; the modal sheet stays alive.
+      navigatorKey.currentState!.removeRoute(pageRoute);
+      await tester.pump();
+      expect(find.text('base'), findsOneWidget);
+      expect(find.byType(ConnectBitboxPage), findsOneWidget);
+
+      Navigator.of(tester.element(find.byType(ConnectBitboxPage))).pop(true);
+      await tester.pumpAndSettle();
+
+      verify(
+        () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+      ).called(1);
+      expect(tester.takeException(), isNull);
     });
   });
 }

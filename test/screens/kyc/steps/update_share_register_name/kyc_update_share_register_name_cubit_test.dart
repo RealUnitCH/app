@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -455,5 +457,59 @@ void main() {
         const KycUpdateShareRegisterNameFailure(_sendFailed),
       ],
     );
+
+    test('submit after close returns early without touching the service', () async {
+      final cubit = build();
+      await cubit.close();
+
+      await submit(cubit);
+
+      expect(cubit.isClosed, isTrue);
+      verifyNever(
+        () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+      );
+    });
+
+    test('retrySubmit after close returns early without touching the service', () async {
+      final cubit = build();
+      await cubit.close();
+
+      await cubit.retrySubmit(
+        shareRegisterNameFailed: _failed,
+        shareRegisterNameSendFailed: _sendFailed,
+        registrationDateUnavailable: _dateUnavailable,
+        signingCancelled: _signingCancelled,
+      );
+
+      expect(cubit.isClosed, isTrue);
+      verifyNever(
+        () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+      );
+    });
+
+    test('a second submit while the first is in flight calls the service once', () async {
+      final response = Completer<RealUnitRegistrationResponseDto>();
+      when(
+        () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+      ).thenAnswer((_) => response.future);
+
+      final cubit = build();
+
+      final first = submit(cubit);
+      final second = submit(cubit);
+      await Future<void>.delayed(Duration.zero);
+
+      verify(
+        () => registrationService.updateShareRegisterName(_userData, _shareRegisterName),
+      ).called(1);
+
+      response.complete(
+        const RealUnitRegistrationResponseDto(status: RegistrationStatus.completed),
+      );
+      await Future.wait([first, second]);
+
+      expect(cubit.state, isA<KycUpdateShareRegisterNameSuccess>());
+      await cubit.close();
+    });
   });
 }

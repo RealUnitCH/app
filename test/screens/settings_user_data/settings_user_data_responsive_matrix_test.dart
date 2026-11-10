@@ -74,6 +74,24 @@ const _settingsUserData = UserData(
   lang: 'DE',
 );
 
+/// Long but realistic values for every row that can grow: the name, the
+/// street, and the city. With the review badges this stresses both the row
+/// Wrap and the scroll body across the full matrix.
+const _longSettingsUserData = UserData(
+  email: 'alexandra.maximiliana@example.com',
+  name: 'Alexandra Maximiliana von Hohenzollern-Sigmaringen',
+  type: RegistrationUserType.human,
+  phoneNumber: '+41791234567',
+  birthday: null,
+  nationality: Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true),
+  addressStreet: 'Bundesplatzstrasse Am Alten Waffenplatz',
+  addressPostalCode: '8000',
+  addressCity: 'Zuerich-Seefeld-Hirslanden',
+  addressCountry: Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true),
+  swissTaxResidence: true,
+  lang: 'DE',
+);
+
 /// A long, realistic file name -- stresses the `selectedFile!.name` row of
 /// [FilePickerField] (used by the name and address pages).
 const _longFileName =
@@ -546,6 +564,21 @@ void main() {
             canEditPhone: true,
             canEditAddress: true,
           ),
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+          shareRegisterNameSigningRequired: true,
+        ),
+        hasCta: true,
+      ),
+      'long values with pending badges without signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _longSettingsUserData,
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+        ),
+        hasCta: false,
+      ),
+      'long values with pending badges with signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _longSettingsUserData,
           pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
           shareRegisterNameSigningRequired: true,
         ),

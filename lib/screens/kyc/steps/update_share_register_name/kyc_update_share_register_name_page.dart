@@ -34,6 +34,7 @@ class KycUpdateShareRegisterNamePage extends StatelessWidget {
       return const _UpdateShareRegisterNameMissingDataPage();
     }
     return BlocProvider(
+      key: ValueKey((data, name)),
       create: (_) => KycUpdateShareRegisterNameCubit(
         getIt<RealUnitRegistrationService>(),
         data,
