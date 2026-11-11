@@ -681,6 +681,94 @@ void main() {
     });
 
     testWidgets(
+      'dashboard waits for a running referral bind before asking for a name signature',
+      (tester) async {
+        final bindStarted = Completer<void>();
+        final referralResult = Completer<ReferralBindResultDto>();
+        final registrationInfo = Completer<RealUnitRegistrationInfoDto>();
+        final referralService = _MockReferralService();
+        when(
+          () => referralService.bind(code: 'AB12CD'),
+        ).thenAnswer((_) {
+          bindStarted.complete();
+          return referralResult.future;
+        });
+        GetIt.instance.registerSingleton<RealUnitReferralService>(
+          referralService,
+        );
+        final registrationService =
+            GetIt.instance<RealUnitRegistrationService>();
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) => registrationInfo.future,
+        );
+        await stashPendingReferralCode('AB12CD');
+
+        // The deeplink bind starts before the post-unlock dashboard is attached.
+        // Its dialog is therefore queued for the first attached frame.
+        final router = buildRouter();
+        final firstBind = bindPendingReferralCode(router);
+        await bindStarted.future;
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(locationOf(router), '/dashboard');
+        verifyNever(() => registrationService.getRegistrationInfo());
+        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+
+        referralResult.complete(
+          const ReferralBindResultDto(
+            kind: 'Invite',
+            inviterName: 'Grace Hopper',
+          ),
+        );
+        await firstBind;
+        await pumpLocalizedRouter(tester, router);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        verify(() => registrationService.getRegistrationInfo()).called(1);
+        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+
+        registrationInfo.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The prompt resolves while the referral dialog is topmost, so it must
+        // not push KYC over or under that popup.
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+
+        Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(matchesOf(router), ['/dashboard']);
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+        verify(() => registrationService.getRegistrationInfo()).called(2);
+      },
+    );
+
+    testWidgets(
       'registration completion before referral completion never puts the referral over /kyc',
       (tester) async {
         final referralResult = Completer<ReferralBindResultDto>();
