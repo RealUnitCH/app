@@ -724,8 +724,8 @@ void main() {
         await tester.pump();
 
         expect(locationOf(router), '/dashboard');
-      verifyNever(() => registrationService.getRegistrationInfo());
-      verifyNoMoreInteractions(referralService);
+        verifyNever(() => registrationService.getRegistrationInfo());
+        verify(() => referralService.bind(code: 'AB12CD')).called(1);
 
         referralResult.complete(
           const ReferralBindResultDto(
@@ -739,7 +739,7 @@ void main() {
         expect(firstBindDone, isFalse);
         expect(matchesOf(router), ['/dashboard']);
         verifyNever(() => registrationService.getRegistrationInfo());
-        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+        verifyNoMoreInteractions(referralService);
 
         Navigator.of(tester.element(find.byType(AlertDialog))).pop();
         await tester.pumpAndSettle();
