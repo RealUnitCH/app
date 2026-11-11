@@ -709,8 +709,11 @@ void main() {
         await pumpLocalizedRouter(tester, router);
         await tester.pump();
         final firstBind = bindPendingReferralCode(router);
-    await tester.pump();
-    expect(bindStarted.isCompleted, isTrue);
+        await tester.pump();
+        expect(bindStarted.isCompleted, isTrue);
+
+        var firstBindDone = false;
+        firstBind.then((_) => firstBindDone = true);
 
         applyBootNavAction(
           const BootNavGoNamed(AppRoutes.dashboard),
@@ -718,29 +721,31 @@ void main() {
           onLoadWallet: () {},
           onClearResume: () {},
         );
-    await tester.pump();
+        await tester.pump();
 
         expect(locationOf(router), '/dashboard');
         verifyNever(() => registrationService.getRegistrationInfo());
         verify(() => referralService.bind(code: 'AB12CD')).called(1);
 
-    var firstBindDone = false;
-    firstBind.then((_) => firstBindDone = true);
-    referralResult.complete(
+        referralResult.complete(
           const ReferralBindResultDto(
             kind: 'Invite',
             inviterName: 'Grace Hopper',
           ),
         );
-    await tester.pumpAndSettle();
-    expect(firstBindDone, isTrue);
-        await pumpLocalizedRouter(tester, router);
         await tester.pumpAndSettle();
 
         expect(find.byType(AlertDialog), findsOneWidget);
+        expect(firstBindDone, isFalse);
         expect(matchesOf(router), ['/dashboard']);
-        verify(() => registrationService.getRegistrationInfo()).called(1);
+        verifyNever(() => registrationService.getRegistrationInfo());
         verify(() => referralService.bind(code: 'AB12CD')).called(1);
+
+        Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+        await tester.pumpAndSettle();
+
+        expect(firstBindDone, isTrue);
+        verify(() => registrationService.getRegistrationInfo()).called(1);
 
         registrationInfo.complete(
           RealUnitRegistrationInfoDto(
@@ -751,26 +756,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // The prompt resolves while the referral dialog is topmost, so it must
-        // not push KYC over or under that popup.
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(matchesOf(router), ['/dashboard']);
-
-        Navigator.of(tester.element(find.byType(AlertDialog))).pop();
-        await tester.pumpAndSettle();
         expect(find.byType(AlertDialog), findsNothing);
-        expect(matchesOf(router), ['/dashboard']);
-
-        applyBootNavAction(
-          const BootNavGoNamed(AppRoutes.dashboard),
-          router,
-          onLoadWallet: () {},
-          onClearResume: () {},
-        );
-        await tester.pumpAndSettle();
-
         expect(matchesOf(router), ['/dashboard', '/kyc']);
-        verify(() => registrationService.getRegistrationInfo()).called(2);
       },
     );
 
@@ -835,7 +822,8 @@ void main() {
     );
 
     testWidgets(
-      'referral completion before registration completion never puts /kyc over the dialog',
+      'asks for registration only after the referral dialog closes and never '
+      'puts /kyc over it',
       (tester) async {
         final referralResult = Completer<ReferralBindResultDto>();
         final registrationInfo = Completer<RealUnitRegistrationInfoDto>();
@@ -851,7 +839,7 @@ void main() {
         await stashPendingReferralCode('AB12CD');
 
         final router = buildRouter();
-        await tester.pumpAndSettle();
+        await pumpLocalizedRouter(tester, router);
         await tester.pumpAndSettle();
 
         applyBootNavAction(
@@ -863,6 +851,10 @@ void main() {
         await tester.pump();
         await tester.pump();
 
+        expect(matchesOf(router), ['/dashboard']);
+        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+        verifyNever(() => registrationService.getRegistrationInfo());
+
         referralResult.complete(
           const ReferralBindResultDto(kind: 'Invite', inviterName: 'Grace Hopper'),
         );
@@ -873,6 +865,8 @@ void main() {
 
         Navigator.of(tester.element(find.byType(AlertDialog))).pop();
         await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
         verify(() => registrationService.getRegistrationInfo()).called(1);
         expect(matchesOf(router), ['/dashboard']);
 
