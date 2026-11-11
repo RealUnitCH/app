@@ -707,7 +707,8 @@ void main() {
         // Its dialog is therefore queued for the first attached frame.
         final router = buildRouter();
         final firstBind = bindPendingReferralCode(router);
-        await bindStarted.future;
+    await tester.pump();
+    expect(bindStarted.isCompleted, isTrue);
 
         applyBootNavAction(
           const BootNavGoNamed(AppRoutes.dashboard),
@@ -715,19 +716,22 @@ void main() {
           onLoadWallet: () {},
           onClearResume: () {},
         );
-        await Future<void>.delayed(Duration.zero);
+    await tester.pump();
 
         expect(locationOf(router), '/dashboard');
         verifyNever(() => registrationService.getRegistrationInfo());
         verify(() => referralService.bind(code: 'AB12CD')).called(1);
 
-        referralResult.complete(
+    var firstBindDone = false;
+    firstBind.then((_) => firstBindDone = true);
+    referralResult.complete(
           const ReferralBindResultDto(
             kind: 'Invite',
             inviterName: 'Grace Hopper',
           ),
         );
-        await firstBind;
+    await tester.pumpAndSettle();
+    expect(firstBindDone, isTrue);
         await pumpLocalizedRouter(tester, router);
         await tester.pumpAndSettle();
 
