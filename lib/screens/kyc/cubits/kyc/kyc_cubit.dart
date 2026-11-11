@@ -168,6 +168,13 @@ class KycCubit extends Cubit<KycState> {
       final registrationInfo = await _registrationService.getRegistrationInfo();
       if (isClosed || generation != _runGeneration) return;
 
+      final shareRegisterName = registrationInfo.shareRegisterName;
+      final registeredUserData = registrationInfo.realUnitUserDataDto;
+      // Manual review still wins: a debug wallet parked in review must see
+      // the review screen, not a signature failure for a sign step it will
+      // not reach.
+      final nameUpdateRequiresSignature = registrationInfo.shareRegisterNameSigningRequired;
+
       // Signing capability is a physical property of the wallet implementation
       // (debug mode is address-only, cannot produce EIP-712 signatures) and
       // cannot be derived from the server — see CONTRIBUTING.md "API as
@@ -176,7 +183,8 @@ class KycCubit extends Cubit<KycState> {
       // throw `UnsupportedError` deep inside the registration flow.
       if (_appStore.wallet.walletType == WalletType.debug &&
           (registrationInfo.state == RealUnitRegistrationState.newRegistration ||
-              registrationInfo.state == RealUnitRegistrationState.addWallet)) {
+              registrationInfo.state == RealUnitRegistrationState.addWallet ||
+              nameUpdateRequiresSignature)) {
         emit(const KycSignatureUnsupportedFailure());
         return;
       }
@@ -196,6 +204,23 @@ class KycCubit extends Cubit<KycState> {
               rejectionMessage == null
                   ? const KycManualReview()
                   : KycManualReview(rejectionMessage: rejectionMessage),
+            );
+            return;
+          }
+          // The API owns the share-register name gate. Only
+          // `shareRegisterNameSigningRequired` opens it (AlreadyRegistered +
+          // nameUpdateRequired=true + no manual review). A missing name or
+          // user record still routes here: the page shows its retry surface
+          // instead of falling through to completed. The gate sits under
+          // manual review and above the e-mail gate. See CONTRIBUTING.md
+          // "API as Decision Authority".
+          if (registrationInfo.shareRegisterNameSigningRequired) {
+            emit(
+              KycSuccess(
+                currentStep: KycStep.updateShareRegisterName,
+                realUnitUserData: registeredUserData,
+                shareRegisterName: shareRegisterName,
+              ),
             );
             return;
           }

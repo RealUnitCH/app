@@ -11,9 +11,11 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class SettingsUserDataPage extends StatelessWidget {
   const SettingsUserDataPage({super.key});
@@ -49,96 +51,117 @@ class SettingsUserDataView extends StatelessWidget {
               :final email,
               :final pendingSteps,
               :final capabilities,
+              :final shareRegisterNameSigningRequired,
             ) =>
               userData != null
-                  ? SingleChildScrollView(
-                      child: Padding(
+                  ? SafeArea(
+                      child: ScrollableActionsLayout(
                         padding: const .symmetric(horizontal: 12.0),
-                        child: SafeArea(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 24,
-                            children: [
-                              _UserDataRow(
-                                label: S.of(context).registerAccountType,
-                                value: userData.type.name(context),
-                              ),
-                              _UserDataRow(
-                                label: S.of(context).name,
-                                value: userData.name,
-                                statusLabel: pendingSteps.contains(KycStepName.nameChange)
-                                    ? S.of(context).changeInReview
-                                    : null,
-                                onEdit: capabilities.canEditName
-                                    ? () async {
-                                        final isEdited = await context.pushNamed<bool>(
-                                          SettingsRoutes.editName,
-                                        );
-                                        if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
-                                        }
+                        body: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 24,
+                          children: [
+                            _UserDataRow(
+                              label: S.of(context).registerAccountType,
+                              value: userData.type.name(context),
+                            ),
+                            _UserDataRow(
+                              label: S.of(context).name,
+                              value: userData.name,
+                              statusLabel: pendingSteps.contains(KycStepName.nameChange)
+                                  ? S.of(context).changeInReview
+                                  : null,
+                              onEdit: capabilities.canEditName
+                                  ? () async {
+                                      final isEdited = await context.pushNamed<bool>(
+                                        SettingsRoutes.editName,
+                                      );
+                                      if (isEdited == true && context.mounted) {
+                                        context.read<SettingsUserDataCubit>().getUserData();
                                       }
-                                    : null,
-                              ),
-                              if (userData.birthday != null)
-                                _UserDataRow(
-                                  label: S.of(context).birthday,
-                                  value: DateFormat('dd.MM.yyyy').format(userData.birthday!),
-                                ),
+                                    }
+                                  : null,
+                            ),
+                            if (userData.birthday != null)
                               _UserDataRow(
-                                label: S.of(context).registerCitizenship,
-                                value: userData.nationality.name,
+                                label: S.of(context).birthday,
+                                value: DateFormat('dd.MM.yyyy').format(userData.birthday!),
                               ),
-                              _UserDataRow(label: S.of(context).email, value: userData.email),
-                              _UserDataRow(
-                                label: S.of(context).phoneNumber,
-                                value: userData.phoneNumber,
-                                onEdit: capabilities.canEditPhone
-                                    ? () async {
-                                        final isEdited = await context.pushNamed<bool>(
-                                          SettingsRoutes.editPhone,
-                                        );
-                                        if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
-                                        }
+                            _UserDataRow(
+                              label: S.of(context).registerCitizenship,
+                              value: userData.nationality.name,
+                            ),
+                            _UserDataRow(label: S.of(context).email, value: userData.email),
+                            _UserDataRow(
+                              label: S.of(context).phoneNumber,
+                              value: userData.phoneNumber,
+                              onEdit: capabilities.canEditPhone
+                                  ? () async {
+                                      final isEdited = await context.pushNamed<bool>(
+                                        SettingsRoutes.editPhone,
+                                      );
+                                      if (isEdited == true && context.mounted) {
+                                        context.read<SettingsUserDataCubit>().getUserData();
                                       }
-                                    : null,
-                              ),
-                              _UserDataRow(
-                                label: S.of(context).residence,
-                                value:
-                                    '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
-                                statusLabel: pendingSteps.contains(KycStepName.addressChange)
-                                    ? S.of(context).changeInReview
-                                    : null,
-                                onEdit: capabilities.canEditAddress
-                                    ? () async {
-                                        final isEdited = await context.pushNamed<bool>(
-                                          SettingsRoutes.editAddress,
-                                        );
-                                        if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
-                                        }
+                                    }
+                                  : null,
+                            ),
+                            _UserDataRow(
+                              label: S.of(context).residence,
+                              value:
+                                  '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
+                              statusLabel: pendingSteps.contains(KycStepName.addressChange)
+                                  ? S.of(context).changeInReview
+                                  : null,
+                              onEdit: capabilities.canEditAddress
+                                  ? () async {
+                                      final isEdited = await context.pushNamed<bool>(
+                                        SettingsRoutes.editAddress,
+                                      );
+                                      if (isEdited == true && context.mounted) {
+                                        context.read<SettingsUserDataCubit>().getUserData();
                                       }
-                                    : null,
-                              ),
-                            ],
-                          ),
+                                    }
+                                  : null,
+                            ),
+                          ],
                         ),
+                        actions: [
+                          if (shareRegisterNameSigningRequired)
+                            const _ShareRegisterNameUpdateButton(),
+                        ],
                       ),
                     )
                   : email != null
                   ? SafeArea(
-                      child: Padding(
+                      child: ScrollableActionsLayout(
                         padding: const .symmetric(horizontal: 12.0),
-                        child: _UserDataRow(
-                          label: S.of(context).email,
-                          value: email,
+                        body: Align(
+                          alignment: .topLeft,
+                          child: _UserDataRow(
+                            label: S.of(context).email,
+                            value: email,
+                          ),
                         ),
+                        actions: [
+                          if (shareRegisterNameSigningRequired)
+                            const _ShareRegisterNameUpdateButton(),
+                        ],
                       ),
                     )
-                  : Center(
-                      child: Text(S.of(context).userDataNotFound),
+                  : SafeArea(
+                      child: ScrollableActionsLayout(
+                        padding: const .symmetric(horizontal: 12.0),
+                        centerBody: true,
+                        body: Text(
+                          S.of(context).userDataNotFound,
+                          textAlign: .center,
+                        ),
+                        actions: [
+                          if (shareRegisterNameSigningRequired)
+                            const _ShareRegisterNameUpdateButton(),
+                        ],
+                      ),
                     ),
             SettingsUserDataLoading() => const Center(
               child: CupertinoActivityIndicator(),
@@ -154,6 +177,23 @@ class SettingsUserDataView extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ShareRegisterNameUpdateButton extends StatelessWidget {
+  const _ShareRegisterNameUpdateButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppFilledButton(
+      onPressed: () async {
+        await context.pushNamed(AppRoutes.kyc);
+        if (context.mounted) {
+          await context.read<SettingsUserDataCubit>().getUserData();
+        }
+      },
+      label: S.of(context).shareRegisterNameAction,
     );
   }
 }
@@ -216,37 +256,40 @@ class _UserDataRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: .spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: .start,
-          spacing: 4,
-          children: [
-            Row(
-              spacing: 8.0,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: .bold,
-                    color: RealUnitColors.neutral900,
-                  ),
-                ),
-                if (statusLabel != null)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: .start,
+            spacing: 4,
+            children: [
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: [
                   Text(
-                    statusLabel!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: RealUnitColors.realUnitBlue,
-                      fontStyle: .italic,
+                    label,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: .bold,
+                      color: RealUnitColors.neutral900,
                     ),
                   ),
-              ],
-            ),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: RealUnitColors.neutral500,
+                  if (statusLabel != null)
+                    Text(
+                      statusLabel!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.realUnitBlue,
+                        fontStyle: .italic,
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ],
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: RealUnitColors.neutral500,
+                ),
+              ),
+            ],
+          ),
         ),
         // `onEdit == null` is now the authoritative signal: the cubit only
         // wires it up when `UserCapabilitiesDto.canEdit*` is true. The

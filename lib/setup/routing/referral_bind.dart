@@ -17,11 +17,11 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/effective_location.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 
-bool _bindInFlight = false;
+Future<void>? _bindInFlightFuture;
 
 @visibleForTesting
 void debugResetBindInFlight() {
-  _bindInFlight = false;
+  _bindInFlightFuture = null;
 }
 
 /// Binds a KYC-deferred stash after the `/kyc` route leaves the stack.
@@ -65,9 +65,10 @@ class _BindReferralOnKycExitState extends State<BindReferralOnKycExit> {
 /// sent to the referrer overview (they are not the host).
 ///
 /// The stash is taken before POST so a dashboard boot bind cannot send the
-/// same code in parallel. A second call while that POST is in flight only
-/// stashes; it does not take. Transport / 5xx / 401 / 429 and an unmounted
-/// NestJS route (`Cannot POST …`) put the code back so the next dashboard
+/// same code in parallel. A second call while that POST is in flight stashes,
+/// if needed, and waits for the running bind instead of taking. Transport /
+/// 5xx / 401 / 429 and an unmounted NestJS route (`Cannot POST …`) put the code
+/// back so the next dashboard
 /// landing can retry, without overwriting a newer stashed code, and show
 /// the unavailable copy once (Retry binds again on that dialog in the
 /// loading state; Close waits for the next landing). 4xx business rejections (invalid,
@@ -104,23 +105,31 @@ Future<void> bindPendingReferralCode(GoRouter router, {String? code}) async {
     await stashPendingReferralCode(code);
   }
   if (_isKycLocation(router)) return;
-  if (_bindInFlight) return;
-  _bindInFlight = true;
+  final inFlightFuture = _bindInFlightFuture;
+  if (inFlightFuture != null) return inFlightFuture;
+  final bindFuture = _drainPendingReferralCodes(router);
+  _bindInFlightFuture = bindFuture;
   try {
-    while (true) {
-      // Take before POST so a parallel boot bind cannot send the same code twice.
-      final resolved = await takePendingReferralCode();
-      if (resolved == null || resolved.isEmpty) {
-        final leftover = await peekPendingReferralCode();
-        if (leftover == null || leftover.isEmpty) return;
-        continue;
-      }
-      final retryLater = await _bindTakenCode(router, resolved);
-      if (retryLater) return;
-      await discardPendingReferralCodeIfEqual(resolved);
-    }
+    await bindFuture;
   } finally {
-    _bindInFlight = false;
+    if (identical(_bindInFlightFuture, bindFuture)) {
+      _bindInFlightFuture = null;
+    }
+  }
+}
+
+Future<void> _drainPendingReferralCodes(GoRouter router) async {
+  while (true) {
+    // Take before POST so a parallel boot bind cannot send the same code twice.
+    final resolved = await takePendingReferralCode();
+    if (resolved == null || resolved.isEmpty) {
+      final leftover = await peekPendingReferralCode();
+      if (leftover == null || leftover.isEmpty) return;
+      continue;
+    }
+    final retryLater = await _bindTakenCode(router, resolved);
+    if (retryLater) return;
+    await discardPendingReferralCodeIfEqual(resolved);
   }
 }
 
