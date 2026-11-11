@@ -922,7 +922,7 @@ void main() {
             RealUnitRegistrationState.alreadyRegistered,
             userData: _fixtureUserData,
             nameUpdateRequired: true,
-            shareRegisterName: null,
+            shareRegisterName: '',
           ),
         );
       },
@@ -933,7 +933,7 @@ void main() {
         const KycSuccess(
           currentStep: KycStep.updateShareRegisterName,
           realUnitUserData: _fixtureUserData,
-          shareRegisterName: '',
+          shareRegisterName: null,
         ),
       ],
     );
