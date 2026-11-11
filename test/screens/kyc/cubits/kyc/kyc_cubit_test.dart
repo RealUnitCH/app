@@ -908,7 +908,7 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      'emits KycSuccess(updateShareRegisterName) when nameUpdateRequired=true and the name is empty',
+      'emits KycSuccess(updateShareRegisterName) when nameUpdateRequired=true and the name is empty (normalised to null)',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(
@@ -922,7 +922,7 @@ void main() {
             RealUnitRegistrationState.alreadyRegistered,
             userData: _fixtureUserData,
             nameUpdateRequired: true,
-            shareRegisterName: '',
+            shareRegisterName: null,
           ),
         );
       },
