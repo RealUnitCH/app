@@ -16,6 +16,12 @@ class DfxLanguageService {
   /// How long a fetched language list stays cached before the next call refetches.
   static const _cacheTtl = Duration(minutes: 5);
 
+  /// Request budget, matching the other DFX services (`dfx_auth_service`,
+  /// `real_unit_pay_service`). Without it a stalled socket leaves the
+  /// `FutureBuilder` in `SettingsLanguagePage` pending forever, so the page
+  /// shows a spinner instead of its load-failure view with the retry button.
+  static const _httpTimeout = Duration(seconds: 20);
+
   List<DfxLanguageDto>? _cachedLanguages;
   DateTime? _cachedAt;
 
@@ -33,7 +39,7 @@ class DfxLanguageService {
     }
 
     final uri = buildUri(_host, _languagePath);
-    final response = await _appStore.httpClient.get(uri);
+    final response = await _appStore.httpClient.get(uri).timeout(_httpTimeout);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch languages: ${response.statusCode}');

@@ -7,6 +7,17 @@
 # dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
 # mobile-dev-inc/maestro#3137). Each gate stops its loop the instant the
 # screen changes, so surplus iterations no-op.
+#
+# The picker is API-backed (`GET /v1/fiat` via `SupportedFiatRepository`), so
+# its list can arrive late — a stalled first request on a freshly booted
+# simulator once kept the screen on its spinner past the previous 5 s budget
+# while the rest of the app stayed responsive. Each iteration therefore waits
+# up to 20 s for the list and, when the request hit the service timeout and
+# the page switched to its load-failure view, taps "Wiederholen" to fetch it
+# again. The tap on "Währung" stays in the loop for the case where the entry
+# tap was dropped; on the picker itself it only hits the app-bar title and is
+# a no-op. The final `extendedWaitUntil` stays strict: a currency list that
+# never loads is still a red flow.
 appId: swiss.realunit.app
 ---
 - repeat:
@@ -28,11 +39,23 @@ appId: swiss.realunit.app
             notVisible:
               text: '.*Schweizer.*'
           commands:
+            # Load-failure view → fetch the list again.
+            - runFlow:
+                when:
+                  visible:
+                    text: '.*Wiederholen.*'
+                commands:
+                  - tapOn:
+                      text: '.*Wiederholen.*'
             - tapOn:
                 text: '.*Währung.*'
                 optional: true
-- waitForAnimationToEnd
+            - extendedWaitUntil:
+                visible:
+                  text: '.*Schweizer.*'
+                timeout: 20000
+                optional: true
 - extendedWaitUntil:
     visible:
       text: '.*Schweizer.*'
-    timeout: 5000
+    timeout: 10000
