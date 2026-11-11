@@ -706,6 +706,8 @@ void main() {
         // The deeplink bind starts before the post-unlock dashboard is attached.
         // Its dialog is therefore queued for the first attached frame.
         final router = buildRouter();
+        await pumpLocalizedRouter(tester, router);
+        await tester.pump();
         final firstBind = bindPendingReferralCode(router);
     await tester.pump();
     expect(bindStarted.isCompleted, isTrue);
@@ -816,6 +818,8 @@ void main() {
         referralResult.complete(
           const ReferralBindResultDto(kind: 'Invite', inviterName: 'Grace Hopper'),
         );
+        // The router was attached before the bind started; settle the queued
+        // dialog now.
         await tester.pumpAndSettle();
         expect(find.byType(AlertDialog), findsOneWidget);
         expect(matchesOf(router), ['/dashboard']);
@@ -847,7 +851,7 @@ void main() {
         await stashPendingReferralCode('AB12CD');
 
         final router = buildRouter();
-        await pumpLocalizedRouter(tester, router);
+        await tester.pumpAndSettle();
         await tester.pumpAndSettle();
 
         applyBootNavAction(
