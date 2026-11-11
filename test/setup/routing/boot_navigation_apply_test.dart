@@ -724,8 +724,8 @@ void main() {
         await tester.pump();
 
         expect(locationOf(router), '/dashboard');
-        verifyNever(() => registrationService.getRegistrationInfo());
-        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+      verifyNever(() => registrationService.getRegistrationInfo());
+      verifyNoMoreInteractions(referralService);
 
         referralResult.complete(
           const ReferralBindResultDto(
