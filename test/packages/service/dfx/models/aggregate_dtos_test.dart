@@ -366,6 +366,16 @@ void main() {
         expect(dto.shareRegisterNameSigningRequired, isTrue);
       });
 
+      test('true when manualReview is explicitly false', () {
+        final dto = RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          manualReview: false,
+          nameUpdateRequired: true,
+        );
+
+        expect(dto.shareRegisterNameSigningRequired, isTrue);
+      });
+
       test('false for every other API combination', () {
         final cases = <RealUnitRegistrationInfoDto>[
           RealUnitRegistrationInfoDto(

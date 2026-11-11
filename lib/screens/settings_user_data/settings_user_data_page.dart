@@ -136,9 +136,12 @@ class SettingsUserDataView extends StatelessWidget {
                   ? SafeArea(
                       child: ScrollableActionsLayout(
                         padding: const .symmetric(horizontal: 12.0),
-                        body: _UserDataRow(
-                          label: S.of(context).email,
-                          value: email,
+                        body: Align(
+                          alignment: .topLeft,
+                          child: _UserDataRow(
+                            label: S.of(context).email,
+                            value: email,
+                          ),
                         ),
                         actions: [
                           if (shareRegisterNameSigningRequired)
@@ -150,7 +153,10 @@ class SettingsUserDataView extends StatelessWidget {
                       child: ScrollableActionsLayout(
                         padding: const .symmetric(horizontal: 12.0),
                         centerBody: true,
-                        body: Text(S.of(context).userDataNotFound),
+                        body: Text(
+                          S.of(context).userDataNotFound,
+                          textAlign: .center,
+                        ),
                         actions: [
                           if (shareRegisterNameSigningRequired)
                             const _ShareRegisterNameUpdateButton(),

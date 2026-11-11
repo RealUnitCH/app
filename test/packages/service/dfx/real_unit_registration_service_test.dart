@@ -45,11 +45,14 @@ class _CapturingFakeBitboxCredentials extends FakeBitboxCredentials {
   _CapturingFakeBitboxCredentials() : super(signDelay: Duration.zero);
 
   String? jsonData;
+  String? signature;
 
   @override
-  Future<String> signTypedDataV4(int chainId, String jsonData) {
+  Future<String> signTypedDataV4(int chainId, String jsonData) async {
     this.jsonData = jsonData;
-    return super.signTypedDataV4(chainId, jsonData);
+    final result = await super.signTypedDataV4(chainId, jsonData);
+    signature = result;
+    return result;
   }
 }
 
@@ -543,6 +546,8 @@ void main() {
         body.keys,
         unorderedEquals(['walletAddress', 'signature', 'registrationDate']),
       );
+      expect(body['signature'], credentials.signature);
+      expect(body['walletAddress'], credentials.address.hexEip55);
       expect(body['registrationDate'], '2026-07-13');
       expect(body.containsKey('name'), isFalse);
       expect(credentials.signCallCount, 1);
@@ -550,6 +555,8 @@ void main() {
       expect(credentials.jsonData, isNot(contains('Markus Akt')));
       expect(result, isA<RealUnitRegistrationResponseDto>());
       expect(result.status, RegistrationStatus.completed);
+      verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
+      verify(() => walletService.lockCurrentWallet()).called(1);
     });
 
     test('parses a forwarding failure response without throwing', () async {
@@ -582,7 +589,7 @@ void main() {
         'message': 'Registration date must be today',
       });
 
-      expect(
+      await expectLater(
         () => build(client).updateShareRegisterName(
           buildUserData(),
           shareRegisterName,
@@ -595,6 +602,8 @@ void main() {
           ),
         ),
       );
+      verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
+      verify(() => walletService.lockCurrentWallet()).called(1);
     });
 
     test('keeps a 5xx a plain ApiException', () async {
@@ -679,6 +688,7 @@ void main() {
       );
       expect(credentials.signCallCount, 0);
       expect(paths, isNot(contains('/v1/realunit/register/name')));
+      verifyNever(() => walletService.ensureCurrentWalletUnlocked());
     });
 
     for (final status in [403, 429]) {

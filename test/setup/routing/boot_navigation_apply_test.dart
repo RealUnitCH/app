@@ -1253,6 +1253,82 @@ void main() {
     );
 
     testWidgets(
+      'does not cover a bottom sheet over the dashboard when the registration '
+      'info arrives late, and closing it does not navigate again',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(
+          MaterialApp.router(
+            locale: const Locale('de'),
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            routerConfig: router,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        final navigatorContext = router.routerDelegate.navigatorKey.currentContext!;
+        unawaited(
+          showModalBottomSheet<void>(
+            context: navigatorContext,
+            builder: (sheetContext) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('dashboard-sheet'),
+                  TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: const Text('close-sheet'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('dashboard-sheet'), findsOneWidget);
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('dashboard-sheet'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        await tester.tap(find.text('close-sheet'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('dashboard-sheet'), findsNothing);
+        expect(find.text('dashboard'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
+
+    testWidgets(
       'does not cover another non-dashboard route when the registration info '
       'arrives late',
       (tester) async {

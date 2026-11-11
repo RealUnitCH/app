@@ -160,15 +160,17 @@ void main() {
     testWidgets('tapping the CTA submits with the localized copy', (tester) async {
       await pumpApp(tester);
 
+      final strings = S.of(tester.element(find.byType(KycUpdateShareRegisterNameView)));
+
       await tester.tap(find.byType(FilledButton));
       await tester.pump();
 
       verify(
         () => nameCubit.submit(
-          shareRegisterNameFailed: any(named: 'shareRegisterNameFailed'),
-          shareRegisterNameSendFailed: any(named: 'shareRegisterNameSendFailed'),
-          registrationDateUnavailable: any(named: 'registrationDateUnavailable'),
-          signingCancelled: any(named: 'signingCancelled'),
+          shareRegisterNameFailed: strings.shareRegisterNameFailed,
+          shareRegisterNameSendFailed: strings.shareRegisterNameSendFailed,
+          registrationDateUnavailable: strings.registrationDateUnavailable,
+          signingCancelled: strings.signingCancelled,
         ),
       ).called(1);
     });
@@ -349,31 +351,52 @@ void main() {
   });
 
   group('$KycUpdateShareRegisterNamePage with missing data', () {
-    testWidgets('renders the defensive retry page and retries via KycCubit', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          locale: const Locale('de'),
-          localizationsDelegates: const [
-            S.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-          ],
-          supportedLocales: S.delegate.supportedLocales,
-          home: BlocProvider<KycCubit>.value(
-            value: kycCubit,
-            child: const KycUpdateShareRegisterNamePage(
-              userData: null,
-              shareRegisterName: null,
+    final cases = <
+      ({
+        String description,
+        RealUnitUserDataDto? userData,
+        String? shareRegisterName,
+      })
+    >[
+      (description: 'user data and name', userData: null, shareRegisterName: null),
+      (description: 'user data', userData: null, shareRegisterName: _shareRegisterName),
+      (description: 'name', userData: _userData, shareRegisterName: null),
+      (description: 'non-empty name', userData: _userData, shareRegisterName: ''),
+    ];
+
+    for (final testCase in cases) {
+      testWidgets('missing ${testCase.description} renders the defensive retry page', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('de'),
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            home: BlocProvider<KycCubit>.value(
+              value: kycCubit,
+              child: KycUpdateShareRegisterNamePage(
+                userData: testCase.userData,
+                shareRegisterName: testCase.shareRegisterName,
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.byType(FilledButton));
-      await tester.pump();
-      verify(() => kycCubit.checkKyc()).called(1);
-    });
+        final strings = S.of(tester.element(find.byType(KycUpdateShareRegisterNamePage)));
+        expect(find.text(strings.kycFailure), findsOneWidget);
+        expect(find.text(strings.refresh), findsOneWidget);
+
+        await tester.tap(find.byType(FilledButton));
+        await tester.pump();
+        verify(() => kycCubit.checkKyc()).called(1);
+      });
+    }
   });
 
   group('$KycUpdateShareRegisterNamePage payload binding', () {

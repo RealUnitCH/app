@@ -172,7 +172,7 @@ void main() {
     );
 
     // The API-derived signing gate adds the sign button under the data column.
-    // Existing cases above leave the flag false, so their pixels stay put.
+    // Existing cases above leave the flag false and show no sign button.
     goldenTest(
       'success with the share-register name button',
       fileName: 'settings_user_data_page_name_update',

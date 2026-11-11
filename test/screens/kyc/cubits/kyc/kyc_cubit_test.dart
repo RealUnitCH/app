@@ -823,6 +823,38 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
+      'emits the signing step when manualReview=false and nameUpdateRequired=true',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            userData: _fixtureUserData,
+            manualReview: false,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(
+          currentStep: KycStep.updateShareRegisterName,
+          realUnitUserData: _fixtureUserData,
+          shareRegisterName: 'Ada Lovelace',
+        ),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
       'manualReview=true takes precedence over nameUpdateRequired=true',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(

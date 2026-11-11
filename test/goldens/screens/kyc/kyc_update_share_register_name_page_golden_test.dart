@@ -58,7 +58,7 @@ const _userData = RealUnitUserDataDto(
 const _shareRegisterName = 'Ada Lovelace';
 
 const _genericFailure =
-    'Das Aktienregister hat die Aktualisierung nicht angenommen. '
+    'Das Aktienbuch hat die Aktualisierung nicht angenommen. '
     'Bitte versuchen Sie es erneut.';
 
 const _sendFailed =
