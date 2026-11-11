@@ -256,10 +256,21 @@ void _checkBrokerbotSell({
       _word(BigInt.zero),
     ]),
   );
+  // group0 is the share sale to the brokerbot: one call with the exact amount.
   final group0 = _group([
     _caveatTuple(_exactExecution, execution),
     _caveatTuple(_limitedCalls, _word(BigInt.one)),
   ]);
+  // The wallet holds only REALU, never ZCHF as a user balance. ZCHF appears only
+  // as proceeds of this sell (or pay): group0 sells the exact confirmed REALU
+  // amount to the pinned brokerbot, which pays ZCHF to the wallet, and group1
+  // lets the relayer forward it. All ZCHF here belongs to the sale and is meant
+  // to be forwarded, so binding recipient, amount or call count in group1 would
+  // add no protection for the user. group1 is still limited to the pinned ZCHF
+  // token (AllowedTargets) and ERC-20 transfer selector (AllowedMethods); the
+  // Timestamp caveat expires it at most delegationValiditySeconds ahead.
+  // Intended behaviour, not a missing check; do not add recipient/amount/
+  // LimitedCalls caveats to group1 without changing this product decision first.
   final group1 = _group([
     _caveatTuple(_allowedTargets, zchf),
     _caveatTuple(_allowedMethods, _erc20TransferSelector),
