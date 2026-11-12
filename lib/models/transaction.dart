@@ -70,6 +70,12 @@ class Transaction {
     required this.timestamp,
   });
 
+  String get onChainTxHash {
+    final separator = txId.indexOf('#');
+    if (separator < 0) return txId;
+    return txId.substring(0, separator);
+  }
+
   bool isOutbound(String walletAddress) {
     if (type == TransactionTypes.referralPayout) return false;
     if (senderAddress.isEmpty || walletAddress.isEmpty) return false;

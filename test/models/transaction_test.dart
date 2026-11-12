@@ -71,6 +71,25 @@ void main() {
       expect(tx.isOutbound(_wallet), isFalse);
     });
 
+    test('onChainTxHash is the text before the first #', () {
+      String hashOf(String txId) => Transaction(
+        height: 1,
+        txId: txId,
+        chainId: realUnitAsset.chainId,
+        senderAddress: '0x0000000000000000000000000000000000000001',
+        receiverAddress: '0x0000000000000000000000000000000000000002',
+        amount: BigInt.one,
+        asset: realUnitAsset,
+        type: TransactionTypes.tokenTransfer,
+        note: '',
+        data: null,
+        timestamp: DateTime.utc(2026, 1, 1),
+      ).onChainTxHash;
+
+      expect(hashOf('0xabc#history-1-2-to'), '0xabc');
+      expect(hashOf('0xabc'), '0xabc');
+    });
+
     test('isOutbound normalises hex-digit case via EIP-55 on both sides', () {
       // EIP-55 keeps the literal `0x` prefix but mixes hex-digit case
       // deterministically. The helper round-trips through fromHex/hexEip55

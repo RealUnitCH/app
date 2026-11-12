@@ -59,6 +59,20 @@ void main() {
       ]),
       isEmpty,
     );
+    expect(
+      receiptTxIdsForDownload([
+        _tx(txId: '0xabc#history-1-2-to'),
+        _tx(txId: '0xabc'),
+      ]),
+      ['0xabc'],
+    );
+    expect(
+      receiptTxIdsForDownload([
+        _tx(txId: '0xabc#history-1-2-to'),
+        _tx(txId: '0xABC'),
+      ]).single,
+      isNot(contains('#')),
+    );
   });
 
   group('$TransactionHistoryDownloadButtonView', () {
@@ -116,6 +130,27 @@ void main() {
         verify(
           () => cubit.generateReceipt(
             ['0xbuy'],
+            currency: Currency.chf,
+            language: Language.en,
+          ),
+        ).called(1);
+      },
+    );
+
+    testWidgets(
+      'sends one pure hash when two rows share the on-chain transaction',
+      (tester) async {
+        await pumpButton(tester, [
+          _tx(txId: '0xabc#history-1-2-to'),
+          _tx(txId: '0xabc'),
+        ]);
+
+        await tester.tap(find.byIcon(Icons.file_download_outlined));
+        await tester.pump();
+
+        verify(
+          () => cubit.generateReceipt(
+            ['0xabc'],
             currency: Currency.chf,
             language: Language.en,
           ),

@@ -29,10 +29,16 @@ class TransactionHistoryDownloadButton extends StatelessWidget {
 
 /// DFX Beleg PDF is buy/sell only. Prize rows already show Anzahl, Datum
 /// and frozen CHF on the history line (Offerte Punkt 2) and have no DFX id.
-List<String> receiptTxIdsForDownload(Iterable<Transaction> transactions) => [
-  for (final t in transactions)
-    if (t.type != TransactionTypes.referralPayout) t.txId,
-];
+List<String> receiptTxIdsForDownload(Iterable<Transaction> transactions) {
+  final seen = <String>{};
+  final hashes = <String>[];
+  for (final t in transactions) {
+    if (t.type == TransactionTypes.referralPayout) continue;
+    final hash = t.onChainTxHash;
+    if (seen.add(hash.toLowerCase())) hashes.add(hash);
+  }
+  return hashes;
+}
 
 class TransactionHistoryDownloadButtonView extends StatelessWidget {
   final List<Transaction> transactions;
