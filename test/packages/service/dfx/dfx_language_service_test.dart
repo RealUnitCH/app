@@ -77,6 +77,36 @@ void main() {
       expect(() => service.getAllLanguages(), throwsException);
     });
 
+    test('getAllLanguages fails after 20 s instead of hanging forever', () {
+      // Ohne Timeout blieb der FutureBuilder auf der Sprachseite unendlich
+      // im Ladezustand, statt die Fehleransicht mit "Wiederholen" zu zeigen.
+      fakeAsync((async) {
+        final service = build(
+          MockClient((_) => Completer<http.Response>().future),
+        );
+
+        Object? failure;
+        unawaited(() async {
+          try {
+            await service.getAllLanguages();
+          } catch (error) {
+            failure = error;
+          }
+        }());
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 19));
+        expect(
+          failure,
+          isNull,
+          reason: 'request must still be in flight before the 20 s budget',
+        );
+
+        async.elapse(const Duration(seconds: 2));
+        expect(failure, isA<TimeoutException>());
+      });
+    });
+
     test('invalidateCache forces the next call to refetch', () async {
       var callCount = 0;
       final client = MockClient((request) async {
