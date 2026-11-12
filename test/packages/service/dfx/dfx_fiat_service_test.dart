@@ -68,6 +68,37 @@ void main() {
       expect(() => service.getAllFiats(), throwsException);
     });
 
+    test('getAllFiats fails after 20 s instead of hanging forever', () {
+      // Ohne Timeout blieb der FutureBuilder auf der Währungsseite unendlich
+      // im Ladezustand, statt die Fehleransicht mit "Wiederholen" zu zeigen
+      // (Tier-3-Flow 14-settings-currency lief deshalb rot).
+      fakeAsync((async) {
+        final service = build(
+          MockClient((_) => Completer<http.Response>().future),
+        );
+
+        Object? failure;
+        unawaited(() async {
+          try {
+            await service.getAllFiats();
+          } catch (error) {
+            failure = error;
+          }
+        }());
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 19));
+        expect(
+          failure,
+          isNull,
+          reason: 'request must still be in flight before the 20 s budget',
+        );
+
+        async.elapse(const Duration(seconds: 2));
+        expect(failure, isA<TimeoutException>());
+      });
+    });
+
     test('invalidateCache forces the next call to refetch', () async {
       var callCount = 0;
       final client = MockClient((request) async {

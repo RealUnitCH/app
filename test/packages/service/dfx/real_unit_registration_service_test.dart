@@ -12,8 +12,11 @@ import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_date_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
@@ -37,6 +40,21 @@ class _MockAccount extends Mock implements AWalletAccount {}
 class _MockCacheRepository extends Mock implements CacheRepository {}
 
 class _MockWalletService extends Mock implements WalletService {}
+
+class _CapturingFakeBitboxCredentials extends FakeBitboxCredentials {
+  _CapturingFakeBitboxCredentials() : super(signDelay: Duration.zero);
+
+  String? jsonData;
+  String? signature;
+
+  @override
+  Future<String> signTypedDataV4(int chainId, String jsonData) async {
+    this.jsonData = jsonData;
+    final result = await super.signTypedDataV4(chainId, jsonData);
+    signature = result;
+    return result;
+  }
+}
 
 void main() {
   late _MockAppStore appStore;
@@ -375,6 +393,363 @@ void main() {
       expect(
         () => build(client).registerWallet(buildUserData()),
         throwsA(isA<BitboxNotConnectedException>()),
+      );
+    });
+
+    group('registration date', () {
+      late FakeBitboxCredentials creds;
+      late List<String> paths;
+      late List<String> walletBodies;
+
+      http.Client clientReturningDate(String date) => MockClient((request) async {
+        paths.add(request.url.path);
+        if (request.url.path == '/v1/realunit/register/wallet') {
+          walletBodies.add(request.body);
+        }
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response(jsonEncode({'date': date}), 200);
+        }
+        return http.Response(jsonEncode({'status': 'completed'}), 201);
+      });
+
+      setUp(() {
+        creds = FakeBitboxCredentials(signDelay: Duration.zero);
+        paths = [];
+        walletBodies = [];
+        when(() => account.primaryAddress).thenReturn(creds);
+      });
+
+      test('signs and submits a well-formed YYYY-MM-DD date', () async {
+        await build(clientReturningDate('2026-07-13')).registerWallet(buildUserData());
+
+        expect(creds.signCallCount, 1);
+        expect(paths, contains('/v1/realunit/register/date'));
+        expect(walletBodies, hasLength(1));
+        expect(jsonDecode(walletBodies.single)['registrationDate'], '2026-07-13');
+      });
+
+      for (final date in const [
+        '2026/07/13',
+        '13.07.2026',
+        '2026-7-13',
+        '2026-07-13T00:00:00Z',
+        '2026-02-30',
+      ]) {
+        test('refuses to sign the registration date "$date"', () async {
+          Object? error;
+          try {
+            await build(clientReturningDate(date)).registerWallet(buildUserData());
+          } catch (e) {
+            error = e;
+          }
+
+          expect(creds.signCallCount, 0, reason: 'expected 0 sign calls');
+          expect(paths, isNot(contains('/v1/realunit/register/wallet')));
+          expect(error, isA<RegistrationDateUnavailableException>());
+        });
+      }
+
+      test('refuses to sign when the response carries no date', () async {
+        final client = MockClient((request) async {
+          paths.add(request.url.path);
+          if (request.url.path == '/v1/realunit/register/date') {
+            return http.Response('{}', 200);
+          }
+          return http.Response(jsonEncode({'status': 'completed'}), 201);
+        });
+
+        await expectLater(
+          build(client).registerWallet(buildUserData()),
+          throwsA(isA<RegistrationDateUnavailableException>()),
+        );
+        expect(creds.signCallCount, 0, reason: 'expected 0 sign calls');
+        expect(paths, isNot(contains('/v1/realunit/register/wallet')));
+      });
+    });
+  });
+
+  group('$RealUnitRegistrationService.updateShareRegisterName', () {
+    RealUnitUserDataDto buildUserData() => const RealUnitUserDataDto(
+      email: 'a@b.com',
+      name: 'Markus Akt',
+      type: 'HUMAN',
+      phoneNumber: '+41 79 000 00 00',
+      birthday: '1815-12-10',
+      nationality: 'CH',
+      addressStreet: 'Bahnhofstrasse 1',
+      addressPostalCode: '8000',
+      addressCity: 'Zurich',
+      addressCountry: 'CH',
+      swissTaxResidence: true,
+      lang: 'de',
+      kycData: KycPersonalData(
+        accountType: KycAccountType.personal,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+41 79 000 00 00',
+        address: KycAddress(
+          street: 'Bahnhofstrasse',
+          zip: '8000',
+          city: 'Zurich',
+          country: 41,
+        ),
+      ),
+    );
+
+    const shareRegisterName = 'Markus Alt';
+    late _CapturingFakeBitboxCredentials credentials;
+    late List<String> paths;
+
+    setUp(() {
+      credentials = _CapturingFakeBitboxCredentials();
+      paths = [];
+      when(() => account.primaryAddress).thenReturn(credentials);
+    });
+
+    MockClient updateErrorClient(int status, Map<String, dynamic> body) =>
+        MockClient((request) async {
+          paths.add(request.url.path);
+          if (request.url.path == '/v1/realunit/register/date') {
+            return http.Response('{"date":"2026-07-13"}', 200);
+          }
+          if (request.method == 'POST' && request.url.path == '/v1/realunit/register/name') {
+            return http.Response(jsonEncode(body), status);
+          }
+          return http.Response('{}', 404);
+        });
+
+    test('submits the signed share register name and parses completed', () async {
+      final postPaths = <String>[];
+      String? sentBody;
+      final client = MockClient((request) async {
+        paths.add(request.url.path);
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{"date":"2026-07-13"}', 200);
+        }
+        if (request.method == 'POST') {
+          postPaths.add(request.url.path);
+          sentBody = request.body;
+        }
+        return http.Response(jsonEncode({'status': 'completed'}), 201);
+      });
+
+      final result = await build(client).updateShareRegisterName(
+        buildUserData(),
+        shareRegisterName,
+      );
+
+      final body = jsonDecode(sentBody!) as Map<String, dynamic>;
+      final typedData = jsonDecode(credentials.jsonData!) as Map<String, dynamic>;
+      final message = typedData['message'] as Map<String, dynamic>;
+      expect(postPaths, ['/v1/realunit/register/name']);
+      expect(
+        body.keys,
+        unorderedEquals(['walletAddress', 'signature', 'registrationDate']),
+      );
+      expect(body['signature'], credentials.signature);
+      expect(body['walletAddress'], credentials.address.hexEip55);
+      expect(body['registrationDate'], '2026-07-13');
+      expect(body.containsKey('name'), isFalse);
+      expect(credentials.signCallCount, 1);
+      expect(message['name'], shareRegisterName);
+      expect(credentials.jsonData, isNot(contains('Markus Akt')));
+      expect(result, isA<RealUnitRegistrationResponseDto>());
+      expect(result.status, RegistrationStatus.completed);
+      verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
+      verify(() => walletService.lockCurrentWallet()).called(1);
+    });
+
+    test('parses a forwarding failure response without throwing', () async {
+      const rejectionMessage = 'The share register did not accept the update.';
+      final client = MockClient((request) async {
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{"date":"2026-07-13"}', 200);
+        }
+        return http.Response(
+          jsonEncode({
+            'status': 'forwarding_failed',
+            'rejectionMessage': rejectionMessage,
+          }),
+          202,
+        );
+      });
+
+      final result = await build(client).updateShareRegisterName(
+        buildUserData(),
+        shareRegisterName,
+      );
+
+      expect(result.status, RegistrationStatus.forwardingFailed);
+      expect(result.rejectionMessage, rejectionMessage);
+    });
+
+    test('types a non-auth 4xx as RegistrationRejectedException', () async {
+      final client = updateErrorClient(400, {
+        'statusCode': 400,
+        'message': 'Registration date must be today',
+      });
+
+      await expectLater(
+        () => build(client).updateShareRegisterName(
+          buildUserData(),
+          shareRegisterName,
+        ),
+        throwsA(
+          isA<RegistrationRejectedException>().having(
+            (e) => e.message,
+            'message',
+            'Registration date must be today',
+          ),
+        ),
+      );
+      verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
+      verify(() => walletService.lockCurrentWallet()).called(1);
+    });
+
+    test('keeps a 5xx a plain ApiException', () async {
+      final client = updateErrorClient(500, {
+        'statusCode': 500,
+        'message': 'Internal server error',
+      });
+
+      expect(
+        () => build(client).updateShareRegisterName(
+          buildUserData(),
+          shareRegisterName,
+        ),
+        throwsA(
+          allOf(
+            isA<ApiException>(),
+            isNot(isA<RegistrationRejectedException>()),
+          ),
+        ),
+      );
+    });
+
+    test('preserves the code-specific subclass for KYC_LEVEL_REQUIRED', () async {
+      final client = updateErrorClient(400, {
+        'statusCode': 400,
+        'code': 'KYC_LEVEL_REQUIRED',
+        'message': 'KYC level 10 required',
+        'requiredLevel': 10,
+        'currentLevel': 0,
+      });
+
+      expect(
+        () => build(client).updateShareRegisterName(
+          buildUserData(),
+          shareRegisterName,
+        ),
+        throwsA(
+          allOf(
+            isA<KycLevelRequiredException>().having(
+              (e) => e.message,
+              'message',
+              'KYC level 10 required',
+            ),
+            isNot(isA<RegistrationRejectedException>()),
+          ),
+        ),
+      );
+    });
+
+    test('throws BitboxNotConnectedException when the BitBox is disconnected', () async {
+      when(() => account.primaryAddress).thenReturn(
+        FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)..bitboxManager = null,
+      );
+      final client = MockClient((request) async {
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{"date":"2026-07-13"}', 200);
+        }
+        return http.Response('{}', 201);
+      });
+
+      expect(
+        () => build(client).updateShareRegisterName(
+          buildUserData(),
+          shareRegisterName,
+        ),
+        throwsA(isA<BitboxNotConnectedException>()),
+      );
+    });
+
+    test('does not sign or post when the registration date is missing', () async {
+      final client = MockClient((request) async {
+        paths.add(request.url.path);
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{}', 200);
+        }
+        return http.Response(jsonEncode({'status': 'completed'}), 201);
+      });
+
+      await expectLater(
+        build(client).updateShareRegisterName(buildUserData(), shareRegisterName),
+        throwsA(isA<RegistrationDateUnavailableException>()),
+      );
+      expect(credentials.signCallCount, 0);
+      expect(paths, isNot(contains('/v1/realunit/register/name')));
+      verifyNever(() => walletService.ensureCurrentWalletUnlocked());
+    });
+
+    for (final status in [403, 429]) {
+      test('keeps $status a plain ApiException, not a rejection', () async {
+        final client = updateErrorClient(status, {
+          'statusCode': status,
+          'message': 'Auth or rate limit',
+        });
+
+        expect(
+          () => build(client).updateShareRegisterName(
+            buildUserData(),
+            shareRegisterName,
+          ),
+          throwsA(
+            allOf(
+              isA<ApiException>().having((e) => e.statusCode, 'statusCode', status),
+              isNot(isA<RegistrationRejectedException>()),
+            ),
+          ),
+        );
+      });
+    }
+
+    test('keeps a 401 a plain ApiException, not a rejection', () async {
+      // A 401 triggers _authenticated's one-shot refresh (re-sign + /v1/auth)
+      // before the retried response is surfaced — stub the signature cache,
+      // the auth wallet accessor, and serve the auth endpoint so the SECOND
+      // 401 reaches the mapping.
+      when(() => wallet.currentAccount).thenReturn(account);
+      when(() => account.signMessage(any())).thenAnswer((_) async => '0xsig');
+      final repo = _MockCacheRepository();
+      when(() => repo.read(any())).thenAnswer((_) async => null);
+      when(() => repo.write(any(), any())).thenAnswer((_) async => 1);
+      session = SessionCache(repo)..setAuthToken('jwt-1');
+      when(() => appStore.sessionCache).thenReturn(session);
+
+      final client = MockClient((request) async {
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{"date":"2026-07-13"}', 200);
+        }
+        if (request.url.path == '/v1/auth') {
+          return http.Response(jsonEncode({'accessToken': 'jwt-2'}), 201);
+        }
+        return http.Response(
+          jsonEncode({'statusCode': 401, 'message': 'Unauthorized'}),
+          401,
+        );
+      });
+
+      expect(
+        () => build(client).updateShareRegisterName(
+          buildUserData(),
+          shareRegisterName,
+        ),
+        throwsA(
+          allOf(
+            isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+            isNot(isA<RegistrationRejectedException>()),
+          ),
+        ),
       );
     });
   });

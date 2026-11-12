@@ -82,6 +82,7 @@ void main() {
       expect(state.email, isNull);
       expect(state.pendingSteps, isEmpty);
       expect(state.capabilities, isA<UserCapabilitiesDto>());
+      expect(state.shareRegisterNameSigningRequired, isFalse);
     });
 
     test('same payload is equal and props match', () {
@@ -97,7 +98,20 @@ void main() {
         pendingSteps: const {KycStepName.contactData},
       );
       expect(a, equals(b));
-      expect(a.props.length, 4);
+      expect(a.props.length, 5);
+    });
+
+    test('shareRegisterNameSigningRequired participates in equality', () {
+      final ud = _userData();
+      final a = SettingsUserDataSuccess(
+        userData: ud,
+        shareRegisterNameSigningRequired: true,
+      );
+      final b = SettingsUserDataSuccess(
+        userData: ud,
+        shareRegisterNameSigningRequired: false,
+      );
+      expect(a, isNot(equals(b)));
     });
 
     test('different pendingSteps is unequal', () {

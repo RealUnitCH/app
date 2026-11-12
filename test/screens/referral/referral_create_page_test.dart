@@ -41,6 +41,12 @@ void main() {
   setUp(() {
     cubit = _MockReferralCubit();
     when(() => cubit.isClosed).thenReturn(false);
+    when(() => cubit.createImpersonalInvite()).thenAnswer((_) async {});
+    when(
+      () => cubit.createImpersonalInvite(retry: any(named: 'retry')),
+    ).thenAnswer((_) async {});
+    when(() => cubit.showPersonalCreate()).thenReturn(null);
+    when(() => cubit.impersonalInviteCreated()).thenAnswer((_) async => false);
   });
 
   Future<void> pumpCreateView(WidgetTester tester, {Locale locale = const Locale('de')}) {
@@ -76,9 +82,11 @@ void main() {
 
     expect(find.text('Ihre Einladung für Alice'), findsOneWidget);
     expect(find.text('Persönlicher Einladungslink'), findsOneWidget);
+    expect(find.text('Persönlich'), findsNothing);
+    expect(find.text('Unpersönlich'), findsNothing);
     expect(
       find.text(
-        'Hallo Alice\n\nKennst du die RealUnit App? Ich nutze RealUnit mit dem Ziel, mein Vermögen langfristig zu schützen. Mit dem Kauf von RealUnit-Aktientoken wirst du AktionärIn der RealUnit Schweiz AG, einer Schweizer Investmentgesellschaft, die u.a. in physisches Gold, Silber und Firmen investiert.\n\nGib bei der Registrierung meinen Code AB12CD ein oder benutze für den App-Download am einfachsten diesen Link: https://realunit.app/invite/AB12CD\n\nDieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: realunit.ch/downloads (Schweiz) | realunit.de/downloads (Deutschland/EU).',
+        'Hallo Alice\n\nKennst du die RealUnit App? Ich nutze RealUnit mit dem Ziel, mein Vermögen langfristig zu schützen. Mit dem Kauf von RealUnit-Aktientoken wirst du AktionärIn der RealUnit Schweiz AG, einer Schweizer Investmentgesellschaft, die u.a. in physisches Gold, Silber und Firmen investiert.\n\nGib bei der Registrierung meinen Code AB12CD ein oder benutze für den App-Download am einfachsten diesen Link: https://realunit.app/invite/AB12CD\n\nDieser Inhalt ist Werbung. Die genehmigten Prospekte zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/downloads/ (Schweiz) | https://realunit.de/downloads/ (Deutschland/EU). Ihre Genehmigung ist keine Befürwortung der Wertpapiere. Anlegern wird empfohlen, vor einer Anlageentscheidung den Prospekt zu lesen, um Risiken und Chancen zu verstehen.',
       ),
       findsOneWidget,
     );
@@ -119,7 +127,7 @@ void main() {
     expect(find.text('Hey ,'), findsNothing);
     expect(
       find.text(
-        'Hallo\n\nKennst du die RealUnit App? Ich nutze RealUnit mit dem Ziel, mein Vermögen langfristig zu schützen. Mit dem Kauf von RealUnit-Aktientoken wirst du AktionärIn der RealUnit Schweiz AG, einer Schweizer Investmentgesellschaft, die u.a. in physisches Gold, Silber und Firmen investiert.\n\nGib bei der Registrierung meinen Code AB12CD ein oder benutze für den App-Download am einfachsten diesen Link: https://realunit.app/invite/AB12CD\n\nDieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: realunit.ch/downloads (Schweiz) | realunit.de/downloads (Deutschland/EU).',
+        'Hallo\n\nKennst du die RealUnit App? Ich nutze RealUnit mit dem Ziel, mein Vermögen langfristig zu schützen. Mit dem Kauf von RealUnit-Aktientoken wirst du AktionärIn der RealUnit Schweiz AG, einer Schweizer Investmentgesellschaft, die u.a. in physisches Gold, Silber und Firmen investiert.\n\nGib bei der Registrierung meinen Code AB12CD ein oder benutze für den App-Download am einfachsten diesen Link: https://realunit.app/invite/AB12CD\n\nDieser Inhalt ist Werbung. Die genehmigten Prospekte zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/downloads/ (Schweiz) | https://realunit.de/downloads/ (Deutschland/EU). Ihre Genehmigung ist keine Befürwortung der Wertpapiere. Anlegern wird empfohlen, vor einer Anlageentscheidung den Prospekt zu lesen, um Risiken und Chancen zu verstehen.',
       ),
       findsOneWidget,
     );
@@ -148,7 +156,7 @@ void main() {
     expect(find.text('Your invitation for Alice'), findsOneWidget);
     expect(
       find.text(
-        'Hi Alice\n\nDo you know the RealUnit app? I use RealUnit with the aim of protecting my wealth over the long term. By buying RealUnit share tokens, you become a shareholder of RealUnit Schweiz AG, a Swiss investment company that invests in physical gold, silver and companies, among other things.\n\nEnter my code AB12CD when you register, or simply use this link to download the app: https://realunit.app/invite/AB12CD\n\nThis is an advertisement. The approved prospectuses and further documents relating to RealUnit Schweiz AG are available at: realunit.ch/downloads (Switzerland) | realunit.de/downloads (Germany/EU).',
+        'Hi Alice\n\nDo you know the RealUnit app? I use RealUnit with the aim of protecting my wealth over the long term. By buying RealUnit share tokens, you become a shareholder of RealUnit Schweiz AG, a Swiss investment company that invests in physical gold, silver and companies, among other things.\n\nEnter my code AB12CD when you register, or simply use this link to download the app: https://realunit.app/invite/AB12CD\n\nThis is an advertisement. The approved prospectuses of RealUnit Schweiz AG are available at: https://realunit.ch/downloads/ (Switzerland) | https://realunit.de/downloads/ (Germany/EU). Their approval is not an endorsement of the securities. Investors are recommended to read the prospectus before making an investment decision in order to understand the risks and rewards.',
       ),
       findsOneWidget,
     );
@@ -186,17 +194,14 @@ void main() {
     await tester.tap(find.text('Einladungslink kopieren'));
     await tester.pump();
 
-    expect(
-      copied,
-      'Hallo Alice\n\nKennst du die RealUnit App? Ich nutze RealUnit mit dem Ziel, mein Vermögen langfristig zu schützen. Mit dem Kauf von RealUnit-Aktientoken wirst du AktionärIn der RealUnit Schweiz AG, einer Schweizer Investmentgesellschaft, die u.a. in physisches Gold, Silber und Firmen investiert.\n\nGib bei der Registrierung meinen Code AB12CD ein oder benutze für den App-Download am einfachsten diesen Link: https://realunit.app/invite/AB12CD\n\nDieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: realunit.ch/downloads (Schweiz) | realunit.de/downloads (Deutschland/EU).',
-    );
+    expect(copied, 'https://realunit.app/invite/AB12CD');
     expect(find.text('Kopiert'), findsOneWidget);
     expect(find.text('In die Zwischenablage kopiert'), findsNothing);
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('Einladungslink kopieren'), findsOneWidget);
   });
 
-  testWidgets('copy fallback uses the first-person share sentence', (
+  testWidgets('copy writes only the invite URL when copy text is set', (
     tester,
   ) async {
     String? copied;
@@ -215,7 +220,7 @@ void main() {
       code: 'AB12CD',
       url: 'https://realunit.app/invite/AB12CD',
       guestName: 'Alice',
-      inviterName: 'Björn',
+      copyText: 'Hey Alice, extra words https://realunit.app/invite/AB12CD',
     );
     when(() => cubit.state).thenReturn(
       const ReferralInviteCreated(summary: _summary, invite: created),
@@ -228,12 +233,17 @@ void main() {
 
     await pumpCreateView(tester);
     await tester.pump();
+    expect(
+      find.text('Hey Alice, extra words https://realunit.app/invite/AB12CD'),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Einladungslink kopieren'));
     await tester.pump();
 
+    expect(copied, 'https://realunit.app/invite/AB12CD');
     expect(
-      copied,
-      'Hallo Alice\n\nKennst du die RealUnit App? Ich nutze RealUnit mit dem Ziel, mein Vermögen langfristig zu schützen. Mit dem Kauf von RealUnit-Aktientoken wirst du AktionärIn der RealUnit Schweiz AG, einer Schweizer Investmentgesellschaft, die u.a. in physisches Gold, Silber und Firmen investiert.\n\nGib bei der Registrierung meinen Code AB12CD ein oder benutze für den App-Download am einfachsten diesen Link: https://realunit.app/invite/AB12CD\n\nDieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: realunit.ch/downloads (Schweiz) | realunit.de/downloads (Deutschland/EU).',
+      find.text('Hey Alice, extra words https://realunit.app/invite/AB12CD'),
+      findsOneWidget,
     );
   });
 
@@ -945,6 +955,176 @@ void main() {
       verifyNever(
         () => cubit.createInvite(guestName: any(named: 'guestName')),
       );
+    },
+  );
+
+  testWidgets(
+    'impersonal pill hides the name field and shows the impersonal description',
+    (tester) async {
+      const invite = ReferralCreatedInviteDto(
+        code: 'IMP1',
+        url: 'https://realunit.app/invite/IMP1',
+        guestName: '',
+        kind: 'Impersonal',
+        copyText: 'Share IMP1: https://realunit.app/invite/IMP1',
+      );
+      final controller = StreamController<ReferralState>.broadcast();
+      addTearDown(controller.close);
+      when(() => cubit.state).thenReturn(
+        const ReferralCreateReady(summary: _summary),
+      );
+      whenListen(
+        cubit,
+        controller.stream,
+        initialState: const ReferralCreateReady(summary: _summary),
+      );
+      when(() => cubit.createImpersonalInvite()).thenAnswer((_) async {
+        controller.add(
+          const ReferralImpersonalReady(summary: _summary, invite: invite),
+        );
+      });
+      when(() => cubit.showPersonalCreate()).thenAnswer((_) {
+        controller.add(const ReferralCreateReady(summary: _summary));
+      });
+
+      await pumpCreateView(tester);
+      await tester.pump();
+
+      expect(find.byType(TextFormField), findsOneWidget);
+
+      await tester.tap(find.text('Unpersönlich'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(TextFormField), findsNothing);
+      expect(
+        find.text(
+          'Verwenden Sie den nachfolgenden Code für mehrfache, unpersönliche Weiterempfehlungen.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Vorname der eingeladenen Person'), findsNothing);
+      expect(
+        find.text('Share IMP1: https://realunit.app/invite/IMP1'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Persönlich'));
+      await tester.pump();
+      expect(find.byType(TextFormField), findsOneWidget);
+
+      await tester.tap(find.text('Unpersönlich'));
+      await tester.pump();
+      await tester.pump();
+      expect(
+        find.text('Share IMP1: https://realunit.app/invite/IMP1'),
+        findsOneWidget,
+      );
+      verify(() => cubit.createImpersonalInvite()).called(2);
+    },
+  );
+
+  testWidgets(
+    'app-bar back on create-ready pops true when impersonalInviteCreated is true',
+    (tester) async {
+      when(() => cubit.state).thenReturn(const ReferralCreateReady(summary: _summary));
+      whenListen(
+        cubit,
+        const Stream<ReferralState>.empty(),
+        initialState: const ReferralCreateReady(summary: _summary),
+      );
+      when(() => cubit.impersonalInviteCreated()).thenAnswer((_) async => true);
+
+      bool? popped;
+      NavigatorState? hostNavigator;
+      await tester.pumpApp(
+        Builder(
+          builder: (context) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final navigator = Navigator.of(context);
+              hostNavigator = navigator;
+              popped = await navigator.push<bool>(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider<ReferralCubit>.value(
+                    value: cubit,
+                    child: const ReferralCreateView(),
+                  ),
+                ),
+              );
+            });
+            return const SizedBox();
+          },
+        ),
+        locale: const Locale('de'),
+        theme: realUnitTheme,
+      );
+      await tester.pumpAndSettle();
+      if (find.byType(BackButton).evaluate().isNotEmpty) {
+        await tester.tap(find.byType(BackButton));
+      } else {
+        await hostNavigator!.maybePop();
+      }
+      await tester.pumpAndSettle();
+
+      expect(popped, isTrue);
+      verify(() => cubit.impersonalInviteCreated()).called(1);
+    },
+  );
+
+  testWidgets(
+    'system back twice while impersonalInviteCreated is pending pops once and keeps the host route',
+    (tester) async {
+      when(() => cubit.state).thenReturn(const ReferralCreateReady(summary: _summary));
+      whenListen(
+        cubit,
+        const Stream<ReferralState>.empty(),
+        initialState: const ReferralCreateReady(summary: _summary),
+      );
+      final pending = Completer<bool>();
+      when(() => cubit.impersonalInviteCreated()).thenAnswer((_) => pending.future);
+
+      bool? popped;
+      NavigatorState? hostNavigator;
+      await tester.pumpApp(
+        Builder(
+          builder: (context) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final navigator = Navigator.of(context);
+              hostNavigator = navigator;
+              popped = await navigator.push<bool>(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider<ReferralCubit>.value(
+                    value: cubit,
+                    child: const ReferralCreateView(),
+                  ),
+                ),
+              );
+            });
+            return const SizedBox();
+          },
+        ),
+        locale: const Locale('de'),
+        theme: realUnitTheme,
+      );
+      await tester.pumpAndSettle();
+      if (find.byType(BackButton).evaluate().isNotEmpty) {
+        await tester.tap(find.byType(BackButton));
+      } else {
+        await hostNavigator!.maybePop();
+      }
+      if (find.byType(BackButton).evaluate().isNotEmpty) {
+        await tester.tap(find.byType(BackButton));
+      } else {
+        await hostNavigator!.maybePop();
+      }
+
+      pending.complete(true);
+      await tester.pumpAndSettle();
+
+      expect(popped, isTrue);
+      verify(() => cubit.impersonalInviteCreated()).called(1);
+      expect(find.byType(ReferralCreateView), findsNothing);
+      expect(find.byType(SizedBox), findsOneWidget);
     },
   );
 }

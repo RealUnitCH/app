@@ -37,6 +37,12 @@ class ResponsiveSurface {
 /// Living catalog — extend when adding sticky-CTA sheets/pages.
 const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
   ResponsiveSurface(
+    id: 'pay_flow_sheet',
+    description: 'Payment flow explanation sheet opened from the scanner (close-only)',
+    matrixTestPath: 'test/screens/pay/pay_flow_sheet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pay/widgets/pay_flow_sheet.dart',
+  ),
+  ResponsiveSurface(
     id: 'bitbox_connect_sheet',
     description: 'BitBox pairing bottom sheet (all button-bearing states)',
     matrixTestPath:
@@ -110,6 +116,14 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/kyc/steps/link_wallet/kyc_link_wallet_page.dart',
   ),
   ResponsiveSurface(
+    id: 'kyc_update_share_register_name_page',
+    description: 'KYC update share register name page',
+    matrixTestPath:
+        'test/screens/kyc/steps/update_share_register_name/kyc_update_share_register_name_responsive_matrix_test.dart',
+    productionPath:
+        'lib/screens/kyc/steps/update_share_register_name/kyc_update_share_register_name_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'kyc_financial_data_questions_page',
     description: 'KYC financial data questions page',
     matrixTestPath:
@@ -151,6 +165,13 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
         'test/screens/settings_user_data/settings_user_data_responsive_matrix_test.dart',
     productionPath:
         'lib/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'settings_user_data_page',
+    description: 'Settings account data page (share-register name signing CTA)',
+    matrixTestPath:
+        'test/screens/settings_user_data/settings_user_data_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/settings_user_data/settings_user_data_page.dart',
   ),
   ResponsiveSurface(
     id: 'settings_edit_phone_number_page',
@@ -281,6 +302,12 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/sell/widgets/sell_executed_sheet.dart',
   ),
   ResponsiveSurface(
+    id: 'pay_result_sheet',
+    description: 'Pay success and failure bottom sheet (shrinkWrap mode)',
+    matrixTestPath: 'test/screens/pay/pay_result_sheet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pay/widgets/pay_result_sheet.dart',
+  ),
+  ResponsiveSurface(
     id: 'forgot_pin_bottom_sheet',
     description: 'Forgot-PIN bottom sheet (shrinkWrap mode)',
     matrixTestPath: 'test/screens/pin/pin_sheets_responsive_matrix_test.dart',
@@ -338,5 +365,12 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     description: 'Startup failure reset-wallet confirmation sheet (shrinkWrap mode)',
     matrixTestPath: 'test/screens/startup_failure/startup_failure_responsive_matrix_test.dart',
     productionPath: 'lib/screens/startup_failure/widgets/startup_failure_reset_sheet.dart',
+  ),
+  ResponsiveSurface(
+    id: 'transaction_detail_return_to_dashboard',
+    description: 'transaction detail after pay or transfer, with the button back to the dashboard',
+    matrixTestPath:
+        'test/screens/transaction_history/transaction_detail_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/transaction_history/transaction_detail_page.dart',
   ),
 ];

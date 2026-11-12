@@ -9,13 +9,17 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_bind_result_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
+import 'package:realunit_wallet/setup/routing/share_register_name_prompt.dart';
 
 // Drives the real `_navigate` wiring — `resolveBootNavigation` + the go_router
 // side effect `applyBootNavAction` — against a real [GoRouter]. This is the seam
@@ -27,11 +31,14 @@ import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 // exercise the smallest faithful seam instead.
 class _MockReferralService extends Mock implements RealUnitReferralService {}
 
+class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     debugSetPendingReferralCodeSync(null);
     debugResetBindInFlight();
+    debugResetShareRegisterNamePromptInFlight();
   });
 
   tearDown(() async {
@@ -44,6 +51,7 @@ void main() {
   GoRouter buildRouter() {
     final router = GoRouter(
       initialLocation: '/verifyPin',
+      observers: [ShareRegisterNameRouteObserver()],
       routes: [
         GoRoute(
           name: PinRoutes.verify,
@@ -65,8 +73,7 @@ void main() {
         GoRoute(
           name: AppRoutes.kyc,
           path: '/kyc',
-          builder: (_, state) =>
-              Text('kyc:${state.uri.queryParameters['context'] ?? 'unscoped'}'),
+          builder: (_, state) => Text('kyc:${state.uri.queryParameters['context'] ?? 'unscoped'}'),
         ),
         GoRoute(
           name: AppRoutes.buyPaymentDetails,
@@ -583,6 +590,779 @@ void main() {
         expect(peekPendingPaymentDeeplink(), isNull);
         expect(find.text('updateRequired'), findsOneWidget);
         expect(find.textContaining(RegExp(r'^pay ')), findsNothing);
+      },
+    );
+  });
+
+  group('share register name prompt on dashboard landing', () {
+    setUp(() {
+      final service = _MockRegistrationService();
+      when(() => service.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          nameUpdateRequired: true,
+          shareRegisterName: 'Ada Lovelace',
+        ),
+      );
+      GetIt.instance.registerSingleton<RealUnitRegistrationService>(service);
+    });
+
+    List<String> matchesOf(GoRouter router) =>
+        router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList();
+
+    Future<void> pumpLocalizedRouter(
+      WidgetTester tester,
+      GoRouter router,
+    ) {
+      return tester.pumpWidget(
+        MaterialApp.router(
+          locale: const Locale('de'),
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+    }
+
+    testWidgets('BootNavStay on /dashboard does not open /kyc', (tester) async {
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavStay(),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(matchesOf(router), ['/dashboard']);
+    });
+
+    testWidgets('BootNavGoNamed(AppRoutes.dashboard) opens /kyc', (tester) async {
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavGoNamed(AppRoutes.dashboard),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(matchesOf(router), ['/dashboard', '/kyc']);
+    });
+
+    testWidgets('BootNavRestore(/dashboard) opens /kyc', (tester) async {
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavRestore('/dashboard'),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(matchesOf(router), ['/dashboard', '/kyc']);
+    });
+
+    testWidgets(
+      'dashboard waits for a running referral bind before asking for a name signature',
+      (tester) async {
+        final bindStarted = Completer<void>();
+        final referralResult = Completer<ReferralBindResultDto>();
+        final registrationInfo = Completer<RealUnitRegistrationInfoDto>();
+        final referralService = _MockReferralService();
+        when(
+          () => referralService.bind(code: 'AB12CD'),
+        ).thenAnswer((_) {
+          bindStarted.complete();
+          return referralResult.future;
+        });
+        GetIt.instance.registerSingleton<RealUnitReferralService>(
+          referralService,
+        );
+        final registrationService =
+            GetIt.instance<RealUnitRegistrationService>();
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) => registrationInfo.future,
+        );
+        await stashPendingReferralCode('AB12CD');
+
+        // The deeplink bind starts before the post-unlock dashboard is attached.
+        // Its dialog is therefore queued for the first attached frame.
+        final router = buildRouter();
+        await pumpLocalizedRouter(tester, router);
+        await tester.pump();
+        final firstBind = bindPendingReferralCode(router);
+        await tester.pump();
+        expect(bindStarted.isCompleted, isTrue);
+
+        var firstBindDone = false;
+        firstBind.then((_) => firstBindDone = true);
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+
+        expect(locationOf(router), '/dashboard');
+        verifyNever(() => registrationService.getRegistrationInfo());
+        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+
+        referralResult.complete(
+          const ReferralBindResultDto(
+            kind: 'Invite',
+            inviterName: 'Grace Hopper',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(firstBindDone, isFalse);
+        expect(matchesOf(router), ['/dashboard']);
+        verifyNever(() => registrationService.getRegistrationInfo());
+        verifyNoMoreInteractions(referralService);
+
+        Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+        await tester.pumpAndSettle();
+
+        expect(firstBindDone, isTrue);
+        verify(() => registrationService.getRegistrationInfo()).called(1);
+
+        registrationInfo.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+      },
+    );
+
+    testWidgets(
+      'registration completion before referral completion never puts the referral over /kyc',
+      (tester) async {
+        final referralResult = Completer<ReferralBindResultDto>();
+        final registrationInfo = Completer<RealUnitRegistrationInfoDto>();
+        final referralService = _MockReferralService();
+        when(
+          () => referralService.bind(code: 'AB12CD'),
+        ).thenAnswer((_) => referralResult.future);
+        GetIt.instance.registerSingleton<RealUnitReferralService>(referralService);
+        final registrationService = GetIt.instance<RealUnitRegistrationService>();
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) => registrationInfo.future,
+        );
+        await stashPendingReferralCode('AB12CD');
+
+        final router = buildRouter();
+        await pumpLocalizedRouter(tester, router);
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+        await tester.pump();
+        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+        verifyNever(() => registrationService.getRegistrationInfo());
+
+        registrationInfo.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pump();
+        expect(matchesOf(router), ['/dashboard']);
+
+        referralResult.complete(
+          const ReferralBindResultDto(kind: 'Invite', inviterName: 'Grace Hopper'),
+        );
+        // The router was attached before the bind started; settle the queued
+        // dialog now.
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        verifyNever(() => registrationService.getRegistrationInfo());
+
+        Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+        verify(() => registrationService.getRegistrationInfo()).called(1);
+      },
+    );
+
+    testWidgets(
+      'asks for registration only after the referral dialog closes and never '
+      'puts /kyc over it',
+      (tester) async {
+        final referralResult = Completer<ReferralBindResultDto>();
+        final registrationInfo = Completer<RealUnitRegistrationInfoDto>();
+        final referralService = _MockReferralService();
+        when(
+          () => referralService.bind(code: 'AB12CD'),
+        ).thenAnswer((_) => referralResult.future);
+        GetIt.instance.registerSingleton<RealUnitReferralService>(referralService);
+        final registrationService = GetIt.instance<RealUnitRegistrationService>();
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) => registrationInfo.future,
+        );
+        await stashPendingReferralCode('AB12CD');
+
+        final router = buildRouter();
+        await pumpLocalizedRouter(tester, router);
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(matchesOf(router), ['/dashboard']);
+        verify(() => referralService.bind(code: 'AB12CD')).called(1);
+        verifyNever(() => registrationService.getRegistrationInfo());
+
+        referralResult.complete(
+          const ReferralBindResultDto(kind: 'Invite', inviterName: 'Grace Hopper'),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        verifyNever(() => registrationService.getRegistrationInfo());
+
+        Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        verify(() => registrationService.getRegistrationInfo()).called(1);
+        expect(matchesOf(router), ['/dashboard']);
+
+        registrationInfo.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+      },
+    );
+
+    testWidgets('nameUpdateRequired=false keeps /dashboard', (tester) async {
+      final service = GetIt.instance<RealUnitRegistrationService>();
+      when(() => service.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          nameUpdateRequired: false,
+          shareRegisterName: 'Ada Lovelace',
+        ),
+      );
+
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavGoNamed(AppRoutes.dashboard),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(matchesOf(router), ['/dashboard']);
+      expect(find.text('kyc:unscoped'), findsNothing);
+    });
+
+    testWidgets('a failing registration-info request keeps /dashboard', (tester) async {
+      final service = GetIt.instance<RealUnitRegistrationService>();
+      when(() => service.getRegistrationInfo()).thenThrow(Exception('offline'));
+
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavGoNamed(AppRoutes.dashboard),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(matchesOf(router), ['/dashboard']);
+      expect(find.text('kyc:unscoped'), findsNothing);
+    });
+
+    testWidgets(
+      'a hanging registration-info request times out, releases the in-flight '
+      'flag, and a later dashboard landing opens /kyc again',
+      (tester) async {
+        final never = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => never.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+        expect(matchesOf(router), ['/dashboard']);
+
+        // Advance past the prompt's local 20s timeout. The request itself stays
+        // pending, so only the local `.timeout` can release the flag.
+        await tester.pump(const Duration(seconds: 21));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        when(() => service.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+        expect(find.text('kyc:unscoped'), findsOneWidget);
+        verify(() => service.getRegistrationInfo()).called(2);
+      },
+    );
+
+    testWidgets(
+      'a gate go replacing the KYC route releases the in-flight flag so a '
+      'later dashboard landing opens /kyc again',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+
+        // A re-lock replaces the pushed KYC route with the gate. The KYC push
+        // future never completes; the prompt must not stay disabled.
+        router.go('/verifyPin');
+        await tester.pumpAndSettle();
+        expect(matchesOf(router), ['/verifyPin']);
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+      },
+    );
+
+    testWidgets('manualReview=true does not open /kyc', (tester) async {
+      final service = GetIt.instance<RealUnitRegistrationService>();
+      when(() => service.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          manualReview: true,
+          nameUpdateRequired: true,
+          shareRegisterName: 'Ada Lovelace',
+        ),
+      );
+
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      applyBootNavAction(
+        const BootNavGoNamed(AppRoutes.dashboard),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(matchesOf(router), ['/dashboard']);
+    });
+
+    testWidgets(
+      'does not cover /verifyPin when the registration info arrives late',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+
+        router.go('/verifyPin');
+        await tester.pump();
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/verifyPin']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        when(() => service.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/kyc']);
+      },
+    );
+
+    testWidgets(
+      'does not cover /updateRequired when the registration info arrives late',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+
+        router.go('/updateRequired');
+        await tester.pump();
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/updateRequired']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not cover /pay when the registration info arrives after the '
+      'payment deeplink is pushed',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+        addTearDown(clearPendingPaymentDeeplink);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('pay-me');
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('pay pay-me'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard', '/pay']);
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/dashboard', '/pay']);
+        expect(find.text('pay pay-me'), findsOneWidget);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not cover a dialog over the dashboard when the registration info '
+      'arrives late, and closing it does not navigate again',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        // showDialog needs MaterialLocalizations; the production app always
+        // has them, including when the referral bind opens its dialog.
+        await tester.pumpWidget(
+          MaterialApp.router(
+            locale: const Locale('de'),
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            routerConfig: router,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Dashboard landing starts the prompt; its registration-info request
+        // stays pending until the dialog is already on screen.
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        // Shows the popup exactly where bindPendingReferralCode shows it: on
+        // the router's navigator context, over the dashboard.
+        final navigatorContext = router.routerDelegate.navigatorKey.currentContext!;
+        unawaited(
+          showDialog<void>(
+            context: navigatorContext,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              content: const Text('referral-bound'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('close'),
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('referral-bound'), findsOneWidget);
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The dialog stays on top; KYC must not be pushed underneath it.
+        expect(find.text('referral-bound'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        await tester.tap(find.text('close'));
+        await tester.pumpAndSettle();
+
+        // Closing reveals the dashboard only — no deferred/duplicate push.
+        expect(find.text('dashboard'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not cover a bottom sheet over the dashboard when the registration '
+      'info arrives late, and closing it does not navigate again',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(
+          MaterialApp.router(
+            locale: const Locale('de'),
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            routerConfig: router,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        final navigatorContext = router.routerDelegate.navigatorKey.currentContext!;
+        unawaited(
+          showModalBottomSheet<void>(
+            context: navigatorContext,
+            builder: (sheetContext) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('dashboard-sheet'),
+                  TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: const Text('close-sheet'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('dashboard-sheet'), findsOneWidget);
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('dashboard-sheet'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+
+        await tester.tap(find.text('close-sheet'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('dashboard-sheet'), findsNothing);
+        expect(find.text('dashboard'), findsOneWidget);
+        expect(matchesOf(router), ['/dashboard']);
+        expect(find.text('kyc:unscoped'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not cover another non-dashboard route when the registration info '
+      'arrives late',
+      (tester) async {
+        final completer = Completer<RealUnitRegistrationInfoDto>();
+        final service = GetIt.instance<RealUnitRegistrationService>();
+        when(() => service.getRegistrationInfo()).thenAnswer((_) => completer.future);
+
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pump();
+
+        router.go('/settings');
+        await tester.pump();
+
+        completer.complete(
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: true,
+            shareRegisterName: 'Ada Lovelace',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(matchesOf(router), ['/settings']);
+        expect(find.text('settings'), findsOneWidget);
+        expect(find.text('kyc:unscoped'), findsNothing);
       },
     );
   });

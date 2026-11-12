@@ -19,10 +19,9 @@ void main() {
   });
 
   // PayProcessPage resolves its cubit from getIt and calls start(); the golden
-  // renders PayProcessView directly with a mocked cubit. Terminal states
-  // (success/failure/retry) are surfaced via modal sheets from the listener,
-  // not the build tree — exercised in the widget test. The build tree shows the
-  // in-progress indicator with a per-state label, captured here.
+  // renders PayProcessView directly with a mocked cubit. In-progress states show
+  // the indicator with a per-state label, captured here. Outcome sheets are
+  // captured in pay_result_sheet_golden_test.dart.
   group('$PayProcessView', () {
     goldenTest(
       'in-progress swapping state',
@@ -49,24 +48,6 @@ void main() {
       pumpBeforeTest: pumpOnce,
       builder: () {
         when(() => processCubit.state).thenReturn(const PayProcessAwaitingSettlement('0xtx'));
-        return wrapForGolden(
-          BlocProvider<PayProcessCubit>.value(
-            value: processCubit,
-            child: const PayProcessView(),
-          ),
-        );
-      },
-    );
-
-    goldenTest(
-      'pay-retry state label',
-      fileName: 'pay_process_page_pay_retry',
-      constraints: phoneConstraints,
-      pumpBeforeTest: pumpOnce,
-      builder: () {
-        when(
-          () => processCubit.state,
-        ).thenReturn(const PayProcessPayRetry(PayRetryReason.transient));
         return wrapForGolden(
           BlocProvider<PayProcessCubit>.value(
             value: processCubit,

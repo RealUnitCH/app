@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/sell_quote_amount.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
@@ -168,6 +169,19 @@ void main() {
       expect(f.message, isEmpty);
     });
 
+    test('a quote that changes the share count stays on the sell page', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+        (_) async => throw const SellShareCountMismatchException(),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '10', iban: 'CH56');
+
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.shareCountMismatch);
+      expect(f.message, isEmpty);
+    });
+
     test('KycLevelRequiredException → Failure(kycRequired, requiredLevel)', () async {
       when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
         (_) async => throw const KycLevelRequiredException(
@@ -280,7 +294,7 @@ void main() {
       expect(f.context, 'RealunitSell');
     });
 
-    test('generic exception → Failure(unknown) carrying the message', () async {
+    test('generic exception → Failure(unknown) without the technical text', () async {
       when(
         () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
       ).thenAnswer((_) async => throw Exception('network'));
@@ -290,7 +304,18 @@ void main() {
 
       final f = cubit.state as SellPaymentInfoFailure;
       expect(f.error, PaymentInfoError.unknown);
-      expect(f.message, contains('network'));
+      expect(f.message, isEmpty);
+    });
+
+    test('a parse error is not passed on to the customer', () async {
+      when(
+        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
+      ).thenAnswer((_) async => throw TypeError());
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '5', iban: 'CH56');
+
+      expect(cubit.state, const SellPaymentInfoFailure(PaymentInfoError.unknown));
     });
 
     test('ApiException 503 → Failure(priceSourceUnavailable)', () async {

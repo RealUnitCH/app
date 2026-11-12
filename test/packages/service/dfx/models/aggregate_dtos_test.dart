@@ -334,6 +334,146 @@ void main() {
       expect(dto.manualReview, isNull);
     });
 
+    test('nameUpdateRequired absent stays null and shareRegisterName absent stays null', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+      });
+
+      expect(dto.nameUpdateRequired, isNull);
+      expect(dto.shareRegisterName, isNull);
+    });
+
+    test('nameUpdateRequired true and shareRegisterName round-trips', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'nameUpdateRequired': true,
+        'shareRegisterName': 'Ada Lovelace',
+      });
+
+      expect(dto.nameUpdateRequired, isTrue);
+      expect(dto.shareRegisterName, 'Ada Lovelace');
+    });
+
+    group('shareRegisterNameSigningRequired', () {
+      test('true only for AlreadyRegistered + nameUpdateRequired=true + no manual review', () {
+        final dto = RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          nameUpdateRequired: true,
+        );
+
+        expect(dto.shareRegisterNameSigningRequired, isTrue);
+      });
+
+      test('true when manualReview is explicitly false', () {
+        final dto = RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+          manualReview: false,
+          nameUpdateRequired: true,
+        );
+
+        expect(dto.shareRegisterNameSigningRequired, isTrue);
+      });
+
+      test('false for every other API combination', () {
+        final cases = <RealUnitRegistrationInfoDto>[
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            manualReview: true,
+            nameUpdateRequired: true,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: false,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.alreadyRegistered,
+            nameUpdateRequired: null,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.addWallet,
+            nameUpdateRequired: true,
+          ),
+          RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.newRegistration,
+            nameUpdateRequired: true,
+          ),
+        ];
+
+        for (final dto in cases) {
+          expect(
+            dto.shareRegisterNameSigningRequired,
+            isFalse,
+            reason: 'state=${dto.state}, manualReview=${dto.manualReview}, '
+                'nameUpdateRequired=${dto.nameUpdateRequired}',
+          );
+        }
+      });
+    });
+
+    test('nameUpdateRequired keeps false, accepts null, and rejects a wrong type', () {
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'nameUpdateRequired': false,
+        }).nameUpdateRequired,
+        isFalse,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'nameUpdateRequired': null,
+        }).nameUpdateRequired,
+        isNull,
+      );
+      expect(
+        () => RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'nameUpdateRequired': 'true',
+        }),
+        throwsA(isA<TypeError>()),
+      );
+    });
+
+    test('shareRegisterName maps only empty or null to null and rejects a wrong type', () {
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': '',
+        }).shareRegisterName,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': null,
+        }).shareRegisterName,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': '  Ada Lovelace  ',
+        }).shareRegisterName,
+        '  Ada Lovelace  ',
+      );
+      expect(
+        () => RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'shareRegisterName': 1,
+        }),
+        throwsA(isA<TypeError>()),
+      );
+    });
+
     test('throws on a present but unparseable confirmedDate (fail loud)', () {
       expect(
         () => RealUnitRegistrationInfoDto.fromJson({

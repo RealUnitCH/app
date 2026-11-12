@@ -17,11 +17,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/user_data.dart';
+import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
+import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/cubit/settings_edit_address_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/settings_edit_address_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/cubit/settings_edit_name_cubit.dart';
@@ -30,6 +38,7 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_n
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
@@ -46,6 +55,42 @@ class MockSettingsEditPhoneNumberCubit extends MockCubit<SettingsEditPhoneNumber
     implements SettingsEditPhoneNumberCubit {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
+
+class MockSettingsUserDataCubit extends MockCubit<SettingsUserDataState>
+    implements SettingsUserDataCubit {}
+
+const _settingsUserData = UserData(
+  email: 'test-direct@dfx.swiss',
+  name: 'Test Direct',
+  type: RegistrationUserType.human,
+  phoneNumber: '+41791234567',
+  birthday: null,
+  nationality: Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true),
+  addressStreet: 'Teststrasse',
+  addressPostalCode: '8000',
+  addressCity: 'Zurich',
+  addressCountry: Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true),
+  swissTaxResidence: true,
+  lang: 'DE',
+);
+
+/// Long but realistic values for every row that can grow: the name, the
+/// street, and the city. With the review badges this stresses both the row
+/// Wrap and the scroll body across the full matrix.
+const _longSettingsUserData = UserData(
+  email: 'alexandra.maximiliana@example.com',
+  name: 'Alexandra Maximiliana von Hohenzollern-Sigmaringen',
+  type: RegistrationUserType.human,
+  phoneNumber: '+41791234567',
+  birthday: null,
+  nationality: Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true),
+  addressStreet: 'Bundesplatzstrasse Am Alten Waffenplatz',
+  addressPostalCode: '8000',
+  addressCity: 'Zuerich-Seefeld-Hirslanden',
+  addressCountry: Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true),
+  swissTaxResidence: true,
+  lang: 'DE',
+);
 
 /// A long, realistic file name -- stresses the `selectedFile!.name` row of
 /// [FilePickerField] (used by the name and address pages).
@@ -92,6 +137,50 @@ Future<void> _pumpPage(
         ],
         supportedLocales: S.delegate.supportedLocales,
         home: child,
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+}
+
+Future<void> _pumpRouterPage(
+  WidgetTester tester, {
+  required Widget child,
+  required MediaQueryData mediaQuery,
+}) async {
+  await tester.binding.setSurfaceSize(mediaQuery.size);
+  addTearDown(() async {
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  final router = GoRouter(
+    initialLocation: '/settings/userData',
+    routes: [
+      GoRoute(path: '/settings/userData', builder: (_, _) => child),
+      GoRoute(
+        name: AppRoutes.kyc,
+        path: '/kyc',
+        builder: (_, _) => const Scaffold(body: Text('KYC')),
+      ),
+    ],
+  );
+  addTearDown(router.dispose);
+
+  await tester.pumpWidget(
+    MediaQuery(
+      data: mediaQuery,
+      child: MaterialApp.router(
+        theme: realUnitTheme,
+        locale: const Locale('de'),
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: S.delegate.supportedLocales,
+        routerConfig: router,
       ),
     ),
   );
@@ -403,6 +492,124 @@ void main() {
           );
         });
       });
+    }
+  });
+
+  group('$SettingsUserDataView responsive matrix', () {
+    late MockSettingsUserDataCubit cubit;
+
+    void stub(SettingsUserDataState state) {
+      cubit = MockSettingsUserDataCubit();
+      when(() => cubit.state).thenReturn(state);
+      when(() => cubit.getUserData()).thenAnswer((_) async {});
+    }
+
+    Future<void> pumpPage(WidgetTester tester, MediaQueryData mediaQuery) => _pumpRouterPage(
+      tester,
+      child: BlocProvider<SettingsUserDataCubit>.value(
+        value: cubit,
+        child: const SettingsUserDataView(),
+      ),
+      mediaQuery: mediaQuery,
+    );
+
+    final states = <String, ({SettingsUserDataState state, bool hasCta})>{
+      'user data without signing CTA': (
+        state: const SettingsUserDataSuccess(userData: _settingsUserData),
+        hasCta: false,
+      ),
+      'user data with signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _settingsUserData,
+          shareRegisterNameSigningRequired: true,
+        ),
+        hasCta: true,
+      ),
+      'email only without signing CTA': (
+        state: const SettingsUserDataSuccess(email: 'test-direct@dfx.swiss'),
+        hasCta: false,
+      ),
+      'email only with signing CTA': (
+        state: const SettingsUserDataSuccess(
+          email: 'test-direct@dfx.swiss',
+          shareRegisterNameSigningRequired: true,
+        ),
+        hasCta: true,
+      ),
+      'empty without signing CTA': (
+        state: const SettingsUserDataSuccess(),
+        hasCta: false,
+      ),
+      'empty with signing CTA': (
+        state: const SettingsUserDataSuccess(shareRegisterNameSigningRequired: true),
+        hasCta: true,
+      ),
+      'editable with pending changes without signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _settingsUserData,
+          capabilities: UserCapabilitiesDto(
+            canEditName: true,
+            canEditPhone: true,
+            canEditAddress: true,
+          ),
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+        ),
+        hasCta: false,
+      ),
+      'editable with pending changes with signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _settingsUserData,
+          capabilities: UserCapabilitiesDto(
+            canEditName: true,
+            canEditPhone: true,
+            canEditAddress: true,
+          ),
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+          shareRegisterNameSigningRequired: true,
+        ),
+        hasCta: true,
+      ),
+      'long values with pending badges without signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _longSettingsUserData,
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+        ),
+        hasCta: false,
+      ),
+      'long values with pending badges with signing CTA': (
+        state: const SettingsUserDataSuccess(
+          userData: _longSettingsUserData,
+          pendingSteps: {KycStepName.nameChange, KycStepName.addressChange},
+          shareRegisterNameSigningRequired: true,
+        ),
+        hasCta: true,
+      ),
+    };
+
+    for (final entry in states.entries) {
+      for (final cell in kFullResponsiveMatrix) {
+        testWidgets('${entry.key} . ${cell.id}', (tester) async {
+          stub(entry.value.state);
+          await withTargetPlatform(cell.device.platform, () async {
+            await expectNoLayoutOverflow(
+              tester,
+              () => pumpPage(tester, cell.mediaQuery),
+              reason: 'overflow on settings user data ${entry.key} / ${cell.label}',
+            );
+
+            if (entry.value.hasCta) {
+              await expectFullyTappable(
+                tester,
+                find.byType(AppFilledButton),
+                within: find.byType(SettingsUserDataView),
+                reason: '${cell.label}: share-register name CTA not tappable',
+              );
+            } else {
+              expect(find.byType(AppFilledButton), findsNothing);
+            }
+          });
+        });
+      }
     }
   });
 

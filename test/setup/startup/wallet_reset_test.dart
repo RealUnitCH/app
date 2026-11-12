@@ -41,6 +41,7 @@ void main() {
       SharedPreferences.setMockInitialValues({
         'currentWalletId': 42,
         'termsAccepted': true,
+        'payIntroSeen': true,
         pendingReferralCodeKey: 'INVITE1',
       });
       debugSetPendingReferralCodeSync('INVITE1');
@@ -56,6 +57,7 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getInt('currentWalletId'), isNull);
       expect(prefs.getBool('termsAccepted'), isFalse);
+      expect(prefs.getBool('payIntroSeen'), isFalse);
       expect(prefs.getString(pendingReferralCodeKey), isNull);
       expect(await peekPendingReferralCode(), isNull);
 

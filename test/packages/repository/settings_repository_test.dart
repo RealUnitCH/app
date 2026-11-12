@@ -124,6 +124,29 @@ void main() {
       });
     });
 
+    group('payIntroSeen', () {
+      test('defaults to false when not stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.payIntroSeen, isFalse);
+      });
+
+      test('setter persists independently of the terms flags', () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        repo.payIntroSeen = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.payIntroSeen, isTrue);
+        expect(prefs.getBool('payIntroSeen'), isTrue);
+        expect(repo.termsAccepted, isFalse);
+        expect(repo.softwareTermsAccepted, isFalse);
+      });
+    });
+
     group('insiderFeaturesUnlocked', () {
       test('defaults to false when not stored', () async {
         SharedPreferences.setMockInitialValues({});

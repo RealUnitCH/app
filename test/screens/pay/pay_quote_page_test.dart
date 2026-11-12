@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:clock/clock.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,6 +15,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -42,6 +45,32 @@ class _MockApiConfig extends Mock implements ApiConfig {}
 
 class _MockWallet extends Mock implements SoftwareWallet {}
 
+// The paying step is reached only when the quote carries a delegation.
+// These tests never sign it; the confirm stub never returns.
+const _delegation = Eip7702Data(
+  relayerAddress: '0x1',
+  delegationManagerAddress: '0x2',
+  delegatorAddress: '0x3',
+  userNonce: 0,
+  domain: Eip7702Domain(
+    name: 'DelegationManager',
+    version: '1',
+    chainId: 1,
+    verifyingContract: '0x4',
+  ),
+  types: Eip7702Types(delegation: [], caveat: []),
+  message: Eip7702Message(
+    delegate: '0x5',
+    delegator: '0x6',
+    authority: '0x7',
+    caveats: [],
+    salt: 0,
+  ),
+  tokenAddress: '0x8',
+  amountWei: '2',
+  depositAddress: '',
+);
+
 void main() {
   late _MockPayQuoteCubit quoteCubit;
 
@@ -57,6 +86,7 @@ void main() {
     isValid: true,
     ethereumTransactionFeeChf: 0.05,
     ethereumTransactionFeeRealu: 0.05 / 1.2,
+    eip7702: _delegation,
   );
 
   final ready = PayQuoteReady(
@@ -78,16 +108,21 @@ void main() {
     // completes (immediately when pumped as home). The load throws a typed
     // error here so the page builds deterministically (PayQuoteError) without
     // a live backend.
+    // The confirm button pushes PayProcessPage. A software wallet whose
+    // confirm never returns stays on that step, so these tests can pop it.
+    registerFallbackValue(readySwap);
     final payService = _MockPayService();
     when(() => payService.getPaymentDetails(any())).thenThrow(
       const ApiException(code: 'TEST', message: 'no backend in widget test'),
     );
+    when(
+      () => payService.confirmOcpPay(
+        swap: any(named: 'swap'),
+        paymentLinkId: any(named: 'paymentLinkId'),
+        quoteId: any(named: 'quoteId'),
+      ),
+    ).thenAnswer((_) => Completer<String>().future);
     getIt.registerSingleton<RealUnitPayService>(payService);
-
-    // The confirm button pushes PayProcessPage, which resolves a full service
-    // graph from getIt; its route gate starts the cubit after animation.
-    // A debug wallet makes start() settle immediately (signatureUnsupported)
-    // without touching the chain.
     getIt.registerSingleton<DfxFaucetService>(_MockFaucetService());
     getIt.registerSingleton<DfxBlockchainApiService>(_MockBlockchainService());
     getIt.registerSingleton<WalletService>(_MockWalletService());
@@ -95,7 +130,7 @@ void main() {
     final apiConfig = _MockApiConfig();
     when(() => apiConfig.asset).thenReturn(realUnitAsset);
     final wallet = _MockWallet();
-    when(() => wallet.walletType).thenReturn(WalletType.debug);
+    when(() => wallet.walletType).thenReturn(WalletType.software);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => appStore.apiConfig).thenReturn(apiConfig);
     getIt.registerSingleton<AppStore>(appStore);
@@ -273,21 +308,24 @@ void main() {
 
       await tester.tap(find.text(S.current.payConfirmButton));
       await tester.pump();
+      await tester.pump(); // flush the post-frame callback that arms the route gate
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byType(PayProcessView), findsOne);
+      expect(
+        find.text(S.current.payFailureTitle, skipOffstage: false),
+        findsNothing,
+      );
+      expect(find.text(S.current.payPaying, skipOffstage: false), findsOne);
 
-      // Debug wallet fails before the swap and shows a result sheet. Pop the
-      // sheet; the process route then pops with swapCompleted=false so Pay
-      // re-enables. Avoid tap(): the sheet is taller than the default test
-      // surface, so Close is outside the hit box.
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+      // The confirm has not left the device. Popping false re-enables Pay.
+      // The route leaves on the frame after its reverse animation completes.
       final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
-      navigator.pop();
+      navigator.pop(false);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      navigator.pop(false);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 

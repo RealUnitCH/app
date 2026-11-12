@@ -44,6 +44,32 @@ class RealUnitRegistrationInfoDto {
   /// stored as null.
   final String? rejectionMessage;
 
+  /// Whether DFX has approved a new personal name that must be signed into the
+  /// existing Aktionariat registration. Nullable on purpose: `null` means a
+  /// pre-rollout backend (the field does not exist yet) or no gate. Only an
+  /// explicit JSON `true` opens the gate. A missing key or JSON null is stored
+  /// as null; a non-bool fails decoding with [TypeError], like [emailConfirmed]
+  /// and [manualReview]. See CONTRIBUTING.md "API as Decision Authority".
+  final bool? nameUpdateRequired;
+
+  /// Exact `name` field to sign when [nameUpdateRequired] is true. The API
+  /// already sends BitBox ASCII. A missing key, JSON null, or an empty string
+  /// is stored as null; a non-string fails decoding with [TypeError]. The value
+  /// is not trimmed: it is the string that gets signed.
+  final String? shareRegisterName;
+
+  /// Whether the app must open the share-register name signing step.
+  ///
+  /// Derived only from API fields: the registration must be
+  /// [RealUnitRegistrationState.alreadyRegistered], [manualReview] must not be
+  /// true (manual review has precedence), and [nameUpdateRequired] must be an
+  /// explicit true. Nullable fields use legacy tolerance: null/false do not
+  /// open the signing step. See CONTRIBUTING.md "API as Decision Authority".
+  bool get shareRegisterNameSigningRequired =>
+      state == RealUnitRegistrationState.alreadyRegistered &&
+      manualReview != true &&
+      nameUpdateRequired == true;
+
   RealUnitRegistrationInfoDto({
     required this.state,
     this.realUnitUserDataDto,
@@ -51,7 +77,9 @@ class RealUnitRegistrationInfoDto {
     this.confirmedDate,
     this.manualReview,
     this.rejectionMessage,
-  });
+    this.nameUpdateRequired,
+    String? shareRegisterName,
+  }) : shareRegisterName = shareRegisterName == '' ? null : shareRegisterName;
 
   factory RealUnitRegistrationInfoDto.fromJson(Map<String, dynamic> json) {
     return RealUnitRegistrationInfoDto(
@@ -65,6 +93,8 @@ class RealUnitRegistrationInfoDto {
           : null,
       manualReview: json['manualReview'] as bool?,
       rejectionMessage: _optionalRejectionMessage(json['rejectionMessage']),
+      nameUpdateRequired: json['nameUpdateRequired'] as bool?,
+      shareRegisterName: json['shareRegisterName'] as String?,
     );
   }
 }

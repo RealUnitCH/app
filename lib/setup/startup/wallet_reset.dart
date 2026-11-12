@@ -22,6 +22,7 @@ Future<void> resetWalletData({
   final settings = SettingsRepository(await preferences());
   await settings.removeCurrentWalletId();
   settings.termsAccepted = false;
+  settings.payIntroSeen = false;
 
   clearPendingPaymentDeeplink();
   await clearPendingReferralCode();
