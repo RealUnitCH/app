@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
+import 'package:realunit_wallet/packages/service/legal/legal_document_api.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/buy_payment_details_page.dart';
@@ -28,6 +31,7 @@ import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart'
 import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/sell_bitbox/sell_bitbox_page.dart';
 import 'package:realunit_wallet/screens/send/send_info_page.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
@@ -67,6 +71,16 @@ import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/setup/routing/share_register_name_prompt.dart';
+
+Future<String?> _legalRemote(BuildContext context, String id, String lang) {
+  final host = legalApiHost(context.read<SettingsBloc>().state.networkMode);
+  return loadLegalMarkdown(
+    host: host,
+    id: id,
+    lang: lang,
+    get: (uri) => http.get(uri),
+  );
+}
 
 final GoRouter routerConfig = GoRouter(
   navigatorKey: navigatorKey,
@@ -112,7 +126,8 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: OnboardingRoutes.verifySeed,
       path: '/verifySeed',
-      builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
+      builder: (_, state) =>
+          VerifySeedPage(wallet: state.extra as SoftwareWallet),
     ),
 
     GoRoute(
@@ -188,9 +203,8 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.buyPaymentDetails,
       path: '/buyPaymentDetails',
-      builder: (_, state) => BuyPaymentDetailsPage(
-        params: state.extra as BuyPaymentDetailsParams,
-      ),
+      builder: (_, state) =>
+          BuyPaymentDetailsPage(params: state.extra as BuyPaymentDetailsParams),
     ),
 
     GoRoute(
@@ -202,7 +216,8 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.sellBitbox,
       path: '/sellBitbox',
-      builder: (_, state) => SellBitboxPage(paymentInfo: state.extra as SellPaymentInfo),
+      builder: (_, state) =>
+          SellBitboxPage(paymentInfo: state.extra as SellPaymentInfo),
     ),
 
     GoRoute(
@@ -234,10 +249,12 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: LegalRoutes.document,
       path: '/legalDocument',
-      builder: (_, state) {
-        final extra = state.extra;
+      builder: (context, state) {
+        final params = state.extra as LegalDocumentParams;
         return LegalDocumentPage(
-          params: extra as LegalDocumentParams,
+          params: params,
+          remoteText: (lang) =>
+              _legalRemote(context, params.assetBaseName, lang),
         );
       },
     ),
@@ -245,18 +262,22 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: LegalRoutes.terms,
       path: '/termsOfUse',
-      builder: (context, state) => LegalDocumentPage(
+      builder: (context, _) => LegalDocumentPage(
         params: LegalDocumentParams(
           title: S.of(context).termsOfUse,
           assetBaseName: 'terms_of_use',
         ),
+        remoteText: (lang) => _legalRemote(context, 'terms_of_use', lang),
       ),
     ),
 
     GoRoute(
       name: LegalRoutes.referralTerms,
       path: '/referralTerms',
-      builder: (_, _) => const ReferralTermsPage(readOnly: true),
+      builder: (context, _) => ReferralTermsPage(
+        readOnly: true,
+        remoteText: (lang) => _legalRemote(context, 'referral_terms', lang),
+      ),
     ),
 
     GoRoute(
@@ -406,9 +427,8 @@ final GoRouter routerConfig = GoRouter(
         GoRoute(
           name: SupportRoutes.emailCapture,
           path: 'email',
-          builder: (_, state) => SupportEmailCapturePage(
-            description: state.extra as String?,
-          ),
+          builder: (_, state) =>
+              SupportEmailCapturePage(description: state.extra as String?),
         ),
         GoRoute(
           name: SupportRoutes.tickets,
@@ -423,9 +443,8 @@ final GoRouter routerConfig = GoRouter(
         GoRoute(
           name: SupportRoutes.chat,
           path: 'chat/:uid',
-          builder: (_, state) => SupportChatPage(
-            ticketUid: state.pathParameters['uid']!,
-          ),
+          builder: (_, state) =>
+              SupportChatPage(ticketUid: state.pathParameters['uid']!),
         ),
       ],
     ),
@@ -442,7 +461,8 @@ class _MissingTransactionDetail extends StatefulWidget {
   const _MissingTransactionDetail();
 
   @override
-  State<_MissingTransactionDetail> createState() => _MissingTransactionDetailState();
+  State<_MissingTransactionDetail> createState() =>
+      _MissingTransactionDetailState();
 }
 
 class _MissingTransactionDetailState extends State<_MissingTransactionDetail> {
