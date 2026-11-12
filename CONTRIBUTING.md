@@ -69,11 +69,11 @@ The auto-opened promotion PRs are idempotent — only one is open per branch pai
 ## A38
 
 This repository requires A38 according to the canonical A38 standard in
-[DFXswiss/agent](https://github.com/DFXswiss/agent/blob/1b153cdf7a1ac3687ba98cad7d323743050fb54b/docs/a38.md)
-at commit `1b153cdf7a1ac3687ba98cad7d323743050fb54b`. Repo job selection:
+[DFXswiss/agent](https://github.com/DFXswiss/agent/blob/e63980625f5b778c5a93104b0bf5de7fb5e379a8/docs/a38.md)
+at commit `e63980625f5b778c5a93104b0bf5de7fb5e379a8`. Repo job selection:
 `.github/a38.json`. Target-branch applicability and fork workflow approval:
 `.github/pr-guard.json`. `dfx pr guard` is
-[wired in](https://github.com/DFXswiss/agent/blob/1b153cdf7a1ac3687ba98cad7d323743050fb54b/docs/a38-guard.md#how-fork-github-actions-are-meant-to-work).
+[wired in](https://github.com/DFXswiss/agent/blob/e63980625f5b778c5a93104b0bf5de7fb5e379a8/docs/a38-guard.md#how-fork-github-actions-are-meant-to-work).
 
 This is a **public** repository. GitHub-hosted and self-hosted runners execute
 the heavy suite (unit and widget tests, the coverage floor, visual regression,
@@ -86,8 +86,16 @@ run `flutter test` or the visual-regression suite locally for A38.
 Draft pull requests run the GitHub CI jobs. GitHub holds fork runs from
 external contributors as `action_required`. Ready does not start CI. After a
 fresh A38 enforce pass on the current head, `dfx pr guard` approves those
-waiting initial runs, then sets Ready when the required GitHub jobs are green
-and the PR is mergeable. The newest well-formed second review comment that
+waiting initial runs, then sets Ready when the review rule below is met, the
+required GitHub jobs are green, and the PR is mergeable.
+
+Two reviews are required before Ready. One review is enough only when the
+pull request opener is listed in one_review_authors in the trusted
+.github/pr-guard.json on the default branch. A missing file, a missing key,
+or an empty list keeps two reviews required. An entry that exists only on
+the pull request head does not count.
+
+The newest well-formed second review comment that
 covers the current head returns a Ready pull request to draft when its
 `blocks_merge` is true and it counts at least one defect; a newer well-formed
 second review with `blocks_merge` false clears that. The merger does not click
@@ -103,7 +111,7 @@ access to `RealUnitCH/app` do not need a report.
 - If a feature needs on-chain data (e.g. native ETH balance, transaction status, token balance), add a new endpoint to [`DFXswiss/api`](https://github.com/DFXswiss/api) and let the app call that endpoint. The API is the single gateway.
 - All network calls must go through `AppStore.httpClient` with `buildUri(_host, …)` — `_host` resolves to the DFX API host via `ApiConfig`. Do not instantiate `http.Client`/`Dio`/`Web3Client` against other hosts.
 - **One scoped exception — crash reporting.** Builds that inject `--dart-define=SENTRY_DSN=...` deliver crash reports to the company-operated crash-reporting service ([`lib/setup/error_handling/crash_reporting.dart`](lib/setup/error_handling/crash_reporting.dart)). This is first-party infrastructure telemetry, not a third-party service: without an injected DSN (all local and test builds) the SDK never starts and produces no network traffic, and the delivered data is limited to error events — no PII, no screenshots, no performance tracing, no session telemetry (the exact pinned option surface lives in `crash_reporting.dart`). Widening what is sent (breadcrumbs with request URLs, user context, attachments) is a review-blocking change, not a config tweak.
-- **One scoped exception — OpenCryptoPay place list.** The pay-locations screen may GET exactly `https://api.opencryptopay.io/map/places?blockchain=Ethereum&asset=ZCHF`. RealUnit pays only with ZCHF on Ethereum, so that pair is fixed and the screen shows no chain or asset choice. It must not request the place list without that pair, and it must not call any other path or host. Production sends that GET through `AppStore.httpClient` as an absolute URI, not through `buildUri`. A failure of that request is an error and does not request an unfiltered list. A returned place with no supports field is shown. A returned place whose supports list does not contain Ethereum and ZCHF is not shown. The country outline, lakes, city names, and markers are local; the screen does not load a tile server. Overlapping shops are grouped, and the screen lists the shop names. Widget tests may pass an `http.Client` so they do not touch GetIt.
+- **One scoped exception — OpenCryptoPay place list.** The pay-locations screen may GET exactly `https://api.opencryptopay.io/map/places?blockchain=Ethereum&asset=ZCHF`. RealUnit pays only with ZCHF on Ethereum, so that pair is fixed and the screen shows no chain or asset choice. It must not request the place list without that pair. Production sends that GET through `AppStore.httpClient` as an absolute URI, not through `buildUri`, and it loads the map style `https://tiles.openfreemap.org/styles/liberty`. The same client may GET `https://api.opencryptopay.io/map/places/` plus an identifier that starts with `npub1`, and `https://api.opencryptopay.io/map/photos/` plus 64 lowercase hexadecimal digits and one of `.jpg`, `.png`, or `.webp`, with no userinfo, query, or fragment. Place photos are the response bytes from that client. The screen does not load any other image URL. A failure of that request is an error and does not request an unfiltered list. A returned place with no supports field is shown. A returned place whose supports list does not contain Ethereum and ZCHF is not shown. Overlapping shops are grouped, and the screen lists the shop names. Widget tests may pass an `http.Client` so they do not touch GetIt. Widget tests cannot host the street map, so they draw a fixed OpenFreeMap Liberty snapshot of that country camera and the same markers.
 
 ## API as Decision Authority — CRITICAL
 

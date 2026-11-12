@@ -256,24 +256,35 @@ void main() {
     expect(await peekPendingReferralCode(), isNull);
   });
 
-  test('does not bind the same stash twice concurrently', () async {
-    await stashPendingReferralCode('AB12CD');
-    final started = Completer<void>();
-    final release = Completer<ReferralBindResultDto>();
-    when(() => service.bind(code: 'AB12CD')).thenAnswer((_) async {
-      started.complete();
-      return release.future;
-    });
+  test(
+    'a concurrent call waits for the running bind without posting twice',
+    () async {
+      await stashPendingReferralCode('AB12CD');
+      final started = Completer<void>();
+      final release = Completer<ReferralBindResultDto>();
+      when(() => service.bind(code: 'AB12CD')).thenAnswer((_) async {
+        started.complete();
+        return release.future;
+      });
 
-    final first = bindPendingReferralCode(router);
-    await started.future;
-    await bindPendingReferralCode(router);
-    release.complete(const ReferralBindResultDto(kind: 'Invite'));
-    await first;
+      final first = bindPendingReferralCode(router);
+      await started.future;
+      var secondCompleted = false;
+      final second = bindPendingReferralCode(router).whenComplete(
+        () => secondCompleted = true,
+      );
+      await Future<void>.delayed(Duration.zero);
 
-    verify(() => service.bind(code: 'AB12CD')).called(1);
-    expect(await peekPendingReferralCode(), isNull);
-  });
+      expect(secondCompleted, isFalse);
+      verify(() => service.bind(code: 'AB12CD')).called(1);
+
+      release.complete(const ReferralBindResultDto(kind: 'Invite'));
+      await Future.wait([first, second]);
+
+      expect(secondCompleted, isTrue);
+      expect(await peekPendingReferralCode(), isNull);
+    },
+  );
 
   testWidgets('defers bind while on /kyc and keeps the stash', (tester) async {
     router.dispose();
@@ -426,9 +437,9 @@ void main() {
 
     final first = bindPendingReferralCode(router);
     await started.future;
-    await bindPendingReferralCode(router, code: 'AB12CD');
+    final second = bindPendingReferralCode(router, code: 'AB12CD');
     release.complete(const ReferralBindResultDto(kind: 'Invite'));
-    await first;
+    await Future.wait([first, second]);
 
     verify(() => service.bind(code: 'AB12CD')).called(1);
     expect(await peekPendingReferralCode(), isNull);
@@ -446,7 +457,7 @@ void main() {
     final first = bindPendingReferralCode(router);
     await started.future;
     await stashPendingReferralCode('EVT1');
-    await bindPendingReferralCode(router);
+    final second = bindPendingReferralCode(router);
     release.completeError(
       const ApiException(
         statusCode: 503,
@@ -454,7 +465,7 @@ void main() {
         message: 'down',
       ),
     );
-    await first;
+    await Future.wait([first, second]);
 
     expect(await peekPendingReferralCode(), 'EVT1');
     verify(() => service.bind(code: 'AB12CD')).called(1);
@@ -475,9 +486,9 @@ void main() {
 
     final first = bindPendingReferralCode(router);
     await started.future;
-    await bindPendingReferralCode(router, code: 'EVT1');
+    final second = bindPendingReferralCode(router, code: 'EVT1');
     release.complete(const ReferralBindResultDto(kind: 'Invite'));
-    await first;
+    await Future.wait([first, second]);
 
     verify(() => service.bind(code: 'AB12CD')).called(1);
     verify(() => service.bind(code: 'EVT1')).called(1);

@@ -1063,7 +1063,7 @@
               <a href="#spec-55"><span class="spec-num">55</span>KYC — Finanzdaten</a>
             </li>
             <li>
-              <a href="#spec-56"><span class="spec-num">56</span>KYC — Identitätsprüfung und Wallet-Verknüpfung</a>
+              <a href="#spec-56"><span class="spec-num">56</span>KYC — Identitätsprüfung, Wallet-Verknüpfung und Namenssignatur</a>
             </li>
             <li>
               <a href="#spec-57"><span class="spec-num">57</span>KYC — Status- und Ergebnisseiten</a>
@@ -1096,7 +1096,7 @@
               <a href="#spec-66"><span class="spec-num">66</span>Nutzerdaten — Übersicht</a>
             </li>
             <li>
-              <a href="#spec-67"><span class="spec-num">67</span>Nutzerdaten — Laden und Fehler</a>
+              <a href="#spec-67"><span class="spec-num">67</span>Nutzerdaten — weitere Zustände</a>
             </li>
             <li>
               <a href="#spec-68"><span class="spec-num">68</span>Daten bearbeiten — Formulare</a>
@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 429 Visual-Regression Goldens (429 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 463 Visual-Regression Goldens (463 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 429 App-Screenshots dieser Seite sind Goldens aus
+            Die 463 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 429 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 463 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -3031,7 +3031,7 @@
                 <div class="file">test/goldens/screens/sell/</div>
               </div>
               <div class="rhs">
-                <b>4 Screens</b>
+                <b>6 Screens</b>
               </div>
             </div>
           </summary>
@@ -3111,7 +3111,27 @@
               <div class="desc">
                 Generischer Fehler-State, wenn das Backend keinen spezifischen Statuscode
                 liefert. Die Backend-Meldung erscheint als rote Snackbar, einen eigenen
-                Retry-Button gibt es nicht; der Golden hält nur die Maske fest.
+                Retry-Button gibt es nicht; der Golden hält nur die Maske fest. Ohne
+                Backend-Meldung zeigt die Snackbar den Text der App, siehe
+                <a href="#445-sell-failure-generic">445-sell-failure-generic</a>.
+              </div>
+            </div>
+            <div class="test" id="445-sell-failure-generic">
+              <div class="head">
+                <a class="name permalink" href="#445-sell-failure-generic">445-sell-failure-generic</a>
+                <button class="copy-link" type="button" data-target="445-sell-failure-generic" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_failure_generic.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/445-sell-failure-generic.png"
+                  alt="Verkaufen — Fehler ohne Backend-Meldung"
+                />
+              </div>
+              <div class="desc">
+                Fehler ohne Meldung des Backends, zum Beispiel wenn die Antwort nicht gelesen
+                werden kann. Die rote Snackbar zeigt <b>Beim Verkauf ist ein Fehler aufgetreten.
+                Bitte versuchen Sie es erneut.</b> Ein technischer Fehlertext erscheint nie.
               </div>
             </div>
             <div class="test" id="428-sell-share-count-mismatch">
@@ -7115,11 +7135,11 @@
           <summary>
             <div class="spec-head">
               <div class="lhs">
-                <h2><span class="num">56</span>KYC — Identitätsprüfung und Wallet-Verknüpfung</h2>
+                <h2><span class="num">56</span>KYC — Identitätsprüfung, Wallet-Verknüpfung und Namenssignatur</h2>
                 <div class="file">test/goldens/screens/kyc/</div>
               </div>
               <div class="rhs">
-                <b>13 Screens</b>
+                <b>23 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/kyc"
@@ -7130,7 +7150,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Nach der Registrierung folgen die Identitätsprüfung und die Verknüpfung der Wallet mit dem Konto. Diese Einträge decken die Ident-Zustände (Start, Fehler, endgültige Ablehnung), die Wallet-Verknüpfung samt BitBox und die Sonderseite für nicht signierfähige Debug-Wallets ab.
+            Nach der Registrierung folgen die Identitätsprüfung und die Verknüpfung der Wallet mit dem Konto. Diese Einträge decken die Ident-Zustände (Start, Fehler, endgültige Ablehnung), die Wallet-Verknüpfung samt BitBox und die Sonderseite für nicht signierfähige Debug-Wallets ab. Ergänzend wird das Signieren des genehmigten Namens dokumentiert, mit dem Sie die Aktualisierung des Aktienbuchs auslösen.
           </p>
 
           <div class="tests cols-2">
@@ -7310,6 +7330,166 @@
               </div>
               <div class="desc">
                 Defensive Auffangseite, wenn die erwarteten Nutzerdaten <b>fehlen</b>: sie zeigt den Lade-Fehlertext mit einem Aktualisieren-Button, um den Schritt neu zu laden.
+              </div>
+            </div>
+            <div class="test" id="444-kyc-update-share-register-name-page-default">
+              <div class="head">
+                <a class="name permalink" href="#444-kyc-update-share-register-name-page-default">444-kyc-update-share-register-name-page-default</a>
+                <button class="copy-link" type="button" data-target="444-kyc-update-share-register-name-page-default" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/444-kyc-update-share-register-name-page-default.png"
+                  alt="Genehmigten Namen signieren — bereit"
+                />
+              </div>
+              <div class="desc">
+                Die Seite <b>Genehmigten Namen signieren</b>. Sie erscheint, wenn die API meldet, dass im Aktienbuch noch der alte Name steht – zum Beispiel nach dem Start, sobald das Dashboard sichtbar ist (nicht über einer bereits geöffneten anderen Seite wie einer Zahlung), über die Kontodaten oder wenn ein Kauf oder Verkauf in die Kontoeröffnung führt. Darüber steht <b>Der genehmigte Name muss signiert werden, damit das Aktienbuch aktualisiert werden kann.</b> Darunter der freigegebene Name und der Button <b>Namen signieren</b>.
+              </div>
+            </div>
+            <div class="test" id="446-kyc-update-share-register-name-page-missing-data">
+              <div class="head">
+                <a class="name permalink" href="#446-kyc-update-share-register-name-page-missing-data">446-kyc-update-share-register-name-page-missing-data</a>
+                <button class="copy-link" type="button" data-target="446-kyc-update-share-register-name-page-missing-data" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_missing_data.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/446-kyc-update-share-register-name-page-missing-data.png"
+                  alt="Genehmigten Namen signieren — Angaben fehlen"
+                />
+              </div>
+              <div class="desc">
+                Die Seite <b>Genehmigten Namen signieren</b>, wenn die Angaben zum Signieren fehlen. Sichtbar sind <b>Fehler beim Laden</b> und der Button <b>Aktualisieren</b>.
+              </div>
+            </div>
+            <div class="test" id="447-kyc-update-share-register-name-page-failure">
+              <div class="head">
+                <a class="name permalink" href="#447-kyc-update-share-register-name-page-failure">447-kyc-update-share-register-name-page-failure</a>
+                <button class="copy-link" type="button" data-target="447-kyc-update-share-register-name-page-failure" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_failure.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/447-kyc-update-share-register-name-page-failure.png"
+                  alt="Genehmigten Namen signieren — Aktienbuch hat nicht angenommen"
+                />
+              </div>
+              <div class="desc">
+                Rote SnackBar: <b>Das Aktienbuch hat die Aktualisierung nicht angenommen. Bitte versuchen Sie es erneut.</b> Der Button <b>Namen signieren</b> bleibt benutzbar.
+              </div>
+            </div>
+            <div class="test" id="448-kyc-update-share-register-name-page-rejection">
+              <div class="head">
+                <a class="name permalink" href="#448-kyc-update-share-register-name-page-rejection">448-kyc-update-share-register-name-page-rejection</a>
+                <button class="copy-link" type="button" data-target="448-kyc-update-share-register-name-page-rejection" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_rejection.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/448-kyc-update-share-register-name-page-rejection.png"
+                  alt="Genehmigten Namen signieren — Ablehnungssatz"
+                />
+              </div>
+              <div class="desc">
+                Rote SnackBar mit einem anderen Satz als dem generischen Fehler. Im Golden: <b>Der Name stimmt nicht mit dem genehmigten Eintrag überein.</b>
+              </div>
+            </div>
+            <div class="test" id="449-kyc-update-share-register-name-page-registration-date-unavailable">
+              <div class="head">
+                <a class="name permalink" href="#449-kyc-update-share-register-name-page-registration-date-unavailable">449-kyc-update-share-register-name-page-registration-date-unavailable</a>
+                <button class="copy-link" type="button" data-target="449-kyc-update-share-register-name-page-registration-date-unavailable" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_registration_date_unavailable.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/449-kyc-update-share-register-name-page-registration-date-unavailable.png"
+                  alt="Genehmigten Namen signieren — Registrierungsdatum nicht verfügbar"
+                />
+              </div>
+              <div class="desc">
+                Rote SnackBar: <b>Das Registrierungsdatum konnte nicht geladen werden. Es wurde nichts signiert. Bitte versuchen Sie es erneut.</b>
+              </div>
+            </div>
+            <div class="test" id="450-kyc-update-share-register-name-page-signing-cancelled">
+              <div class="head">
+                <a class="name permalink" href="#450-kyc-update-share-register-name-page-signing-cancelled">450-kyc-update-share-register-name-page-signing-cancelled</a>
+                <button class="copy-link" type="button" data-target="450-kyc-update-share-register-name-page-signing-cancelled" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_signing_cancelled.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/450-kyc-update-share-register-name-page-signing-cancelled.png"
+                  alt="Genehmigten Namen signieren — Signatur abgebrochen"
+                />
+              </div>
+              <div class="desc">
+                Rote SnackBar: <b>Signatur abgebrochen — bitte BitBox erneut bestätigen</b>
+              </div>
+            </div>
+            <div class="test" id="454-kyc-update-share-register-name-page-success">
+              <div class="head">
+                <a class="name permalink" href="#454-kyc-update-share-register-name-page-success">454-kyc-update-share-register-name-page-success</a>
+                <button class="copy-link" type="button" data-target="454-kyc-update-share-register-name-page-success" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_success.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/454-kyc-update-share-register-name-page-success.png"
+                  alt="Genehmigten Namen signieren — Erfolg"
+                />
+              </div>
+              <div class="desc">
+                Nach dem erfolgreichen Signieren steht ein zentrierter Ladekreis, während der nächste Schritt ermittelt wird.
+              </div>
+            </div>
+            <div class="test" id="455-kyc-update-share-register-name-page-send-failed">
+              <div class="head">
+                <a class="name permalink" href="#455-kyc-update-share-register-name-page-send-failed">455-kyc-update-share-register-name-page-send-failed</a>
+                <button class="copy-link" type="button" data-target="455-kyc-update-share-register-name-page-send-failed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_send_failed.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/455-kyc-update-share-register-name-page-send-failed.png"
+                  alt="Genehmigten Namen signieren — Aktualisierung nicht gesendet"
+                />
+              </div>
+              <div class="desc">
+                Rote SnackBar: <b>Die Aktualisierung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.</b> Der Button <b>Namen signieren</b> bleibt benutzbar.
+              </div>
+            </div>
+            <div class="test" id="456-kyc-update-share-register-name-page-submitting">
+              <div class="head">
+                <a class="name permalink" href="#456-kyc-update-share-register-name-page-submitting">456-kyc-update-share-register-name-page-submitting</a>
+                <button class="copy-link" type="button" data-target="456-kyc-update-share-register-name-page-submitting" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/456-kyc-update-share-register-name-page-submitting.png"
+                  alt="Genehmigten Namen signieren — Button lädt"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Seite <b>Genehmigten Namen signieren</b>, während der Button <b>Namen signieren</b> lädt.
+              </div>
+            </div>
+            <div class="test" id="457-kyc-update-share-register-name-page-bitbox-required">
+              <div class="head">
+                <a class="name permalink" href="#457-kyc-update-share-register-name-page-bitbox-required">457-kyc-update-share-register-name-page-bitbox-required</a>
+                <button class="copy-link" type="button" data-target="457-kyc-update-share-register-name-page-bitbox-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_update_share_register_name_page_bitbox_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/457-kyc-update-share-register-name-page-bitbox-required.png"
+                  alt="Genehmigten Namen signieren — BitBox verbinden"
+                />
+              </div>
+              <div class="desc">
+                Über der Seite <b>Genehmigten Namen signieren</b> liegt das Sheet <b>BitBox verbinden</b>. Der Text lautet <b>Bitte verbinden Sie Ihre BitBox mit Ihrem Smartphone.</b> Die Signierseite bleibt darunter.
               </div>
             </div>
             <div class="test" id="203-kyc-signature-unsupported-page-default">
@@ -8135,11 +8315,11 @@
           <summary>
             <div class="spec-head">
               <div class="lhs">
-                <h2><span class="num">67</span>Nutzerdaten — Laden und Fehler</h2>
+                <h2><span class="num">67</span>Nutzerdaten — weitere Zustände</h2>
                 <div class="file">test/goldens/screens/settings_user_data/</div>
               </div>
               <div class="rhs">
-                <b>3 Screens</b>
+                <b>6 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/settings_user_data"
@@ -8150,7 +8330,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Solange die Angaben noch geladen werden oder das Laden scheitert, zeigt die Seite statt der Liste einen Platzhalter- oder Fehlerzustand. Bei BitBox-Wallets kommt ein zusätzlicher Hardware-Sonderfall hinzu.
+            Solange die Angaben noch geladen werden oder das Laden scheitert, zeigt die Seite statt der Liste einen Platzhalter- oder Fehlerzustand. Bei BitBox-Wallets kommt ein zusätzlicher Hardware-Sonderfall hinzu. Ist eine Namenssignatur offen, erscheint zusätzlich der Signier-Knopf — auch in den reduzierten E-Mail- und Leerzuständen.
           </p>
 
           <div class="tests cols-2">
@@ -8200,6 +8380,54 @@
               </div>
               <div class="desc">
                 Sonderfall bei einer BitBox-Wallet, deren Hardware getrennt ist: Titel <b>BitBox ist nicht verbunden</b>, eine kurze Erklärung und der blaue Button <b>BitBox erneut verbinden</b>. Über den Button startet der Nutzer den Wiederverbindungs-Dialog, danach werden die Daten neu geladen.
+              </div>
+            </div>
+            <div class="test" id="451-settings-user-data-page-name-update">
+              <div class="head">
+                <a class="name permalink" href="#451-settings-user-data-page-name-update">451-settings-user-data-page-name-update</a>
+                <button class="copy-link" type="button" data-target="451-settings-user-data-page-name-update" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_user_data/goldens/macos/settings_user_data_page_name_update.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/451-settings-user-data-page-name-update.png"
+                  alt="Nutzerdaten mit Button Namen signieren"
+                />
+              </div>
+              <div class="desc">
+                Die Seite <b>Nutzerdaten</b> mit der Datenspalte und dem Button <b>Namen signieren</b>.
+              </div>
+            </div>
+            <div class="test" id="452-settings-user-data-page-email-only-name-update">
+              <div class="head">
+                <a class="name permalink" href="#452-settings-user-data-page-email-only-name-update">452-settings-user-data-page-email-only-name-update</a>
+                <button class="copy-link" type="button" data-target="452-settings-user-data-page-email-only-name-update" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_user_data/goldens/macos/settings_user_data_page_email_only_name_update.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/452-settings-user-data-page-email-only-name-update.png"
+                  alt="Nur E-Mail und Button Namen signieren"
+                />
+              </div>
+              <div class="desc">
+                Die Seite <b>Nutzerdaten</b> zeigt nur die Zeile <b>E-Mail</b> und den Button <b>Namen signieren</b>.
+              </div>
+            </div>
+            <div class="test" id="453-settings-user-data-page-empty-name-update">
+              <div class="head">
+                <a class="name permalink" href="#453-settings-user-data-page-empty-name-update">453-settings-user-data-page-empty-name-update</a>
+                <button class="copy-link" type="button" data-target="453-settings-user-data-page-empty-name-update" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_user_data/goldens/macos/settings_user_data_page_empty_name_update.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/453-settings-user-data-page-empty-name-update.png"
+                  alt="Keine Nutzerdaten und Button Namen signieren"
+                />
+              </div>
+              <div class="desc">
+                Die Seite <b>Nutzerdaten</b> mit dem Hinweis <b>Zu dieser Wallet sind keine Nutzerdaten hinterlegt.</b> und dem Button <b>Namen signieren</b>.
               </div>
             </div>
           </div>
@@ -9818,10 +10046,10 @@
                 />
               </div>
               <div class="desc">
-                Standortkarte der veröffentlichten SPAR-Filialen auf dem
-                Umriss der Schweiz und Liechtensteins, mit Seen, Ortsnamen,
-                gruppierten Markern und der Adressliste. Keine Blockchain- oder
-                Asset-Auswahl und keine Kartenkacheln. Titel
+                Standortkarte der veröffentlichten SPAR-Filialen auf der
+                OpenFreeMap-Liberty-Strassenkarte, mit nummerierten blauen
+                Clustern, dem Pin Lugano und der Adressliste. Jede Zeile zeigt
+                das Aktivitätswort. Keine Blockchain- oder Asset-Auswahl. Titel
                 <b>Standorte</b>.
                 Golden-Quelle: <code>pay_locations_page_empty.png</code>.
               </div>
@@ -9839,9 +10067,9 @@
                 />
               </div>
               <div class="desc">
-                Standortkarte mit einem Geschäft für ZCHF auf Ethereum, auf dem
-                lokalen Landesumriss und mit der Geschäftsliste. Titel
-                <b>Standorte</b>.
+                Ein Geschäft auf der OpenFreeMap-Liberty-Strassenkarte, mit dem
+                Namen am Pin und der Geschäftsliste. Das Aktivitätswort ist
+                <b>Keine</b>. Titel <b>Standorte</b>.
                 Golden-Quelle: <code>pay_locations_page_places.png</code>.
               </div>
             </div>
@@ -9860,7 +10088,7 @@
               <div class="desc">
                 Standortsuche ohne Treffer. Sichtbarer Text:
                 <b>Kein Standort passt.</b>
-                Die Karte zeigt weiter den Landesumriss, ohne Marker.
+                Die Strassenkarte bleibt sichtbar, ohne Marker.
                 Golden-Quelle: <code>pay_locations_page_no_match.png</code>.
               </div>
             </div>
@@ -9877,11 +10105,211 @@
                 />
               </div>
               <div class="desc">
-                Keine veröffentlichten Standorte. Die Hinweis-Karte sitzt auf dem
-                lokalen Landesumriss, ohne Geschäfts-Marker. Sichtbarer Text:
+                Keine veröffentlichten Standorte. Die Hinweis-Karte sitzt auf der
+                OpenFreeMap-Liberty-Strassenkarte, ohne Geschäfts-Marker. Sichtbarer Text:
                 <b>Noch keine Standorte veröffentlicht.</b>
                 Titel <b>Standorte</b>.
                 Golden-Quelle: <code>pay_locations_page_unpublished.png</code>.
+              </div>
+            </div>
+            <div class="test" id="433-pay-locations-activity-daily">
+              <div class="head">
+                <a class="name permalink" href="#433-pay-locations-activity-daily">433-pay-locations-activity-daily</a>
+                <button class="copy-link" type="button" data-target="433-pay-locations-activity-daily" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_activity_daily.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/433-pay-locations-activity-daily.png"
+                  alt="Standort mit Aktivität Täglich"
+                />
+              </div>
+              <div class="desc">
+                Ein Geschäft auf der Standortkarte. Das Aktivitätswort ist
+                <b>Täglich</b>. Titel <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_activity_daily.png</code>.
+              </div>
+            </div>
+            <div class="test" id="434-pay-locations-activity-weekly">
+              <div class="head">
+                <a class="name permalink" href="#434-pay-locations-activity-weekly">434-pay-locations-activity-weekly</a>
+                <button class="copy-link" type="button" data-target="434-pay-locations-activity-weekly" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_activity_weekly.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/434-pay-locations-activity-weekly.png"
+                  alt="Standort mit Aktivität Wöchentlich"
+                />
+              </div>
+              <div class="desc">
+                Ein Geschäft auf der Standortkarte. Das Aktivitätswort ist
+                <b>Wöchentlich</b>. Titel <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_activity_weekly.png</code>.
+              </div>
+            </div>
+            <div class="test" id="435-pay-locations-activity-monthly">
+              <div class="head">
+                <a class="name permalink" href="#435-pay-locations-activity-monthly">435-pay-locations-activity-monthly</a>
+                <button class="copy-link" type="button" data-target="435-pay-locations-activity-monthly" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_activity_monthly.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/435-pay-locations-activity-monthly.png"
+                  alt="Standort mit Aktivität Monatlich"
+                />
+              </div>
+              <div class="desc">
+                Ein Geschäft auf der Standortkarte. Das Aktivitätswort ist
+                <b>Monatlich</b>. Titel <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_activity_monthly.png</code>.
+              </div>
+            </div>
+            <div class="test" id="436-pay-locations-activity-idle">
+              <div class="head">
+                <a class="name permalink" href="#436-pay-locations-activity-idle">436-pay-locations-activity-idle</a>
+                <button class="copy-link" type="button" data-target="436-pay-locations-activity-idle" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_page_activity_idle.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/436-pay-locations-activity-idle.png"
+                  alt="Standort mit Aktivität Ruhend"
+                />
+              </div>
+              <div class="desc">
+                Ein Geschäft auf der Standortkarte. Das Aktivitätswort ist
+                <b>Ruhend</b>. Titel <b>Standorte</b>.
+                Golden-Quelle: <code>pay_locations_page_activity_idle.png</code>.
+              </div>
+            </div>
+            <div class="test" id="437-pay-locations-detail-daily">
+              <div class="head">
+                <a class="name permalink" href="#437-pay-locations-detail-daily">437-pay-locations-detail-daily</a>
+                <button class="copy-link" type="button" data-target="437-pay-locations-detail-daily" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_detail_daily.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/437-pay-locations-detail-daily.png"
+                  alt="Standortdetail mit täglicher Aktivität"
+                />
+              </div>
+              <div class="desc">
+                Detailblatt eines Geschäfts nach Antippen der Liste. Sichtbar sind
+                der Name, das Aktivitätswort <b>Täglich</b>, der Satz
+                <b>An mindestens 5 Tagen eine Zahlung in den letzten 7 Tagen.</b>,
+                die Adresszeilen, die Beschreibung, <b>Kategorie</b>, <b>Art</b>,
+                <b>Anbieter</b> und <b>Zahlung</b> mit <b>Ethereum / ZCHF</b>.
+                Golden-Quelle: <code>pay_locations_detail_daily.png</code>.
+              </div>
+            </div>
+            <div class="test" id="438-pay-locations-detail-weekly">
+              <div class="head">
+                <a class="name permalink" href="#438-pay-locations-detail-weekly">438-pay-locations-detail-weekly</a>
+                <button class="copy-link" type="button" data-target="438-pay-locations-detail-weekly" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_detail_weekly.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/438-pay-locations-detail-weekly.png"
+                  alt="Standortdetail mit wöchentlicher Aktivität"
+                />
+              </div>
+              <div class="desc">
+                Detailblatt eines Geschäfts. Der Hilfesatz lautet
+                <b>Zahlungen in den letzten 7 Tagen.</b>
+                Golden-Quelle: <code>pay_locations_detail_weekly.png</code>.
+              </div>
+            </div>
+            <div class="test" id="439-pay-locations-detail-monthly">
+              <div class="head">
+                <a class="name permalink" href="#439-pay-locations-detail-monthly">439-pay-locations-detail-monthly</a>
+                <button class="copy-link" type="button" data-target="439-pay-locations-detail-monthly" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_detail_monthly.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/439-pay-locations-detail-monthly.png"
+                  alt="Standortdetail mit monatlicher Aktivität"
+                />
+              </div>
+              <div class="desc">
+                Detailblatt eines Geschäfts. Der Hilfesatz lautet
+                <b>Zahlungen in den letzten 30 Tagen.</b>
+                Golden-Quelle: <code>pay_locations_detail_monthly.png</code>.
+              </div>
+            </div>
+            <div class="test" id="440-pay-locations-detail-idle">
+              <div class="head">
+                <a class="name permalink" href="#440-pay-locations-detail-idle">440-pay-locations-detail-idle</a>
+                <button class="copy-link" type="button" data-target="440-pay-locations-detail-idle" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_detail_idle.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/440-pay-locations-detail-idle.png"
+                  alt="Standortdetail mit ruhender Aktivität"
+                />
+              </div>
+              <div class="desc">
+                Detailblatt eines Geschäfts. Der Hilfesatz lautet
+                <b>Keine Zahlungen in den letzten 30 Tagen.</b>
+                Golden-Quelle: <code>pay_locations_detail_idle.png</code>.
+              </div>
+            </div>
+            <div class="test" id="441-pay-locations-detail-none">
+              <div class="head">
+                <a class="name permalink" href="#441-pay-locations-detail-none">441-pay-locations-detail-none</a>
+                <button class="copy-link" type="button" data-target="441-pay-locations-detail-none" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_detail_none.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/441-pay-locations-detail-none.png"
+                  alt="Standortdetail ohne erfasste Zahlung"
+                />
+              </div>
+              <div class="desc">
+                Detailblatt eines Geschäfts. Der Hilfesatz lautet
+                <b>Noch keine Zahlung erfasst.</b>
+                Golden-Quelle: <code>pay_locations_detail_none.png</code>.
+              </div>
+            </div>
+            <div class="test" id="442-pay-locations-detail-others">
+              <div class="head">
+                <a class="name permalink" href="#442-pay-locations-detail-others">442-pay-locations-detail-others</a>
+                <button class="copy-link" type="button" data-target="442-pay-locations-detail-others" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_detail_others.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/442-pay-locations-detail-others.png"
+                  alt="Standortdetail mit Art Andere"
+                />
+              </div>
+              <div class="desc">
+                Detailblatt eines Geschäfts. Die Art lautet <b>Andere</b>.
+                Golden-Quelle: <code>pay_locations_detail_others.png</code>.
+              </div>
+            </div>
+            <div class="test" id="443-pay-locations-detail-photo">
+              <div class="head">
+                <a class="name permalink" href="#443-pay-locations-detail-photo">443-pay-locations-detail-photo</a>
+                <button class="copy-link" type="button" data-target="443-pay-locations-detail-photo" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_locations_detail_photo.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/443-pay-locations-detail-photo.png"
+                  alt="Standortdetail mit Foto"
+                />
+              </div>
+              <div class="desc">
+                Detailblatt eines Geschäfts mit Foto. Die Bildunterschrift lautet
+                <b>Eingang</b>.
+                Golden-Quelle: <code>pay_locations_detail_photo.png</code>.
               </div>
             </div>
           </div>
@@ -14235,7 +14663,8 @@
             Verkaufstransaktion) und die <b>Übertragung</b> (Einzelbeleg für eine
             Wallet-zu-Wallet-Übertragung). Ein Verkauf hat zusätzlich den
             <b>DFX-Beleg</b> «Auszahlung (DFX AG)» für den Tausch von ZCHF in CHF
-            oder EUR. Der
+            oder EUR. Der <b>Shop-Zahlungsbeleg</b> beschreibt eine Zahlung in
+            ZCHF in einem Shop. Der
             Renderer lebt im
             <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo;
             die verlinkten Muster-PDFs liegen dort als
@@ -14376,6 +14805,58 @@
             </div>
           </div>
 
+          <h3>Zahlung im Shop <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-payment-merchant-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-payment-merchant-de">payment_merchant_de</a>
+                <button class="copy-link" type="button" data-target="receipt-payment-merchant-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Zahlung im Shop, ZCHF (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/payment-merchant-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/payment-merchant-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-payment-merchant-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-payment-merchant-en">payment_merchant_en</a>
+                <button class="copy-link" type="button" data-target="receipt-payment-merchant-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Payment to merchant, ZCHF</span>
+                <a class="dl-btn" href="../receipts/payment-merchant-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/payment-merchant-en.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-payment-merchant-fr">
+              <div class="head">
+                <a class="name permalink" href="#receipt-payment-merchant-fr">payment_merchant_fr</a>
+                <button class="copy-link" type="button" data-target="receipt-payment-merchant-fr" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">fr</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Paiement au commerçant, ZCHF</span>
+                <a class="dl-btn" href="../receipts/payment-merchant-fr.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/payment-merchant-fr.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-payment-merchant-it">
+              <div class="head">
+                <a class="name permalink" href="#receipt-payment-merchant-it">payment_merchant_it</a>
+                <button class="copy-link" type="button" data-target="receipt-payment-merchant-it" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">it</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Pagamento al commerciante, ZCHF</span>
+                <a class="dl-btn" href="../receipts/payment-merchant-it.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/payment-merchant-it.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+
           <h3>Übertragung <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
           <div class="tests cols-2">
             <div class="test legal-doc" id="receipt-transfer-de">
@@ -14511,7 +14992,7 @@ FÜR WEN IST DIE APP?
 
 Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen ausserhalb des Bankensystems verwalten möchten – transparent, sicher und selbstbestimmt.
 
-Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das Vermögen der Gesellschaft bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
 
 Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.
 
@@ -14567,7 +15048,7 @@ Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen aus
 
 <b>Über RealUnit Schweiz AG</b>
 
-Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das Vermögen der Gesellschaft bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
 
 Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.
 

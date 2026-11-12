@@ -9,7 +9,7 @@ const _testSeed =
 
 void main() {
   group('$KycState', () {
-    test('KycStep enum has all 11 documented variants', () {
+    test('KycStep enum has all 12 documented variants', () {
       // The KycCubit advances through these steps in order; pin the set so a
       // refactor that drops one surfaces here.
       expect(KycStep.values.toSet(), {
@@ -18,6 +18,7 @@ void main() {
         KycStep.registration,
         KycStep.personalData,
         KycStep.linkWallet,
+        KycStep.updateShareRegisterName,
         KycStep.legalDisclaimer,
         KycStep.nationality,
         KycStep.twoFa,
@@ -38,12 +39,18 @@ void main() {
       );
     });
 
-    test('KycSuccess props pin (currentStep, urlOrToken)', () {
+    test('KycSuccess props pin (currentStep, urlOrToken, shareRegisterName)', () {
       const a = KycSuccess(currentStep: KycStep.email, urlOrToken: 'https://k/1');
       const b = KycSuccess(currentStep: KycStep.email, urlOrToken: 'https://k/1');
       const c = KycSuccess(currentStep: KycStep.email, urlOrToken: 'https://k/2');
+      const d = KycSuccess(
+        currentStep: KycStep.email,
+        urlOrToken: 'https://k/1',
+        shareRegisterName: 'Ada Lovelace',
+      );
       expect(a, b);
       expect(a, isNot(c));
+      expect(a, isNot(d));
     });
 
     test('KycUnsupportedStepFailure props pin the stepName', () {

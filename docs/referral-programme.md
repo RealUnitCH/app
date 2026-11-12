@@ -460,7 +460,8 @@ row.
   If the navigator is not attached yet (dashboard boot bind), the promo,
   invalid, or unavailable dialog is shown on the next frame instead of
   dropped.
-  A second bind while the POST is in flight only stashes. A retryable
+  A second bind while the POST is in flight stashes its code, if any, and
+  waits for the running bind instead of starting another. A retryable
   bind failure does not overwrite a newer stashed code. A retryable bind
   (Dart timeout, transport error, 5xx, 401, 408, 429, 504, or an unmounted
   NestJS route) restashes the code and shows the unavailable copy once

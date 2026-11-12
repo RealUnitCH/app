@@ -116,6 +116,14 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/kyc/steps/link_wallet/kyc_link_wallet_page.dart',
   ),
   ResponsiveSurface(
+    id: 'kyc_update_share_register_name_page',
+    description: 'KYC update share register name page',
+    matrixTestPath:
+        'test/screens/kyc/steps/update_share_register_name/kyc_update_share_register_name_responsive_matrix_test.dart',
+    productionPath:
+        'lib/screens/kyc/steps/update_share_register_name/kyc_update_share_register_name_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'kyc_financial_data_questions_page',
     description: 'KYC financial data questions page',
     matrixTestPath:
@@ -157,6 +165,13 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
         'test/screens/settings_user_data/settings_user_data_responsive_matrix_test.dart',
     productionPath:
         'lib/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'settings_user_data_page',
+    description: 'Settings account data page (share-register name signing CTA)',
+    matrixTestPath:
+        'test/screens/settings_user_data/settings_user_data_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/settings_user_data/settings_user_data_page.dart',
   ),
   ResponsiveSurface(
     id: 'settings_edit_phone_number_page',
@@ -353,8 +368,7 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
   ),
   ResponsiveSurface(
     id: 'transaction_detail_return_to_dashboard',
-    description:
-        'transaction detail after pay or transfer, with the button back to the dashboard',
+    description: 'transaction detail after pay or transfer, with the button back to the dashboard',
     matrixTestPath:
         'test/screens/transaction_history/transaction_detail_responsive_matrix_test.dart',
     productionPath: 'lib/screens/transaction_history/transaction_detail_page.dart',

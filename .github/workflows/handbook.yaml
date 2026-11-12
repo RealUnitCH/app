@@ -230,21 +230,23 @@ jobs:
       - name: Stage RealUnit receipt examples from api repo
         env:
           API_DIR: _api-checkout
-          # The api repo commits twelve example receipt PDFs under
-          # docs/examples/realunit-receipt/, each type in DE and EN:
-          # transaction-{confirmation,confirmation-sale,history,transfer}-{de,en}.pdf
-          # plus exchange-zchf-{chf,eur}-{de,en}.pdf.
+          # The api repo commits sixteen example receipt PDFs under
+          # docs/examples/realunit-receipt/:
+          # transaction-{confirmation,confirmation-sale,history,transfer}-{de,en}.pdf,
+          # exchange-zchf-{chf,eur}-{de,en}.pdf and
+          # payment-merchant-{de,en,fr,it}.pdf.
           # `-ne` below fails the build on ANY drift (add OR remove) so a change to
           # the committed set upstream requires an explicit bump here in the SAME
           # PR — same guard rationale as EXPECTED_HTML_COUNT above.
-          EXPECTED_PDF_COUNT: 12
+          EXPECTED_PDF_COUNT: 16
         run: |
           set -euo pipefail
 
           # Unlike the mail previews, these PDFs are already committed in the api
-          # repo (rendered from SwissQRService: the eight transaction-*.pdf files
-          # by the api-side spec realunit-receipt-example.spec.ts, and the four
-          # exchange-zchf-*.pdf files by realunit-exchange-receipt-example.spec.ts),
+          # repo (rendered from SwissQRService: the eight transaction-*.pdf and
+          # four payment-merchant-*.pdf files by the api-side spec
+          # realunit-receipt-example.spec.ts, and the four exchange-zchf-*.pdf
+          # files by realunit-exchange-receipt-example.spec.ts),
           # so no generator / npm run is needed here — we only copy them into the
           # build context. Reuses the same _api-checkout/ from the mail step above.
           SRC_DIR="${API_DIR}/docs/examples/realunit-receipt"
