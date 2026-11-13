@@ -248,6 +248,47 @@ void main() {
   );
 
   testWidgets(
+    'a suffixed txId passes the plain hash to the sale and payout receipts',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _tx(category: TransferCategory.sale, txId: 'tx-42#history-1-2-to'),
+      );
+
+      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+      expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
+
+      await tester.tap(find.text('RealUnit-Verkauf'));
+      await tester.pump();
+      verify(
+        () => receiptCubit.generateReceipt(
+          'tx-42',
+          currency: Currency.chf,
+          language: Language.de,
+        ),
+      ).called(1);
+
+      await tester.tap(find.text('Auszahlung (DFX AG)'));
+      await tester.pump();
+      verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
+    },
+  );
+
+  testWidgets(
+    'a suffixed txId passes the plain hash to the payment receipt',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _tx(category: TransferCategory.payment, txId: 'tx-42#history-1-2-to'),
+      );
+
+      await tester.tap(find.text('Zahlungsbeleg'));
+      await tester.pump();
+      verify(() => receiptCubit.generatePaymentReceipt('tx-42', language: Language.de)).called(1);
+    },
+  );
+
+  testWidgets(
     'payment shows the sale receipt and the payment receipt, and no DFX payout',
     (tester) async {
       await pumpDetail(tester, _tx(category: TransferCategory.payment));
