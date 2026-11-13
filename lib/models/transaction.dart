@@ -42,6 +42,8 @@ enum TransferCategory {
 
 /// Transaction with on-chain metadata
 class Transaction {
+  static const String _txIdSeparator = '#';
+
   final int height;
   final String txId;
   final int chainId;
@@ -70,8 +72,10 @@ class Transaction {
     required this.timestamp,
   });
 
+  static String separateTxId(String txHash, String eventId) => '$txHash$_txIdSeparator$eventId';
+
   String get onChainTxHash {
-    final separator = txId.indexOf('#');
+    final separator = txId.indexOf(_txIdSeparator);
     if (separator < 0) return txId;
     return txId.substring(0, separator);
   }

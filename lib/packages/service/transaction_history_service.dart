@@ -48,7 +48,9 @@ class TransactionHistoryService extends DFXAuthService {
         for (final entry in group) {
           final id = entry.id;
           if (entry.transfer == null || id == null) continue;
-          final existing = await _transactionRepository.findTxIdIgnoreCase('${entry.txHash}#$id');
+          final existing = await _transactionRepository.findTxIdIgnoreCase(
+            Transaction.separateTxId(entry.txHash, id),
+          );
           if (existing != null) continue;
           final currentId = canonical?.id;
           if (currentId == null || id.compareTo(currentId) < 0) {
@@ -65,7 +67,7 @@ class TransactionHistoryService extends DFXAuthService {
           }
 
           final storeApart = entry.id != null && !identical(entry, canonical);
-          var txId = storeApart ? '${entry.txHash}#${entry.id}' : entry.txHash;
+          var txId = storeApart ? Transaction.separateTxId(entry.txHash, entry.id!) : entry.txHash;
           final storedTxId = await _transactionRepository.findTxIdIgnoreCase(txId);
           final exists = storedTxId != null;
           if (storedTxId != null) txId = storedTxId;

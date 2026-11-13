@@ -7,10 +7,11 @@ const _wallet = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 Transaction _tx({
   String sender = '0x0000000000000000000000000000000000000001',
   String receiver = '0x0000000000000000000000000000000000000002',
+  String txId = '0xabc',
 }) =>
     Transaction(
       height: 1,
-      txId: '0xabc',
+      txId: txId,
       chainId: realUnitAsset.chainId,
       senderAddress: sender,
       receiverAddress: receiver,
@@ -24,6 +25,13 @@ Transaction _tx({
 
 void main() {
   group('$Transaction', () {
+    test('separateTxId preserves the on-chain transaction hash', () {
+      final txId = Transaction.separateTxId('0xabc', 'history-1-2-to');
+
+      expect(txId, '0xabc#history-1-2-to');
+      expect(_tx(txId: txId).onChainTxHash, '0xabc');
+    });
+
     test('isOutbound is true when sender matches the wallet (EIP-55 normalised)', () {
       // Pass a lowercase wallet; the helper EIP-55-normalises both sides.
       final tx = _tx(sender: _wallet.toLowerCase());
