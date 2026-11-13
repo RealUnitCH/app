@@ -48,6 +48,8 @@ class TransactionHistoryService extends DFXAuthService {
         for (final entry in group) {
           final id = entry.id;
           if (entry.transfer == null || id == null) continue;
+          final existing = await _transactionRepository.findTxIdIgnoreCase('${entry.txHash}#$id');
+          if (existing != null) continue;
           final currentId = canonical?.id;
           if (currentId == null || id.compareTo(currentId) < 0) {
             canonical = entry;

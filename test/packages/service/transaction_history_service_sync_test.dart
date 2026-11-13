@@ -961,6 +961,44 @@ void main() {
       expect(rows, hasLength(3));
     });
 
+    test('a partial history page preserves both transfer amounts across syncs', () async {
+      final both = [
+        _historyEntry(id: idSmall, txHash: dupHash, value: '100'),
+        _historyEntry(id: idLarge, txHash: dupHash, value: '200'),
+      ];
+
+      Future<void> expectTransfers() async {
+        final rows = rowsFor(await repo.allTransactions, dupHash);
+        expect(rows, hasLength(2));
+        expect(rows.singleWhere((row) => row.txId == dupHash).amount, BigInt.from(100));
+        expect(rows.singleWhere((row) => row.txId == '$dupHash#$idLarge').amount, BigInt.from(200));
+      }
+
+      await serviceFor(both).apiBasedSync();
+      await expectTransfers();
+      await serviceFor([both.last]).apiBasedSync();
+      await expectTransfers();
+      await serviceFor(both).apiBasedSync();
+      await expectTransfers();
+    });
+
+    test('a separately stored event is reused when its hash casing differs', () async {
+      await seed(txId: dupHash, amount: 100);
+      await seed(txId: '$dupHashStored#$idLarge', amount: 150);
+
+      await serviceFor([
+        _historyEntry(id: idLarge, txHash: dupHash, value: '200'),
+      ]).apiBasedSync();
+
+      final rows = rowsFor(await repo.allTransactions, dupHash);
+      expect(rows, hasLength(2));
+      expect(rows.singleWhere((row) => row.txId == dupHash).amount, BigInt.from(100));
+      expect(
+        rows.singleWhere((row) => row.txId == '$dupHashStored#$idLarge').amount,
+        BigInt.from(200),
+      );
+    });
+
     test('a stored mixed-case hash is reused and not inserted again', () async {
       await seed(txId: dupHashStored, amount: 1459);
 
