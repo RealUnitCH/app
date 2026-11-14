@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:collection/collection.dart';
 import 'package:http/http.dart' as http;
 import 'package:web3dart/credentials.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
@@ -44,6 +43,11 @@ class TransactionHistoryService extends DFXAuthService {
       }
 
       for (final group in byHash.values) {
+        final matches = _matchDfxTransactions(
+          group,
+          transactions,
+          appStore.apiConfig.asset.decimals,
+        );
         HistoryEventDto? canonical;
         for (final entry in group) {
           final id = entry.id;
@@ -71,11 +75,7 @@ class TransactionHistoryService extends DFXAuthService {
           final storedTxId = await _transactionRepository.findTxIdIgnoreCase(txId);
           final exists = storedTxId != null;
           if (storedTxId != null) txId = storedTxId;
-          final matchingTransaction = storeApart
-              ? null
-              : transactions.firstWhereOrNull(
-                  (t) => t.inputTxId == entry.txHash || t.outputTxId == entry.txHash,
-                );
+          final matchingTransaction = matches[entry];
 
           if (matchingTransaction != null && matchingTransaction.id != null) {
             final dfxTransaction = DfxTransaction(
@@ -135,6 +135,60 @@ class TransactionHistoryService extends DFXAuthService {
     }
 
     await _syncReferralPayouts();
+  }
+
+  Map<HistoryEventDto, TransactionDto> _matchDfxTransactions(
+    List<HistoryEventDto> group,
+    List<TransactionDto> transactions,
+    int decimals,
+  ) {
+    final hash = group.first.txHash.toLowerCase();
+    final candidates = transactions.where((transaction) {
+      return transaction.id != null &&
+          (transaction.inputTxId?.toLowerCase() == hash ||
+              transaction.outputTxId?.toLowerCase() == hash);
+    }).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+    final indexes =
+        <int>[
+          for (var i = 0; i < group.length; i++)
+            if (group[i].transfer != null) i,
+        ]..sort((a, b) {
+          final left = group[a].id;
+          final right = group[b].id;
+          if ((left == null) != (right == null)) return left == null ? 1 : -1;
+          final order = left == null ? 0 : left.compareTo(right!);
+          return order == 0 ? a.compareTo(b) : order;
+        });
+
+    final matches = <HistoryEventDto, TransactionDto>{};
+    final used = <int>{};
+    final scale = BigInt.from(10).pow(decimals).toDouble();
+    for (final index in indexes) {
+      final entry = group[index];
+      final amount = BigInt.parse(entry.transfer!.value).toDouble() / scale;
+      for (final candidate in candidates) {
+        if (used.contains(candidate.id)) continue;
+        final dfxAmount = candidate.outputTxId?.toLowerCase() == hash
+            ? candidate.outputAmount
+            : candidate.inputAmount;
+        if (dfxAmount != null && (dfxAmount - amount).abs() < 0.5 / scale) {
+          matches[entry] = candidate;
+          used.add(candidate.id!);
+          break;
+        }
+      }
+    }
+    for (final index in indexes) {
+      final entry = group[index];
+      if (matches.containsKey(entry)) continue;
+      for (final candidate in candidates) {
+        if (used.add(candidate.id!)) {
+          matches[entry] = candidate;
+          break;
+        }
+      }
+    }
+    return matches;
   }
 
   Future<void> _syncReferralPayouts() async {

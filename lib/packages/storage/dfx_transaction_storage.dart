@@ -65,6 +65,12 @@ extension DfxTransactionStorage on AppDatabase {
   Future<int> deleteDfxTransactionDetails(String txId) =>
       (delete(dfxTransactionDetails)..where((row) => row.txId.equals(txId))).go();
 
+  Future<int> deleteDfxTransactionDetailsForOtherTx(int dfxId, String txId) =>
+      (delete(dfxTransactionDetails)..where(
+            (row) => row.dfxId.equals(dfxId) & row.txId.collate(Collate.noCase).equals(txId).not(),
+          ))
+          .go();
+
   /// Hex hashes are stored as the API sent them. Drop Beleg metadata for a
   /// prize even when the payout hash casing differs from the history row.
   Future<int> deleteDfxTransactionDetailsIgnoreCase(String txId) async {

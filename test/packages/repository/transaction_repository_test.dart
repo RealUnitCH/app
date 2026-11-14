@@ -337,6 +337,21 @@ void main() {
       },
     );
 
+    test('deleteDfxTransactionDetailsForOtherTx keeps the same tx and other IDs', () async {
+      for (final txId in ['0xAbC', '0xDef', '0x123']) {
+        await repo.insertTransaction(buildTokenTransfer(txId: txId, height: 1));
+      }
+      await db.insertDfxTransactionDetails(txId: '0xAbC', dfxId: 1);
+      await db.insertDfxTransactionDetails(txId: '0x123', dfxId: 2);
+
+      expect(await repo.deleteDfxTransactionDetailsForOtherTx(1, '0xabc'), 0);
+      expect((await db.getDfxTransactionDetails('0xAbC'))?.dfxId, 1);
+      expect(await repo.deleteDfxTransactionDetailsForOtherTx(1, '0xDef'), 1);
+      expect(await db.getDfxTransactionDetails('0xAbC'), isNull);
+      expect((await db.getDfxTransactionDetails('0x123'))?.dfxId, 2);
+      expect(await db.getDfxTransactionDetails('0xDef'), isNull);
+    });
+
     test('insertDfxTransaction updates the DFX details when they already exist', () async {
       DfxTransaction dfx(int dfxId, double rate) => DfxTransaction(
         dfxId: dfxId,
@@ -679,6 +694,39 @@ void main() {
       );
 
       await repo.insertDfxTransaction(dfxTx);
+      await settled;
+    });
+
+    test('watchTransactions emits DFX details added to an existing plain row', () async {
+      await repo.insertTransaction(buildTokenTransfer(txId: 'tx-watch-update', height: 1));
+      final settled = expectLater(
+        repo.watchTransactions(),
+        emitsThrough(
+          predicate<List<Transaction>>(
+            (rows) =>
+                rows.length == 1 &&
+                rows.single is DfxTransaction &&
+                (rows.single as DfxTransaction).dfxId == 7,
+          ),
+        ),
+      );
+
+      await repo.updateDfxTransaction(
+        DfxTransaction(
+          dfxId: 7,
+          height: 1,
+          txId: 'tx-watch-update',
+          chainId: 1,
+          senderAddress: sender,
+          receiverAddress: receiver,
+          amount: BigInt.from(0xff),
+          asset: tokenAssetMainnet,
+          type: TransactionTypes.tokenTransfer,
+          note: null,
+          data: null,
+          timestamp: DateTime.utc(2025, 1, 1),
+        ),
+      );
       await settled;
     });
 

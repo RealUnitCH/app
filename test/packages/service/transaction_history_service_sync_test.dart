@@ -44,18 +44,17 @@ Map<String, dynamic> _historyEntry({
   String value = '1000000',
   String timestamp = '2026-01-01T00:00:00Z',
   String? category,
-}) =>
-    {
-      if (id != null) 'id': id,
-      'timestamp': timestamp,
-      'txHash': txHash,
-      'transfer': {
-        'from': from,
-        'to': to,
-        'value': value,
-      },
-      if (category != null) 'category': category,
-    };
+}) => {
+  if (id != null) 'id': id,
+  'timestamp': timestamp,
+  'txHash': txHash,
+  'transfer': {
+    'from': from,
+    'to': to,
+    'value': value,
+  },
+  if (category != null) 'category': category,
+};
 
 Map<String, dynamic> _accountHistory(List<Map<String, dynamic>> events) => {
   'address': _wallet,
@@ -67,6 +66,7 @@ Map<String, dynamic> _txJson({
   int id = 1,
   String? inputTxId,
   String? outputTxId,
+  double outputAmount = 1.0,
   String state = 'Completed',
 }) => {
   'id': id,
@@ -76,7 +76,7 @@ Map<String, dynamic> _txJson({
   'inputAmount': 100.0,
   'inputAsset': 'CHF',
   'inputTxId': inputTxId,
-  'outputAmount': 1.0,
+  'outputAmount': outputAmount,
   'outputAsset': 'REALU',
   'outputTxId': outputTxId,
 };
@@ -206,9 +206,11 @@ void main() {
 
       await build(client).apiBasedSync();
 
-      final captured = verify(
-        () => txRepo.insertTransaction(captureAny()),
-      ).captured.single as Transaction;
+      final captured =
+          verify(
+                () => txRepo.insertTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
       expect(captured.category, TransferCategory.transferIn);
     });
 
@@ -225,9 +227,11 @@ void main() {
 
       await build(client).apiBasedSync();
 
-      final captured = verify(
-        () => txRepo.insertTransaction(captureAny()),
-      ).captured.single as Transaction;
+      final captured =
+          verify(
+                () => txRepo.insertTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
       expect(captured.category, isNull);
     });
 
@@ -401,8 +405,7 @@ void main() {
       await build(client).apiBasedSync();
 
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, 'referral-payout-9');
       expect(captured.type, TransactionTypes.referralPayout);
     });
@@ -552,8 +555,7 @@ void main() {
 
       await build(client).apiBasedSync();
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, '0xgood');
     });
 
@@ -594,8 +596,7 @@ void main() {
         throwsA(isA<FormatException>()),
       );
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, '0xgood');
       expect(captured.type, TransactionTypes.referralPayout);
     });
@@ -910,9 +911,8 @@ void main() {
       );
     }
 
-    List<Transaction> rowsFor(List<Transaction> rows, String hash) => rows
-        .where((row) => row.onChainTxHash.toLowerCase() == hash.toLowerCase())
-        .toList();
+    List<Transaction> rowsFor(List<Transaction> rows, String hash) =>
+        rows.where((row) => row.onChainTxHash.toLowerCase() == hash.toLowerCase()).toList();
 
     test('two events of one hash and a third hash become three rows', () async {
       await serviceFor([
@@ -1018,7 +1018,7 @@ void main() {
       expect(rows.map((row) => row.amount), everyElement(BigInt.from(1459)));
     });
 
-    test('dfx details attach only to the canonical event and the sync does not throw', () async {
+    test('dfx details attach to both events with matching amounts', () async {
       const canonicalAmount = 100;
       const otherAmount = 200;
       await serviceFor(
@@ -1027,7 +1027,8 @@ void main() {
           _historyEntry(id: idLarge, txHash: dupHash, value: '$otherAmount'),
         ],
         dfx: [
-          _txJson(id: 42, outputTxId: dupHash),
+          _txJson(id: 42, outputTxId: dupHash, outputAmount: 100),
+          _txJson(id: 43, outputTxId: dupHash, outputAmount: 200),
         ],
       ).apiBasedSync();
 
@@ -1041,12 +1042,152 @@ void main() {
       final extra = rows.singleWhere((row) => row.txId == '$dupHash#$idLarge');
       expect(extra.amount, BigInt.from(otherAmount));
       expect(extra.eventId, idLarge);
-      expect(extra, isNot(isA<DfxTransaction>()));
+      expect(extra, isA<DfxTransaction>());
+      expect((extra as DfxTransaction).dfxId, 43);
 
       final details = await db.allDfxTransactionDetails;
-      expect(details, hasLength(1));
-      expect(details.single.txId, dupHash);
-      expect(details.single.dfxId, 42);
+      expect(details, hasLength(2));
+      expect(details.singleWhere((row) => row.txId == dupHash).dfxId, 42);
+      expect(details.singleWhere((row) => row.txId == '$dupHash#$idLarge').dfxId, 43);
+    });
+
+    test('different amounts match their DFX IDs regardless of response order', () async {
+      await serviceFor(
+        [
+          _historyEntry(id: idLarge, txHash: dupHash, value: '200'),
+          _historyEntry(id: idSmall, txHash: dupHash, value: '100'),
+        ],
+        dfx: [
+          _txJson(id: 1, outputTxId: dupHash, outputAmount: 200),
+          _txJson(id: 2, outputTxId: dupHash, outputAmount: 100),
+        ],
+      ).apiBasedSync();
+
+      final rows = await repo.allTransactions;
+      expect(rows, hasLength(2));
+      expect((rows.singleWhere((row) => row.eventId == idSmall) as DfxTransaction).dfxId, 2);
+      expect((rows.singleWhere((row) => row.eventId == idLarge) as DfxTransaction).dfxId, 1);
+    });
+
+    test('equal amounts assign distinct DFX IDs in event and DFX ID order', () async {
+      await serviceFor(
+        [
+          _historyEntry(id: idLarge, txHash: dupHash, value: '100'),
+          _historyEntry(id: idSmall, txHash: dupHash, value: '100'),
+        ],
+        dfx: [
+          _txJson(id: 2, outputTxId: dupHash, outputAmount: 100),
+          _txJson(id: 1, outputTxId: dupHash, outputAmount: 100),
+        ],
+      ).apiBasedSync();
+
+      final rows = await repo.allTransactions;
+      expect(rows, hasLength(2));
+      expect((rows.singleWhere((row) => row.eventId == idSmall) as DfxTransaction).dfxId, 1);
+      expect((rows.singleWhere((row) => row.eventId == idLarge) as DfxTransaction).dfxId, 2);
+    });
+
+    test('mixed-case DFX output hash matches a lowercase history hash', () async {
+      await serviceFor(
+        [_historyEntry(id: idSmall, txHash: dupHash, value: '100')],
+        dfx: [_txJson(id: 42, outputTxId: dupHashStored, outputAmount: 100)],
+      ).apiBasedSync();
+
+      final row = (await repo.allTransactions).single;
+      expect(row, isA<DfxTransaction>());
+      expect((row as DfxTransaction).dfxId, 42);
+    });
+
+    test('a single unmatched amount receives the remaining DFX details', () async {
+      await serviceFor(
+        [_historyEntry(id: idSmall, txHash: dupHash, value: '100')],
+        dfx: [_txJson(id: 42, outputTxId: dupHash, outputAmount: 200)],
+      ).apiBasedSync();
+
+      final row = (await repo.allTransactions).single;
+      expect(row, isA<DfxTransaction>());
+      expect((row as DfxTransaction).dfxId, 42);
+    });
+
+    test('one DFX transaction is assigned only to the event with matching amount', () async {
+      await serviceFor(
+        [
+          _historyEntry(id: idSmall, txHash: dupHash, value: '100'),
+          _historyEntry(id: idLarge, txHash: dupHash, value: '200'),
+        ],
+        dfx: [_txJson(id: 42, outputTxId: dupHash, outputAmount: 200)],
+      ).apiBasedSync();
+
+      final rows = await repo.allTransactions;
+      expect(rows, hasLength(2));
+      expect(rows.singleWhere((row) => row.eventId == idSmall), isNot(isA<DfxTransaction>()));
+      final matched = rows.singleWhere((row) => row.eventId == idLarge);
+      expect(matched, isA<DfxTransaction>());
+      expect((matched as DfxTransaction).dfxId, 42);
+    });
+
+    for (final separateFirst in [true, false]) {
+      test(
+        separateFirst
+            ? 'reassigns existing DFX details when the separate event arrives first'
+            : 'reassigns existing DFX details when the canonical event arrives first',
+        () async {
+          await repo.insertDfxTransaction(
+            DfxTransaction(
+              dfxId: 42,
+              height: 0,
+              txId: dupHash,
+              chainId: realUnitAsset.chainId,
+              senderAddress: _other,
+              receiverAddress: _wallet,
+              amount: BigInt.from(100),
+              asset: realUnitAsset,
+              type: TransactionTypes.tokenTransfer,
+              note: '',
+              data: null,
+              timestamp: DateTime.utc(2026),
+            ),
+          );
+          final canonical = _historyEntry(id: idSmall, txHash: dupHash, value: '100');
+          final separate = _historyEntry(id: idLarge, txHash: dupHash, value: '200');
+          final events = separateFirst ? [separate, canonical] : [canonical, separate];
+          final service = serviceFor(
+            events,
+            dfx: [
+              _txJson(id: 42, outputTxId: dupHash, outputAmount: 200),
+              _txJson(id: 43, outputTxId: dupHash, outputAmount: 100),
+            ],
+          );
+
+          Future<void> expectAssignments() async {
+            final rows = await repo.allTransactions;
+            expect(rows, hasLength(2));
+            expect((rows.singleWhere((row) => row.txId == dupHash) as DfxTransaction).dfxId, 43);
+            expect(
+              (rows.singleWhere((row) => row.txId == '$dupHash#$idLarge') as DfxTransaction).dfxId,
+              42,
+            );
+            expect(await db.allDfxTransactionDetails, hasLength(2));
+          }
+
+          await service.apiBasedSync();
+          await expectAssignments();
+          await service.apiBasedSync();
+          await expectAssignments();
+        },
+      );
+    }
+
+    test('an existing plain row receives its matched DFX details', () async {
+      await seed(txId: dupHash, amount: 100);
+      await serviceFor(
+        [_historyEntry(id: idSmall, txHash: dupHash, value: '100')],
+        dfx: [_txJson(id: 42, outputTxId: dupHash, outputAmount: 100)],
+      ).apiBasedSync();
+
+      final row = (await repo.allTransactions).single;
+      expect(row, isA<DfxTransaction>());
+      expect((row as DfxTransaction).dfxId, 42);
     });
 
     test('an event without id still occupies the hash, and a second one overwrites it', () async {
@@ -1068,6 +1209,30 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single.txId, dupHash);
       expect(rows.single.amount, BigInt.from(2));
+    });
+
+    test('two events without IDs leave one row with the second event and DFX ID', () async {
+      await serviceFor(
+        [
+          _historyEntry(txHash: dupHash, value: '100', timestamp: '2026-01-01T00:00:00Z'),
+          _historyEntry(txHash: dupHash, value: '100', timestamp: '2026-01-02T00:00:00Z'),
+        ],
+        dfx: [
+          _txJson(id: 43, outputTxId: dupHash, outputAmount: 100),
+          _txJson(id: 42, outputTxId: dupHash, outputAmount: 100),
+        ],
+      ).apiBasedSync();
+
+      final rows = await repo.allTransactions;
+      expect(rows, hasLength(1));
+      final row = rows.single;
+      expect(row.txId, dupHash);
+      expect(row.eventId, isNull);
+      expect(row.amount, BigInt.from(100));
+      expect(row.timestamp.toUtc(), DateTime.utc(2026, 1, 2));
+      expect(row, isA<DfxTransaction>());
+      expect((row as DfxTransaction).dfxId, 43);
+      expect(await db.allDfxTransactionDetails, hasLength(1));
     });
 
     test('a prize hash is skipped for every event of that hash', () async {
