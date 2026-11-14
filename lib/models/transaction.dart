@@ -46,6 +46,7 @@ class Transaction {
 
   final int height;
   final String txId;
+  final String? eventId;
   final int chainId;
   final String senderAddress;
   final String receiverAddress;
@@ -60,6 +61,7 @@ class Transaction {
   const Transaction({
     required this.height,
     required this.txId,
+    this.eventId,
     required this.chainId,
     required this.senderAddress,
     required this.receiverAddress,

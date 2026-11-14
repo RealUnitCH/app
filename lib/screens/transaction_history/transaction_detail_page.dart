@@ -327,6 +327,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     setState(() => _pending = .realunit);
     context.read<TransactionHistoryReceiptCubit>().generateReceipt(
       widget.args.transaction.onChainTxHash,
+      eventId: widget.args.transaction.eventId,
       currency: settings.currency,
       language: settings.language,
     );

@@ -89,6 +89,7 @@ class TransactionHistoryService extends DFXAuthService {
               outputAsset: matchingTransaction.outputAsset,
               height: 0, // TODO
               txId: txId,
+              eventId: entry.id,
               chainId: appStore.apiConfig.asset.chainId,
               senderAddress: transfer.from,
               receiverAddress: transfer.to,
@@ -110,6 +111,7 @@ class TransactionHistoryService extends DFXAuthService {
             final transaction = Transaction(
               height: 0, // TODO
               txId: txId,
+              eventId: entry.id,
               chainId: appStore.apiConfig.asset.chainId,
               senderAddress: transfer.from,
               receiverAddress: transfer.to,

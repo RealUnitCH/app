@@ -40,6 +40,16 @@ List<String> receiptTxIdsForDownload(Iterable<Transaction> transactions) {
   return hashes;
 }
 
+List<String> receiptEventIdsForDownload(Iterable<Transaction> transactions) {
+  final ids = <String>{};
+  for (final transaction in transactions) {
+    if (transaction.type == TransactionTypes.referralPayout) continue;
+    final id = transaction.eventId;
+    if (id != null) ids.add(id);
+  }
+  return ids.toList();
+}
+
 class TransactionHistoryDownloadButtonView extends StatelessWidget {
   final List<Transaction> transactions;
 
@@ -96,6 +106,7 @@ class TransactionHistoryDownloadButtonView extends StatelessWidget {
                     onTap: () =>
                         context.read<TransactionHistoryMultiReceiptCubit>().generateReceipt(
                           transactionsIds,
+                          eventIds: receiptEventIdsForDownload(transactions),
                           currency: context.read<SettingsBloc>().state.currency,
                           language: context.read<SettingsBloc>().state.language,
                         ),

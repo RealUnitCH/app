@@ -33,11 +33,13 @@ class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState>
 Transaction _tx({
   TransferCategory? category,
   String txId = 'tx-42',
+  String? eventId,
   TransactionTypes type = TransactionTypes.tokenTransfer,
   String note = '',
 }) => Transaction(
   height: 0,
   txId: txId,
+  eventId: eventId,
   chainId: realUnitAsset.chainId,
   senderAddress: '0x1111111111111111111111111111111111111111',
   receiverAddress: '0x2222222222222222222222222222222222222222',
@@ -114,6 +116,7 @@ void main() {
     when(
       () => receiptCubit.generateReceipt(
         any(),
+        eventId: any(named: 'eventId'),
         currency: any(named: 'currency'),
         language: any(named: 'language'),
       ),
@@ -232,6 +235,7 @@ void main() {
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
+          eventId: null,
           currency: Currency.chf,
           language: Language.de,
         ),
@@ -263,6 +267,7 @@ void main() {
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
+          eventId: null,
           currency: Currency.chf,
           language: Language.de,
         ),
@@ -273,6 +278,18 @@ void main() {
       verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
     },
   );
+
+  testWidgets('the RealUnit receipt receives the event ID', (tester) async {
+    await pumpDetail(tester, _tx(category: TransferCategory.sale, eventId: 'e2'));
+    await tester.tap(find.text('RealUnit-Verkauf'));
+    await tester.pump();
+    verify(() => receiptCubit.generateReceipt(
+      'tx-42',
+      eventId: 'e2',
+      currency: Currency.chf,
+      language: Language.de,
+    )).called(1);
+  });
 
   testWidgets(
     'a suffixed txId passes the plain hash to the payment receipt',
@@ -305,6 +322,7 @@ void main() {
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
+          eventId: null,
           currency: Currency.chf,
           language: Language.de,
         ),
@@ -386,6 +404,7 @@ void main() {
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
+          eventId: null,
           currency: Currency.chf,
           language: Language.de,
         ),

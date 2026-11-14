@@ -25,6 +25,7 @@ class TransactionHistoryReceiptCubit extends Cubit<TransactionHistoryReceiptStat
 
   Future<void> generateReceipt(
     String txId, {
+    String? eventId,
     Currency currency = Currency.chf,
     required Language language,
   }) async {
@@ -33,6 +34,7 @@ class TransactionHistoryReceiptCubit extends Cubit<TransactionHistoryReceiptStat
 
       final response = await _pdfService.getTransactionReceipt(
         txId,
+        eventId: eventId,
         currency: currency,
         language: language,
       );

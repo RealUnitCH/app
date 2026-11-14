@@ -926,12 +926,15 @@ void main() {
       expect(dupRows, hasLength(2));
       expect(dupRows.map((row) => row.amount), everyElement(BigInt.from(1459)));
       expect(dupRows.map((row) => row.txId).toSet(), {dupHash, '$dupHash#$idLarge'});
+      expect(dupRows.singleWhere((row) => row.txId == dupHash).eventId, idSmall);
+      expect(dupRows.singleWhere((row) => row.txId == '$dupHash#$idLarge').eventId, idLarge);
       expect(rows.singleWhere((row) => row.txId == otherHash).amount, BigInt.from(2189));
       expect(rows, hasLength(3));
     });
 
     test('existing hash row gains the other event and a second sync stays at two', () async {
       await seed(txId: dupHash, amount: 1459);
+      expect((await repo.allTransactions).single.eventId, isNull);
       await seed(
         txId: otherHash,
         amount: 2189,
@@ -948,6 +951,7 @@ void main() {
       var rows = await repo.allTransactions;
       expect(rowsFor(rows, dupHash), hasLength(2));
       expect(rowsFor(rows, dupHash).map((row) => row.txId).toSet(), {dupHash, '$dupHash#$idLarge'});
+      expect(rows.singleWhere((row) => row.txId == dupHash).eventId, idSmall);
       expect(rowsFor(rows, otherHash), hasLength(1));
       expect(rows, hasLength(3));
 
@@ -1033,8 +1037,10 @@ void main() {
       expect(canonical.amount, BigInt.from(canonicalAmount));
       expect(canonical, isA<DfxTransaction>());
       expect((canonical as DfxTransaction).dfxId, 42);
+      expect(canonical.eventId, idSmall);
       final extra = rows.singleWhere((row) => row.txId == '$dupHash#$idLarge');
       expect(extra.amount, BigInt.from(otherAmount));
+      expect(extra.eventId, idLarge);
       expect(extra, isNot(isA<DfxTransaction>()));
 
       final details = await db.allDfxTransactionDetails;
