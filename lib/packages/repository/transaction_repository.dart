@@ -90,15 +90,9 @@ class TransactionRepository {
     );
   }
 
-  Future<void> insertDfxTransaction(DfxTransaction transaction) =>
-      _appDatabase.transaction(() async {
-        await insertTransaction(transaction);
-        final stored = await findTxIdIgnoreCase(transaction.txId) ?? transaction.txId;
-        await _writeDfxTransactionDetails(transaction, stored);
-      });
-
-  Future<void> _writeDfxTransactionDetails(DfxTransaction transaction, String stored) async {
-    await deleteDfxTransactionDetailsForOtherTx(transaction.dfxId, stored);
+  Future<void> insertDfxTransaction(DfxTransaction transaction) async {
+    await insertTransaction(transaction);
+    final stored = await findTxIdIgnoreCase(transaction.txId) ?? transaction.txId;
     final existing = await _appDatabase.getDfxTransactionDetails(stored);
     if (existing != null) {
       await _appDatabase.updateDfxTransactionDetails(
@@ -127,15 +121,21 @@ class TransactionRepository {
     );
   }
 
-  Future<void> updateDfxTransaction(DfxTransaction transaction) =>
-      _appDatabase.transaction(() async {
-        await updateTransaction(transaction);
-        final stored = await findTxIdIgnoreCase(transaction.txId) ?? transaction.txId;
-        await _writeDfxTransactionDetails(transaction, stored);
-      });
-
-  Future<int> deleteDfxTransactionDetailsForOtherTx(int dfxId, String txId) =>
-      _appDatabase.deleteDfxTransactionDetailsForOtherTx(dfxId, txId);
+  Future<void> updateDfxTransaction(DfxTransaction transaction) async {
+    await updateTransaction(transaction);
+    final stored = await findTxIdIgnoreCase(transaction.txId) ?? transaction.txId;
+    await _appDatabase.updateDfxTransactionDetails(
+      txId: stored,
+      dfxId: transaction.dfxId,
+      rate: transaction.rate.toString(),
+      inputTxId: transaction.inputTxId,
+      outputTxId: transaction.outputTxId,
+      inputAmount: transaction.inputAmount?.toString(),
+      inputAsset: transaction.inputAsset,
+      outputAmount: transaction.outputAmount?.toString(),
+      outputAsset: transaction.outputAsset,
+    );
+  }
 
   Future<bool> existsTransaction(String txId) =>
       _appDatabase.getTransaction(txId).then((txData) => txData != null);
