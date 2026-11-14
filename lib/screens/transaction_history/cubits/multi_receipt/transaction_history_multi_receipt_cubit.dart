@@ -25,6 +25,7 @@ class TransactionHistoryMultiReceiptCubit extends Cubit<TransactionHistoryMultiR
 
   Future<void> generateReceipt(
     List<String> ids, {
+    List<String> eventIds = const [],
     Currency currency = Currency.chf,
     required Language language,
   }) async {
@@ -33,6 +34,7 @@ class TransactionHistoryMultiReceiptCubit extends Cubit<TransactionHistoryMultiR
 
       final response = await _pdfService.getTransactionsReceipt(
         ids,
+        eventIds: eventIds,
         currency: currency,
         language: language,
       );

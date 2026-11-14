@@ -57,6 +57,7 @@ class TransactionRepository {
         transaction.note ?? '',
         transaction.data ?? '',
         transaction.timestamp,
+        eventId: transaction.eventId,
       );
     } finally {
       mine.complete();
@@ -82,6 +83,7 @@ class TransactionRepository {
       asset: transaction.asset.id,
       type: transaction.type.index,
       category: transaction.category?.value ?? '',
+      eventId: transaction.eventId,
       note: transaction.note ?? '',
       data: transaction.data ?? '',
       timeStamp: transaction.timestamp,
@@ -202,6 +204,7 @@ class TransactionRepository {
             outputAsset: dfxDetails.outputAsset,
             height: txData.height,
             txId: txData.txId,
+            eventId: txData.eventId,
             chainId: txData.chainId,
             senderAddress: txData.senderAddress,
             receiverAddress: txData.receiverAddress,
@@ -218,6 +221,7 @@ class TransactionRepository {
         return Transaction(
           height: txData.height,
           txId: txData.txId,
+          eventId: txData.eventId,
           chainId: txData.chainId,
           senderAddress: txData.senderAddress,
           receiverAddress: txData.receiverAddress,
@@ -291,6 +295,7 @@ class TransactionRepository {
                   outputAsset: dfxDetails.outputAsset,
                   height: transactionData.height,
                   txId: transactionData.txId,
+                  eventId: transactionData.eventId,
                   chainId: transactionData.chainId,
                   senderAddress: transactionData.senderAddress,
                   receiverAddress: transactionData.receiverAddress,
@@ -308,6 +313,7 @@ class TransactionRepository {
                 Transaction(
                   height: transactionData.height,
                   txId: transactionData.txId,
+                  eventId: transactionData.eventId,
                   chainId: transactionData.chainId,
                   senderAddress: transactionData.senderAddress,
                   receiverAddress: transactionData.receiverAddress,

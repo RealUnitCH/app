@@ -178,6 +178,26 @@ void main() {
     );
 
     goldenTest(
+      'two purchases in one transaction',
+      fileName: 'transaction_history_page_shared_transaction',
+      constraints: phoneConstraints,
+      builder: () {
+        final purchases = <Transaction>[
+          buy('0xtx4', 40, DateTime.utc(2026, 5, 20, 10, 30)),
+          buy(
+            Transaction.separateTxId('0xtx4', 'history-1-2-to'),
+            60,
+            DateTime.utc(2026, 5, 20, 10, 30),
+          ),
+        ];
+        when(() => filterCubit.state).thenReturn(
+          TransactionHistoryFilterState(all: purchases, filtered: purchases),
+        );
+        return withClock(pinnedClock, () => wrapForGolden(buildSubject()));
+      },
+    );
+
+    goldenTest(
       'referral prize with frozen CHF',
       fileName: 'transaction_history_page_referral_payout',
       constraints: phoneConstraints,

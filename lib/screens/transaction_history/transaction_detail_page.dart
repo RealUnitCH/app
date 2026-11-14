@@ -139,7 +139,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
                   ),
                 ),
               if (transaction.type != TransactionTypes.referralPayout &&
-                  usableTxHash(transaction.txId) != null) ...[
+                  usableTxHash(transaction.onChainTxHash) != null) ...[
                 Text(
                   S.of(context).saleReceiptSheetTitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -326,7 +326,8 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     final settings = context.read<SettingsBloc>().state;
     setState(() => _pending = .realunit);
     context.read<TransactionHistoryReceiptCubit>().generateReceipt(
-      widget.args.transaction.txId,
+      widget.args.transaction.onChainTxHash,
+      eventId: widget.args.transaction.eventId,
       currency: settings.currency,
       language: settings.language,
     );
@@ -336,7 +337,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
     final settings = context.read<SettingsBloc>().state;
     setState(() => _pending = .payment);
     context.read<TransactionHistoryReceiptCubit>().generatePaymentReceipt(
-      widget.args.transaction.txId,
+      widget.args.transaction.onChainTxHash,
       language: settings.language,
     );
   }
@@ -344,7 +345,7 @@ class _TransactionDetailViewState extends State<TransactionDetailView> {
   void _onExchangePressed() {
     setState(() => _pending = .exchange);
     context.read<TransactionHistoryReceiptCubit>().generateExchangeReceipt(
-      widget.args.transaction.txId,
+      widget.args.transaction.onChainTxHash,
     );
   }
 }

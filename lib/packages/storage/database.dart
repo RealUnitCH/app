@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -110,6 +110,9 @@ class AppDatabase extends _$AppDatabase {
         ]) {
           await _addColumnIfMissing(m, dfxTransactionDetails, column);
         }
+      }
+      if (from < 6 && to >= 6) {
+        await _addColumnIfMissing(m, transactions, transactions.eventId);
       }
       await m.database.customStatement('PRAGMA user_version = $to');
     }),

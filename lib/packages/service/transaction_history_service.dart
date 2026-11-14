@@ -38,70 +38,99 @@ class TransactionHistoryService extends DFXAuthService {
     final transactions = results.elementAt(1) as List<TransactionDto>;
 
     if (accountHistory != null) {
+      final byHash = <String, List<HistoryEventDto>>{};
       for (final entry in accountHistory.history) {
-        final transfer = entry.transfer;
-        if (transfer == null) continue;
+        (byHash[entry.txHash.toLowerCase()] ??= <HistoryEventDto>[]).add(entry);
+      }
 
-        var txId = entry.txHash;
-        if (await _transactionRepository.isReferralPayoutIgnoreCase(txId)) {
-          continue;
-        }
-        final storedTxId = await _transactionRepository.findTxIdIgnoreCase(txId);
-        final exists = storedTxId != null;
-        if (storedTxId != null) txId = storedTxId;
-        final matchingTransaction = transactions.firstWhereOrNull(
-          (t) => t.inputTxId == txId || t.outputTxId == txId,
-        );
-
-        if (matchingTransaction != null && matchingTransaction.id != null) {
-          final dfxTransaction = DfxTransaction(
-            dfxId: matchingTransaction.id!,
-            rate: matchingTransaction.rate,
-            inputTxId: matchingTransaction.inputTxId,
-            outputTxId: matchingTransaction.outputTxId,
-            inputAmount: matchingTransaction.inputAmount,
-            inputAsset: matchingTransaction.inputAsset,
-            outputAmount: matchingTransaction.outputAmount,
-            outputAsset: matchingTransaction.outputAsset,
-            height: 0, // TODO
-            txId: txId,
-            chainId: appStore.apiConfig.asset.chainId,
-            senderAddress: transfer.from,
-            receiverAddress: transfer.to,
-            amount: BigInt.parse(transfer.value),
-            asset: appStore.apiConfig.asset,
-            type: TransactionTypes.tokenTransfer,
-            category: TransferCategory.fromValue(entry.category),
-            note: '',
-            data: null,
-            timestamp: entry.timestamp,
+      for (final group in byHash.values) {
+        HistoryEventDto? canonical;
+        for (final entry in group) {
+          final id = entry.id;
+          if (entry.transfer == null || id == null) continue;
+          final existing = await _transactionRepository.findTxIdIgnoreCase(
+            Transaction.separateTxId(entry.txHash, id),
           );
-
-          if (exists) {
-            await _transactionRepository.updateDfxTransaction(dfxTransaction);
-          } else {
-            await _transactionRepository.insertDfxTransaction(dfxTransaction);
+          if (existing != null) continue;
+          final currentId = canonical?.id;
+          if (currentId == null || id.compareTo(currentId) < 0) {
+            canonical = entry;
           }
-        } else {
-          final transaction = Transaction(
-            height: 0, // TODO
-            txId: txId,
-            chainId: appStore.apiConfig.asset.chainId,
-            senderAddress: transfer.from,
-            receiverAddress: transfer.to,
-            amount: BigInt.parse(transfer.value),
-            asset: appStore.apiConfig.asset,
-            type: TransactionTypes.tokenTransfer,
-            category: TransferCategory.fromValue(entry.category),
-            note: '',
-            data: null,
-            timestamp: entry.timestamp,
-          );
+        }
 
-          if (exists) {
-            await _transactionRepository.updateTransaction(transaction);
+        for (final entry in group) {
+          final transfer = entry.transfer;
+          if (transfer == null) continue;
+
+          if (await _transactionRepository.isReferralPayoutIgnoreCase(entry.txHash)) {
+            continue;
+          }
+
+          final storeApart = entry.id != null && !identical(entry, canonical);
+          var txId = storeApart ? Transaction.separateTxId(entry.txHash, entry.id!) : entry.txHash;
+          final storedTxId = await _transactionRepository.findTxIdIgnoreCase(txId);
+          final exists = storedTxId != null;
+          if (storedTxId != null) txId = storedTxId;
+          final matchingTransaction = storeApart
+              ? null
+              : transactions.firstWhereOrNull(
+                  (t) =>
+                      t.inputTxId?.toLowerCase() == entry.txHash.toLowerCase() ||
+                      t.outputTxId?.toLowerCase() == entry.txHash.toLowerCase(),
+                );
+
+          if (matchingTransaction != null && matchingTransaction.id != null) {
+            final dfxTransaction = DfxTransaction(
+              dfxId: matchingTransaction.id!,
+              rate: matchingTransaction.rate,
+              inputTxId: matchingTransaction.inputTxId,
+              outputTxId: matchingTransaction.outputTxId,
+              inputAmount: matchingTransaction.inputAmount,
+              inputAsset: matchingTransaction.inputAsset,
+              outputAmount: matchingTransaction.outputAmount,
+              outputAsset: matchingTransaction.outputAsset,
+              height: 0, // TODO
+              txId: txId,
+              eventId: entry.id,
+              chainId: appStore.apiConfig.asset.chainId,
+              senderAddress: transfer.from,
+              receiverAddress: transfer.to,
+              amount: BigInt.parse(transfer.value),
+              asset: appStore.apiConfig.asset,
+              type: TransactionTypes.tokenTransfer,
+              category: TransferCategory.fromValue(entry.category),
+              note: '',
+              data: null,
+              timestamp: entry.timestamp,
+            );
+
+            if (exists) {
+              await _transactionRepository.updateDfxTransaction(dfxTransaction);
+            } else {
+              await _transactionRepository.insertDfxTransaction(dfxTransaction);
+            }
           } else {
-            await _transactionRepository.insertTransaction(transaction);
+            final transaction = Transaction(
+              height: 0, // TODO
+              txId: txId,
+              eventId: entry.id,
+              chainId: appStore.apiConfig.asset.chainId,
+              senderAddress: transfer.from,
+              receiverAddress: transfer.to,
+              amount: BigInt.parse(transfer.value),
+              asset: appStore.apiConfig.asset,
+              type: TransactionTypes.tokenTransfer,
+              category: TransferCategory.fromValue(entry.category),
+              note: '',
+              data: null,
+              timestamp: entry.timestamp,
+            );
+
+            if (exists) {
+              await _transactionRepository.updateTransaction(transaction);
+            } else {
+              await _transactionRepository.insertTransaction(transaction);
+            }
           }
         }
       }

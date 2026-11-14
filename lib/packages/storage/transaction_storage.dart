@@ -15,8 +15,9 @@ extension TransactionStorage on AppDatabase {
     String category,
     String note,
     String data,
-    DateTime timeStamp,
-  ) => into(transactions).insert(
+    DateTime timeStamp, {
+    String? eventId,
+  }) => into(transactions).insert(
     TransactionsCompanion.insert(
       height: height,
       txId: txId,
@@ -27,6 +28,7 @@ extension TransactionStorage on AppDatabase {
       asset: asset,
       type: type,
       category: Value(category),
+      eventId: Value(eventId),
       note: note,
       data: data,
       timeStamp: timeStamp,
@@ -43,6 +45,7 @@ extension TransactionStorage on AppDatabase {
     int? asset,
     int? type,
     String? category,
+    String? eventId,
     String? note,
     String? data,
     DateTime? timeStamp,
@@ -56,6 +59,7 @@ extension TransactionStorage on AppDatabase {
       asset: Value.absentIfNull(asset),
       type: Value.absentIfNull(type),
       category: Value.absentIfNull(category),
+      eventId: Value.absentIfNull(eventId),
       note: Value.absentIfNull(note),
       data: Value.absentIfNull(data),
       timeStamp: Value.absentIfNull(timeStamp),
@@ -161,6 +165,8 @@ class Transactions extends Table {
   // Business category of the transfer as delivered by the API ('' = uncategorized, legacy
   // rows and events without a category). Added in schema v3.
   TextColumn get category => text().withDefault(const Constant(''))(); // coverage:ignore-line
+
+  TextColumn get eventId => text().nullable()(); // coverage:ignore-line
 
   TextColumn get note => text()(); // coverage:ignore-line
 

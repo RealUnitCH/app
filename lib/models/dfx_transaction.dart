@@ -22,6 +22,7 @@ class DfxTransaction extends Transaction {
     this.outputAsset,
     required super.height,
     required super.txId,
+    super.eventId,
     required super.chainId,
     required super.senderAddress,
     required super.receiverAddress,

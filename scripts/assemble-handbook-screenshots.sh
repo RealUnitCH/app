@@ -507,6 +507,7 @@ MAPPING=(
   "455-kyc-update-share-register-name-page-send-failed=screens/kyc/goldens/macos/kyc_update_share_register_name_page_send_failed.png"
   "456-kyc-update-share-register-name-page-submitting=screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png"
   "457-kyc-update-share-register-name-page-bitbox-required=screens/kyc/goldens/macos/kyc_update_share_register_name_page_bitbox_required.png"
+  "458-transaction-history-page-shared-transaction=screens/transaction_history/goldens/macos/transaction_history_page_shared_transaction.png"
 )
 
 missing=()

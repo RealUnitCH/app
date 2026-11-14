@@ -42,8 +42,11 @@ enum TransferCategory {
 
 /// Transaction with on-chain metadata
 class Transaction {
+  static const String _txIdSeparator = '#';
+
   final int height;
   final String txId;
+  final String? eventId;
   final int chainId;
   final String senderAddress;
   final String receiverAddress;
@@ -58,6 +61,7 @@ class Transaction {
   const Transaction({
     required this.height,
     required this.txId,
+    this.eventId,
     required this.chainId,
     required this.senderAddress,
     required this.receiverAddress,
@@ -69,6 +73,14 @@ class Transaction {
     required this.data,
     required this.timestamp,
   });
+
+  static String separateTxId(String txHash, String eventId) => '$txHash$_txIdSeparator$eventId';
+
+  String get onChainTxHash {
+    final separator = txId.indexOf(_txIdSeparator);
+    if (separator < 0) return txId;
+    return txId.substring(0, separator);
+  }
 
   bool isOutbound(String walletAddress) {
     if (type == TransactionTypes.referralPayout) return false;
