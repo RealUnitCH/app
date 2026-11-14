@@ -44,18 +44,17 @@ Map<String, dynamic> _historyEntry({
   String value = '1000000',
   String timestamp = '2026-01-01T00:00:00Z',
   String? category,
-}) =>
-    {
-      if (id != null) 'id': id,
-      'timestamp': timestamp,
-      'txHash': txHash,
-      'transfer': {
-        'from': from,
-        'to': to,
-        'value': value,
-      },
-      if (category != null) 'category': category,
-    };
+}) => {
+  if (id != null) 'id': id,
+  'timestamp': timestamp,
+  'txHash': txHash,
+  'transfer': {
+    'from': from,
+    'to': to,
+    'value': value,
+  },
+  if (category != null) 'category': category,
+};
 
 Map<String, dynamic> _accountHistory(List<Map<String, dynamic>> events) => {
   'address': _wallet,
@@ -206,9 +205,11 @@ void main() {
 
       await build(client).apiBasedSync();
 
-      final captured = verify(
-        () => txRepo.insertTransaction(captureAny()),
-      ).captured.single as Transaction;
+      final captured =
+          verify(
+                () => txRepo.insertTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
       expect(captured.category, TransferCategory.transferIn);
     });
 
@@ -225,9 +226,11 @@ void main() {
 
       await build(client).apiBasedSync();
 
-      final captured = verify(
-        () => txRepo.insertTransaction(captureAny()),
-      ).captured.single as Transaction;
+      final captured =
+          verify(
+                () => txRepo.insertTransaction(captureAny()),
+              ).captured.single
+              as Transaction;
       expect(captured.category, isNull);
     });
 
@@ -401,8 +404,7 @@ void main() {
       await build(client).apiBasedSync();
 
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, 'referral-payout-9');
       expect(captured.type, TransactionTypes.referralPayout);
     });
@@ -552,8 +554,7 @@ void main() {
 
       await build(client).apiBasedSync();
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, '0xgood');
     });
 
@@ -594,8 +595,7 @@ void main() {
         throwsA(isA<FormatException>()),
       );
       final captured =
-          verify(() => txRepo.insertTransaction(captureAny())).captured.single
-              as Transaction;
+          verify(() => txRepo.insertTransaction(captureAny())).captured.single as Transaction;
       expect(captured.txId, '0xgood');
       expect(captured.type, TransactionTypes.referralPayout);
     });
@@ -910,9 +910,8 @@ void main() {
       );
     }
 
-    List<Transaction> rowsFor(List<Transaction> rows, String hash) => rows
-        .where((row) => row.onChainTxHash.toLowerCase() == hash.toLowerCase())
-        .toList();
+    List<Transaction> rowsFor(List<Transaction> rows, String hash) =>
+        rows.where((row) => row.onChainTxHash.toLowerCase() == hash.toLowerCase()).toList();
 
     test('two events of one hash and a third hash become three rows', () async {
       await serviceFor([
@@ -1016,6 +1015,17 @@ void main() {
       expect(rows.map((row) => row.txId).toSet(), {dupHashStored, '$dupHash#$idLarge'});
       expect(rows.where((row) => row.txId == dupHash), isEmpty);
       expect(rows.map((row) => row.amount), everyElement(BigInt.from(1459)));
+    });
+
+    test('mixed-case DFX output hash gives the lowercase history event its DFX ID', () async {
+      await serviceFor(
+        [_historyEntry(id: idSmall, txHash: dupHash, value: '100')],
+        dfx: [_txJson(id: 42, outputTxId: dupHashStored)],
+      ).apiBasedSync();
+
+      final row = (await repo.allTransactions).single;
+      expect(row, isA<DfxTransaction>());
+      expect((row as DfxTransaction).dfxId, 42);
     });
 
     test('dfx details attach only to the canonical event and the sync does not throw', () async {

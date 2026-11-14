@@ -74,7 +74,9 @@ class TransactionHistoryService extends DFXAuthService {
           final matchingTransaction = storeApart
               ? null
               : transactions.firstWhereOrNull(
-                  (t) => t.inputTxId == entry.txHash || t.outputTxId == entry.txHash,
+                  (t) =>
+                      t.inputTxId?.toLowerCase() == entry.txHash.toLowerCase() ||
+                      t.outputTxId?.toLowerCase() == entry.txHash.toLowerCase(),
                 );
 
           if (matchingTransaction != null && matchingTransaction.id != null) {
