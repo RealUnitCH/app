@@ -211,6 +211,11 @@ class TransactionHistoryService extends DFXAuthService {
       } else {
         await _transactionRepository.insertTransaction(transaction);
       }
+      if (hashKey != null) {
+        await _transactionRepository.deleteTransactionsWithTxIdPrefixIgnoreCase(
+          Transaction.separateTxId(hashKey, ''),
+        );
+      }
     }
     if (parseError != null) {
       Error.throwWithStackTrace(parseError, parseStack ?? StackTrace.current);

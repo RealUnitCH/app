@@ -163,6 +163,17 @@ class TransactionRepository {
     return _appDatabase.deleteTransaction(stored);
   }
 
+  /// Drops every stored row whose `txId` starts with [prefix], any casing,
+  /// and that row's DFX Beleg details.
+  Future<int> deleteTransactionsWithTxIdPrefixIgnoreCase(String prefix) async {
+    final rows = await _appDatabase.getTransactionsWithTxIdPrefixIgnoreCase(prefix);
+    var deleted = 0;
+    for (final row in rows) {
+      deleted += await deleteTransaction(row.txId);
+    }
+    return deleted;
+  }
+
   /// Prize rows have no DFX Beleg. Drop leftover buy/sell metadata so a
   /// converted on-chain transfer cannot keep a live rate or receipt id.
   Future<int> deleteDfxTransactionDetailsIgnoreCase(String txId) =>

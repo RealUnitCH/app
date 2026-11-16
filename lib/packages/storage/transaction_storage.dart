@@ -134,6 +134,12 @@ extension TransactionStorage on AppDatabase {
     return rows.firstWhere((row) => row.txId == txId, orElse: () => rows.first);
   }
 
+  /// Stored rows whose `txId` starts with [prefix], ignoring case.
+  Future<List<TransactionData>> getTransactionsWithTxIdPrefixIgnoreCase(String prefix) =>
+      (select(transactions)..where(
+        (row) => row.txId.substr(1, prefix.length).lower().equals(prefix.toLowerCase()),
+      )).get();
+
   Future<int> deleteTransaction(String txId) =>
       (delete(transactions)..where((row) => row.txId.equals(txId))).go();
 }

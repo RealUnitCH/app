@@ -62,6 +62,16 @@ Map<String, dynamic> _accountHistory(List<Map<String, dynamic>> events) => {
   'totalCount': events.length,
 };
 
+Map<String, dynamic> _settledPayout({required String txHash, int id = 9}) => {
+  'id': id,
+  'amount': 20,
+  'chfValue': 246.5,
+  'created': '2026-08-24T10:00:00Z',
+  'kind': 'Invite',
+  'status': 'Complete',
+  'txHash': txHash,
+};
+
 Map<String, dynamic> _txJson({
   int id = 1,
   String? inputTxId,
@@ -108,6 +118,9 @@ void main() {
     when(() => txRepo.deleteTransaction(any())).thenAnswer((_) async => 1);
     when(
       () => txRepo.deleteDfxTransactionDetailsIgnoreCase(any()),
+    ).thenAnswer((_) async => 0);
+    when(
+      () => txRepo.deleteTransactionsWithTxIdPrefixIgnoreCase(any()),
     ).thenAnswer((_) async => 0);
     when(() => txRepo.insertTransaction(any())).thenAnswer((_) async => 1);
     when(() => txRepo.insertDfxTransaction(any())).thenAnswer((_) async {});
@@ -870,13 +883,14 @@ void main() {
     TransactionHistoryService serviceFor(
       List<Map<String, dynamic>> events, {
       List<Map<String, dynamic>> dfx = const <Map<String, dynamic>>[],
+      List<Map<String, dynamic>> payouts = const <Map<String, dynamic>>[],
     }) {
       final client = MockClient((request) async {
         if (request.url.path.endsWith('/history')) {
           return http.Response(jsonEncode(_accountHistory(events)), 200);
         }
         if (request.url.path.contains('/referral/payouts')) {
-          return http.Response('[]', 200);
+          return http.Response(jsonEncode(payouts), 200);
         }
         return http.Response(jsonEncode(dfx), 200);
       });
@@ -1098,5 +1112,89 @@ void main() {
       expect(rows.single.txId, dupHash);
       expect(rows.single.type, TransactionTypes.referralPayout);
     });
+
+    test(
+      'another casing stays one referralPayout row with no separated txId after two syncs',
+      () async {
+        final events = [
+          _historyEntry(id: idLarge, txHash: dupHashStored, value: '1459'),
+          _historyEntry(id: idSmall, txHash: dupHashStored, value: '1459'),
+        ];
+        final payouts = [_settledPayout(txHash: dupHash)];
+        final separatedPrefix = Transaction.separateTxId(dupHash, '');
+
+        Future<void> expectOnePrize() async {
+          final rows = await repo.allTransactions;
+          expect(rows, hasLength(1));
+          expect(rows.single.type, TransactionTypes.referralPayout);
+          expect(rows.single.onChainTxHash.toLowerCase(), dupHash);
+          expect(
+            rows.where((row) => row.txId.toLowerCase().startsWith(separatedPrefix)),
+            isEmpty,
+          );
+        }
+
+        await serviceFor(events, payouts: payouts).apiBasedSync();
+        await expectOnePrize();
+        await serviceFor(events, payouts: payouts).apiBasedSync();
+        await expectOnePrize();
+      },
+    );
+
+    test(
+      'two transfer rows become one referralPayout and separated DFX details are gone',
+      () async {
+        final events = [
+          _historyEntry(id: idLarge, txHash: dupHashStored, value: '1459'),
+          _historyEntry(id: idSmall, txHash: dupHashStored, value: '1459'),
+        ];
+        final separatedPrefix = Transaction.separateTxId(dupHash, '');
+
+        await serviceFor(events).apiBasedSync();
+
+        final before = rowsFor(await repo.allTransactions, dupHash);
+        expect(before, hasLength(2));
+        expect(before.map((row) => row.type), everyElement(TransactionTypes.tokenTransfer));
+        final separated = before.singleWhere(
+          (row) => row.txId.toLowerCase().startsWith(separatedPrefix),
+        );
+        await db.insertDfxTransactionDetails(txId: separated.txId, dfxId: 77, rate: '1.25');
+        expect(await db.allDfxTransactionDetails, hasLength(1));
+
+        await serviceFor(events, payouts: [_settledPayout(txHash: dupHash)]).apiBasedSync();
+
+        final rows = await repo.allTransactions;
+        expect(rows, hasLength(1));
+        expect(rows.single.type, TransactionTypes.referralPayout);
+        expect(rows.single.onChainTxHash.toLowerCase(), dupHash);
+        expect(
+          rows.where((row) => row.txId.toLowerCase().startsWith(separatedPrefix)),
+          isEmpty,
+        );
+        expect(await db.allDfxTransactionDetails, isEmpty);
+      },
+    );
+
+    test(
+      'a separated txId of another hash without a prize remains a token transfer',
+      () async {
+        const otherSmall = 'history-26327244-150-to';
+        const otherLarge = 'history-26327244-151-to';
+        final separatedTxId = Transaction.separateTxId(otherHash, otherLarge);
+
+        await serviceFor(
+          [
+            _historyEntry(id: idLarge, txHash: dupHashStored, value: '1459'),
+            _historyEntry(id: idSmall, txHash: dupHashStored, value: '1459'),
+            _historyEntry(id: otherLarge, txHash: otherHash, value: '2189'),
+            _historyEntry(id: otherSmall, txHash: otherHash, value: '2189'),
+          ],
+          payouts: [_settledPayout(txHash: dupHash)],
+        ).apiBasedSync();
+
+        final kept = (await repo.allTransactions).singleWhere((row) => row.txId == separatedTxId);
+        expect(kept.type, TransactionTypes.tokenTransfer);
+      },
+    );
   });
 }
