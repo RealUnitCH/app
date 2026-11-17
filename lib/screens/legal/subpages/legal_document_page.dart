@@ -32,10 +32,15 @@ class LegalDocumentPage extends StatefulWidget {
   @visibleForTesting
   final String? initialMarkdownContent;
 
+  /// Reads one language from the legal API. A null, blank, or failed result
+  /// falls back to the bundled asset.
+  final Future<String?> Function(String languageCode)? remoteText;
+
   const LegalDocumentPage({
     super.key,
     required this.params,
     this.initialMarkdownContent,
+    this.remoteText,
   });
 
   @override
@@ -58,6 +63,23 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
 
   Future<void> _loadMarkdown() async {
     final code = context.read<SettingsBloc>().state.language.code;
+    final remote = widget.remoteText;
+    if (remote != null) {
+      String? remoteText;
+      try {
+        remoteText = await remote(code);
+      } catch (_) {
+        remoteText = null;
+      }
+      if (!mounted) return;
+      if (remoteText != null && remoteText.trim().isNotEmpty) {
+        setState(() {
+          _markdownContent = remoteText;
+          _loadFailed = false;
+        });
+        return;
+      }
+    }
     final assetPath = 'assets/legal/${widget.params.assetBaseName}_$code.md';
     try {
       // cache: false so Retry after a transient failure actually re-reads the
@@ -92,9 +114,7 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(widget.params.title),
-    ),
+    appBar: AppBar(title: Text(widget.params.title)),
     body: _loadFailed
         ? _buildError(context)
         : _markdownContent != null
@@ -107,7 +127,9 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                     h2Padding: const .only(top: 16),
                   ),
                   onTapLink: (text, href, title) {
-                    if (href == null || href.startsWith('mailto:') || href.contains('@')) return;
+                    if (href == null || href.startsWith('mailto:') || href.contains('@')) {
+                      return;
+                    }
                     context.pushNamed(
                       AppRoutes.webView,
                       extra: WebViewRouteParams(

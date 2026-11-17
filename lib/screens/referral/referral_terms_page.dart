@@ -41,7 +41,8 @@ Uri? referralTermsInAppUri(String? href) {
 }
 
 @visibleForTesting
-bool referralTermsOpensInApp(String? href) => referralTermsInAppUri(href) != null;
+bool referralTermsOpensInApp(String? href) =>
+    referralTermsInAppUri(href) != null;
 
 class ReferralTermsPage extends StatefulWidget {
   /// Pre-loaded markdown for golden tests.
@@ -52,14 +53,19 @@ class ReferralTermsPage extends StatefulWidget {
   @visibleForTesting
   final Future<String> Function(String assetPath)? loadAsset;
 
+  /// Reads one language from the legal API. A null, blank, or failed result
+  /// falls back to the bundled asset.
+  final Future<String?> Function(String languageCode)? remoteText;
+
   /// After the Empfehler has accepted, hide the checkbox and create CTA.
-  /// Still loads in-app Markdown from assets.
+  /// Still loads in-app Markdown from assets when the remote text is missing.
   final bool readOnly;
 
   const ReferralTermsPage({
     super.key,
     this.initialMarkdownContent,
     this.loadAsset,
+    this.remoteText,
     this.readOnly = false,
   });
 
@@ -115,9 +121,29 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
   Future<void> _loadMarkdown() async {
     final generation = ++_loadGeneration;
     final code = _languageCode();
+    final remote = widget.remoteText;
+    if (remote != null) {
+      String? remoteText;
+      try {
+        remoteText = await remote(code);
+      } catch (_) {
+        remoteText = null;
+      }
+      if (!mounted || generation != _loadGeneration) return;
+      if (remoteText != null && remoteText.trim().isNotEmpty) {
+        setState(() {
+          _markdown = remoteText;
+          _termsVersion = ReferralTermsDto.bundledVersion;
+          _loadFailed = false;
+          _reloading = false;
+        });
+        return;
+      }
+    }
     final content = await loadReferralTermsMarkdown(
       languageCode: code,
-      loadAsset: widget.loadAsset ??
+      loadAsset:
+          widget.loadAsset ??
           ((path) => rootBundle.loadString(path, cache: false)),
     );
     if (!mounted || generation != _loadGeneration) return;
@@ -188,9 +214,9 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                     Text(s.legalDocumentLoadFailed),
                     Text(
                       s.legalDocumentLoadFailedDescription,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: RealUnitColors.neutral500),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.neutral500,
+                      ),
                     ),
                   ],
                 ),
@@ -199,7 +225,9 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                 label: s.retry,
                 autofocus: !_reloading,
                 variant: FilledButtonVariant.secondary,
-                state: _reloading ? FilledButtonState.loading : FilledButtonState.idle,
+                state: _reloading
+                    ? FilledButtonState.loading
+                    : FilledButtonState.idle,
                 onPressed: accepting || _reloading
                     ? null
                     : () {
@@ -218,15 +246,13 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                 child: Row(
                   spacing: 8,
                   children: [
-                    const ExcludeSemantics(
-                      child: CupertinoActivityIndicator(),
-                    ),
+                    const ExcludeSemantics(child: CupertinoActivityIndicator()),
                     Expanded(
                       child: Text(
                         s.referralTermsLoading,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: RealUnitColors.neutral500),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
                       ),
                     ),
                   ],
@@ -244,29 +270,26 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                   if (uri == null) return;
                   context.pushNamed(
                     AppRoutes.webView,
-                    extra: WebViewRouteParams(
-                      title: text,
-                      url: uri,
-                    ),
+                    extra: WebViewRouteParams(title: text, url: uri),
                   );
                 },
               ),
-            if (!widget.readOnly && accepting && (error == null || error.isEmpty))
+            if (!widget.readOnly &&
+                accepting &&
+                (error == null || error.isEmpty))
               Semantics(
                 container: true,
                 liveRegion: true,
                 child: Row(
                   spacing: 8,
                   children: [
-                    const ExcludeSemantics(
-                      child: CupertinoActivityIndicator(),
-                    ),
+                    const ExcludeSemantics(child: CupertinoActivityIndicator()),
                     Expanded(
                       child: Text(
                         s.referralTermsAccepting,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: RealUnitColors.neutral500),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
                       ),
                     ),
                   ],
@@ -288,7 +311,9 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 value: _accepted,
-                onChanged: accepting ? null : (v) => setState(() => _accepted = v ?? false),
+                onChanged: accepting
+                    ? null
+                    : (v) => setState(() => _accepted = v ?? false),
                 title: Text(s.referralTermsCheckbox),
               ),
           ],
@@ -299,8 +324,14 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: AppFilledButton(
                 label: s.referralCreateInvite,
-                autofocus: error != null && error.isNotEmpty && _accepted && !accepting,
-                state: accepting ? FilledButtonState.loading : FilledButtonState.idle,
+                autofocus:
+                    error != null &&
+                    error.isNotEmpty &&
+                    _accepted &&
+                    !accepting,
+                state: accepting
+                    ? FilledButtonState.loading
+                    : FilledButtonState.idle,
                 onPressed:
                     _accepted &&
                         !accepting &&
