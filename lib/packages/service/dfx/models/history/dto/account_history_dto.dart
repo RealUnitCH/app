@@ -21,12 +21,14 @@ class AccountHistoryDto {
 }
 
 class HistoryEventDto {
+  final String? id;
   final DateTime timestamp;
   final String txHash;
   final TransferDto? transfer;
   final String? category;
 
   const HistoryEventDto({
+    this.id,
     required this.timestamp,
     required this.txHash,
     this.transfer,
@@ -35,6 +37,7 @@ class HistoryEventDto {
 
   factory HistoryEventDto.fromJson(Map<String, dynamic> json) {
     return HistoryEventDto(
+      id: json['id'] as String?,
       timestamp: DateTime.parse(json['timestamp'] as String),
       txHash: json['txHash'] as String,
       transfer: json['transfer'] != null

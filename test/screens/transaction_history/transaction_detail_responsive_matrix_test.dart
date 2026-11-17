@@ -61,6 +61,7 @@ void main() {
     when(
       () => receiptCubit.generateReceipt(
         any(),
+        eventId: any(named: 'eventId'),
         currency: any(named: 'currency'),
         language: any(named: 'language'),
       ),

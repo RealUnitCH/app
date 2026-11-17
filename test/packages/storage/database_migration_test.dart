@@ -22,8 +22,8 @@ void main() {
   });
 
   group('AppDatabase schema', () {
-    test('schema version is 5', () {
-      expect(db.schemaVersion, 5);
+    test('schema version is 6', () {
+      expect(db.schemaVersion, 6);
     });
 
     test('creates all expected tables on fresh database', () async {
@@ -86,6 +86,33 @@ void main() {
   });
 
   group('AppDatabase.migration', () {
+    test('onUpgrade from v5 → v6 adds the event_id column and keeps existing rows', () async {
+      await db.insertTransactions(
+        1, 'tx-1', 1, '0xA', '0xB', '100', 1, 2, '', '', '', DateTime.utc(2026),
+      );
+      final original = (await db.allTransactions).single;
+      await db.customStatement('ALTER TABLE transactions DROP COLUMN event_id');
+      await db.customStatement('PRAGMA user_version = 5');
+
+      await db.migration.onUpgrade(Migrator(db), 5, 6);
+
+      final columns = await db.customSelect("PRAGMA table_info('transactions')").get();
+      expect(columns.map((row) => row.read<String>('name')), contains('event_id'));
+      final row = (await db.allTransactions).single;
+      expect(row, original);
+      expect(row.eventId, isNull);
+    });
+
+    test('updating without an event ID preserves the stored ID', () async {
+      await db.insertTransactions(
+        1, 'tx-1', 1, '0xA', '0xB', '100', 1, 2, '', '', '', DateTime.utc(2026),
+        eventId: 'e1',
+      );
+      await db.updateTransaction('tx-1', amount: '200');
+      final row = (await db.allTransactions).single;
+      expect(row.amount, '200');
+      expect(row.eventId, 'e1');
+    });
     test('onCreate creates the full schema on a fresh database', () async {
       // Re-running `createAll` on an already migrated database would
       // fail with "table … already exists". This indirectly pins that
@@ -289,7 +316,7 @@ void main() {
     });
 
     test(
-      'v3 → v5 deletes savings rows, keeps referral payouts and adds the amount columns',
+      'v3 → v6 deletes savings rows, keeps referral payouts and adds the amount columns',
       () async {
         final upgraded = _openSchema(3, [
           _txRow('tx-token', type: 2),
@@ -301,7 +328,7 @@ void main() {
         ]);
         addTearDown(upgraded.close);
 
-        expect(await _userVersion(upgraded), 5);
+        expect(await _userVersion(upgraded), 6);
         expect(await _types(upgraded), {'tx-token': 2, 'tx-referral': 3});
         expect(await _columns(upgraded, 'dfx_transaction_details'), containsAll(_amountColumns));
         final details = await upgraded.getDfxTransactionDetailsByDfxId(7);
@@ -313,7 +340,7 @@ void main() {
     );
 
     test(
-      'v3 with input_amount already present reaches v5 and keeps rewritten referral payouts',
+      'v3 with input_amount already present reaches v6 and keeps rewritten referral payouts',
       () async {
         // State after an upgrade that rewrote the types and added input_amount,
         // but was interrupted before the version was written.
@@ -325,7 +352,7 @@ void main() {
         ]);
         addTearDown(upgraded.close);
 
-        expect(await _userVersion(upgraded), 5);
+        expect(await _userVersion(upgraded), 6);
         expect(await _types(upgraded), {'tx-token': 2, 'tx-referral': 3});
         expect(await _columns(upgraded, 'dfx_transaction_details'), containsAll(_amountColumns));
         expect((await upgraded.getDfxTransactionDetailsByDfxId(7))!.inputAmount, '100');
@@ -333,7 +360,7 @@ void main() {
     );
 
     test(
-      'v3 with all four amount columns already present reaches v5 and keeps referral payouts',
+      'v3 with all four amount columns already present reaches v6 and keeps referral payouts',
       () async {
         final upgraded = _openSchema(3, [
           for (final column in _amountColumns)
@@ -344,7 +371,7 @@ void main() {
         ]);
         addTearDown(upgraded.close);
 
-        expect(await _userVersion(upgraded), 5);
+        expect(await _userVersion(upgraded), 6);
         expect(await _types(upgraded), {'tx-token': 2, 'tx-referral': 3});
         expect((await upgraded.getDfxTransactionDetailsByDfxId(7))!.inputAmount, '100');
       },
@@ -359,13 +386,13 @@ void main() {
         ]);
         addTearDown(upgraded.close);
 
-        expect(await _userVersion(upgraded), 5);
+        expect(await _userVersion(upgraded), 6);
         expect(await _types(upgraded), {'tx-token': 2, 'tx-referral': 3});
       },
     );
 
     test(
-      'v1 whose earlier upgrade already created the old details table reaches v5 with the amount columns',
+      'v1 whose earlier upgrade already created the old details table reaches v6 with the amount columns',
       () async {
         // An upgrade from v1 under the v2–v4 code created dfx_transaction_details
         // without the amount columns and was interrupted before the version was
@@ -373,28 +400,28 @@ void main() {
         final upgraded = _openSchema(1, [_txRow('tx-token', type: 2, withCategory: false)]);
         addTearDown(upgraded.close);
 
-        expect(await _userVersion(upgraded), 5);
+        expect(await _userVersion(upgraded), 6);
         expect(await _types(upgraded), {'tx-token': 2});
         expect(await _columns(upgraded, 'transactions'), contains('category'));
         expect(await _columns(upgraded, 'dfx_transaction_details'), containsAll(_amountColumns));
       },
     );
 
-    test('v2 → v5 adds the category column with its default and the amount columns', () async {
+    test('v2 → v6 adds the category column with its default and the amount columns', () async {
       final upgraded = _openSchema(2, [
         _txRow('tx-token', type: 2, withCategory: false),
         _txRow('tx-referral', type: 5, sender: _zeroSender, withCategory: false),
       ]);
       addTearDown(upgraded.close);
 
-      expect(await _userVersion(upgraded), 5);
+      expect(await _userVersion(upgraded), 6);
       expect(await _types(upgraded), {'tx-token': 2, 'tx-referral': 3});
       final rows = await upgraded.select(upgraded.transactions).get();
       expect(rows.map((r) => r.category), everyElement(''));
       expect(await _columns(upgraded, 'dfx_transaction_details'), containsAll(_amountColumns));
     });
 
-    test('v4 → v5 adds the amount columns and leaves every type unchanged', () async {
+    test('v4 → v6 adds the amount columns and leaves every type unchanged', () async {
       final upgraded = _openSchema(4, [
         _txRow('tx-token', type: 2),
         _txRow('tx-referral', type: 3, sender: _zeroSender),
@@ -402,7 +429,7 @@ void main() {
       ]);
       addTearDown(upgraded.close);
 
-      expect(await _userVersion(upgraded), 5);
+      expect(await _userVersion(upgraded), 6);
       expect(await _types(upgraded), {'tx-token': 2, 'tx-referral': 3, 'tx-other': 3});
       expect(await _columns(upgraded, 'dfx_transaction_details'), containsAll(_amountColumns));
     });
@@ -444,8 +471,9 @@ void main() {
       final upgraded = AppDatabase.forTesting(NativeDatabase.createInBackground(File(path)));
       addTearDown(upgraded.close);
 
-      expect(await _userVersion(upgraded), 5);
+      expect(await _userVersion(upgraded), 6);
       expect(await _types(upgraded), {'tx-referral': 3});
+      expect(await _columns(upgraded, 'transactions'), contains('event_id'));
       expect(await _columns(upgraded, 'dfx_transaction_details'), containsAll(_amountColumns));
     });
   });

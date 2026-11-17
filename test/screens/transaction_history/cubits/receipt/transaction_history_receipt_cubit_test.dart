@@ -71,6 +71,7 @@ void main() {
       when(
         () => service.getTransactionReceipt(
           any(),
+          eventId: any(named: 'eventId'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -85,7 +86,7 @@ void main() {
         ]),
       );
 
-      await cubit.generateReceipt('tx-42', currency: Currency.eur, language: Language.de);
+      await cubit.generateReceipt('tx-42', eventId: 'e2', currency: Currency.eur, language: Language.de);
       await emissions;
 
       expect(cubit.state, isA<TransactionHistoryReceiptSuccess>());
@@ -95,7 +96,7 @@ void main() {
       expect(File(success.receiptPath).readAsBytesSync(), pdfBytes);
       expect(directoryPort.calls, 1);
       verify(
-        () => service.getTransactionReceipt('tx-42', currency: Currency.eur, language: Language.de),
+        () => service.getTransactionReceipt('tx-42', eventId: 'e2', currency: Currency.eur, language: Language.de),
       ).called(1);
     });
 
@@ -103,6 +104,7 @@ void main() {
       when(
         () => service.getTransactionReceipt(
           any(),
+          eventId: any(named: 'eventId'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -112,7 +114,7 @@ void main() {
       await cubit.generateReceipt('tx-1', language: Language.en);
 
       verify(
-        () => service.getTransactionReceipt('tx-1', currency: Currency.chf, language: Language.en),
+        () => service.getTransactionReceipt('tx-1', eventId: null, currency: Currency.chf, language: Language.en),
       ).called(1);
     });
 
@@ -120,6 +122,7 @@ void main() {
       when(
         () => service.getTransactionReceipt(
           any(),
+          eventId: any(named: 'eventId'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -140,6 +143,7 @@ void main() {
       when(
         () => service.getTransactionReceipt(
           any(),
+          eventId: any(named: 'eventId'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -156,6 +160,7 @@ void main() {
       when(
         () => service.getTransactionReceipt(
           any(),
+          eventId: any(named: 'eventId'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -174,6 +179,7 @@ void main() {
       when(
         () => service.getTransactionReceipt(
           any(),
+          eventId: any(named: 'eventId'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),

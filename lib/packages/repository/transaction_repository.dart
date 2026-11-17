@@ -57,6 +57,7 @@ class TransactionRepository {
         transaction.note ?? '',
         transaction.data ?? '',
         transaction.timestamp,
+        eventId: transaction.eventId,
       );
     } finally {
       mine.complete();
@@ -82,6 +83,7 @@ class TransactionRepository {
       asset: transaction.asset.id,
       type: transaction.type.index,
       category: transaction.category?.value ?? '',
+      eventId: transaction.eventId,
       note: transaction.note ?? '',
       data: transaction.data ?? '',
       timeStamp: transaction.timestamp,
@@ -161,6 +163,17 @@ class TransactionRepository {
     return _appDatabase.deleteTransaction(stored);
   }
 
+  /// Drops every stored row whose `txId` starts with [prefix], any casing,
+  /// and that row's DFX Beleg details.
+  Future<int> deleteTransactionsWithTxIdPrefixIgnoreCase(String prefix) async {
+    final rows = await _appDatabase.getTransactionsWithTxIdPrefixIgnoreCase(prefix);
+    var deleted = 0;
+    for (final row in rows) {
+      deleted += await deleteTransaction(row.txId);
+    }
+    return deleted;
+  }
+
   /// Prize rows have no DFX Beleg. Drop leftover buy/sell metadata so a
   /// converted on-chain transfer cannot keep a live rate or receipt id.
   Future<int> deleteDfxTransactionDetailsIgnoreCase(String txId) =>
@@ -202,6 +215,7 @@ class TransactionRepository {
             outputAsset: dfxDetails.outputAsset,
             height: txData.height,
             txId: txData.txId,
+            eventId: txData.eventId,
             chainId: txData.chainId,
             senderAddress: txData.senderAddress,
             receiverAddress: txData.receiverAddress,
@@ -218,6 +232,7 @@ class TransactionRepository {
         return Transaction(
           height: txData.height,
           txId: txData.txId,
+          eventId: txData.eventId,
           chainId: txData.chainId,
           senderAddress: txData.senderAddress,
           receiverAddress: txData.receiverAddress,
@@ -291,6 +306,7 @@ class TransactionRepository {
                   outputAsset: dfxDetails.outputAsset,
                   height: transactionData.height,
                   txId: transactionData.txId,
+                  eventId: transactionData.eventId,
                   chainId: transactionData.chainId,
                   senderAddress: transactionData.senderAddress,
                   receiverAddress: transactionData.receiverAddress,
@@ -308,6 +324,7 @@ class TransactionRepository {
                 Transaction(
                   height: transactionData.height,
                   txId: transactionData.txId,
+                  eventId: transactionData.eventId,
                   chainId: transactionData.chainId,
                   senderAddress: transactionData.senderAddress,
                   receiverAddress: transactionData.receiverAddress,

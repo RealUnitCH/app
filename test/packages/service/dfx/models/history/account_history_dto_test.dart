@@ -31,8 +31,24 @@ void main() {
 
       expect(dto.timestamp, DateTime.utc(2026, 5, 15, 10));
       expect(dto.txHash, '0xabc');
+      expect(dto.id, isNull);
       expect(dto.transfer, isNotNull);
       expect(dto.transfer!.from, '0xa');
+    });
+
+    test('parses id and leaves it null when the field is absent', () {
+      final withId = HistoryEventDto.fromJson({
+        'id': 'history-26340401-311-to',
+        'timestamp': '2026-05-15T10:00:00Z',
+        'txHash': '0xabc',
+      });
+      expect(withId.id, 'history-26340401-311-to');
+
+      final without = HistoryEventDto.fromJson({
+        'timestamp': '2026-05-15T10:00:00Z',
+        'txHash': '0xabc',
+      });
+      expect(without.id, isNull);
     });
 
     test('transfer is optional (null on the wire stays null)', () {
