@@ -69,11 +69,11 @@ The auto-opened promotion PRs are idempotent — only one is open per branch pai
 ## A38
 
 This repository requires A38 according to the canonical A38 standard in
-[DFXswiss/agent](https://github.com/DFXswiss/agent/blob/e63980625f5b778c5a93104b0bf5de7fb5e379a8/docs/a38.md)
-at commit `e63980625f5b778c5a93104b0bf5de7fb5e379a8`. Repo job selection:
+[DFXswiss/agent](https://github.com/DFXswiss/agent/blob/3528240c62d72e8f50f8ec5ddda0c4d213f0f04a/docs/a38.md)
+at commit `3528240c62d72e8f50f8ec5ddda0c4d213f0f04a`. Repo job selection:
 `.github/a38.json`. Target-branch applicability and fork workflow approval:
 `.github/pr-guard.json`. `dfx pr guard` is
-[wired in](https://github.com/DFXswiss/agent/blob/e63980625f5b778c5a93104b0bf5de7fb5e379a8/docs/a38-guard.md#how-fork-github-actions-are-meant-to-work).
+[wired in](https://github.com/DFXswiss/agent/blob/3528240c62d72e8f50f8ec5ddda0c4d213f0f04a/docs/a38-guard.md#how-fork-github-actions-are-meant-to-work).
 
 This is a **public** repository. GitHub-hosted and self-hosted runners execute
 the heavy suite (unit and widget tests, the coverage floor, visual regression,
@@ -88,6 +88,8 @@ external contributors as `action_required`. Ready does not start CI. After a
 fresh A38 enforce pass on the current head, `dfx pr guard` approves those
 waiting initial runs, then sets Ready when the review rule below is met, the
 required GitHub jobs are green, and the PR is mergeable.
+A draft that a person sets stays draft until a person marks the pull request
+Ready or a first-run review comment posted after that draft names the current head.
 
 Two reviews are required before Ready. One review is enough only when the
 pull request opener is listed in one_review_authors in the trusted
