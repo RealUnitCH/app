@@ -38,6 +38,7 @@ void main() {
   Transaction buildTokenTransfer({
     required String txId,
     required int height,
+    String? eventId,
     DateTime? timestamp,
     int chainId = 1,
     BigInt? amount,
@@ -51,6 +52,7 @@ void main() {
     return Transaction(
       height: height,
       txId: txId,
+      eventId: eventId,
       chainId: chainId,
       senderAddress: senderOverride ?? sender,
       receiverAddress: receiverOverride ?? receiver,
@@ -678,6 +680,39 @@ void main() {
 
       await repo.insertDfxTransaction(dfxTx);
       await settled;
+    });
+
+    test('watchTransactions keeps the event ID of plain and DFX rows', () async {
+      await repo.insertTransaction(
+        buildTokenTransfer(txId: 'tx-plain', height: 1, eventId: 'history-1-0-to'),
+      );
+      await repo.insertDfxTransaction(
+        DfxTransaction(
+          dfxId: 7,
+          height: 2,
+          txId: 'tx-dfx',
+          eventId: 'history-2-0-to',
+          chainId: 1,
+          senderAddress: sender,
+          receiverAddress: receiver,
+          amount: BigInt.from(0x100),
+          asset: tokenAssetMainnet,
+          type: TransactionTypes.tokenTransfer,
+          note: null,
+          data: null,
+          timestamp: DateTime.utc(2025, 1, 1),
+        ),
+      );
+
+      final rows = await repo.watchTransactions().first;
+      expect(rows, hasLength(2));
+      final plain = rows.singleWhere((row) => row.txId == 'tx-plain');
+      final dfx = rows.singleWhere((row) => row.txId == 'tx-dfx');
+      expect(plain, isA<Transaction>());
+      expect(plain, isNot(isA<DfxTransaction>()));
+      expect(plain.eventId, 'history-1-0-to');
+      expect(dfx, isA<DfxTransaction>());
+      expect(dfx.eventId, 'history-2-0-to');
     });
 
     test(

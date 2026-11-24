@@ -33,11 +33,13 @@ class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState>
 Transaction _tx({
   TransferCategory? category,
   String txId = 'tx-42',
+  String? eventId,
   TransactionTypes type = TransactionTypes.tokenTransfer,
   String note = '',
 }) => Transaction(
   height: 0,
   txId: txId,
+  eventId: eventId,
   chainId: realUnitAsset.chainId,
   senderAddress: '0x1111111111111111111111111111111111111111',
   receiverAddress: '0x2222222222222222222222222222222222222222',
@@ -114,6 +116,7 @@ void main() {
     when(
       () => receiptCubit.generateReceipt(
         any(),
+        eventId: any(named: 'eventId'),
         currency: any(named: 'currency'),
         language: any(named: 'language'),
       ),
@@ -232,6 +235,7 @@ void main() {
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
+          eventId: null,
           currency: Currency.chf,
           language: Language.de,
         ),
@@ -244,6 +248,60 @@ void main() {
       verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
       expect(find.text('RealUnit-Verkauf'), findsOneWidget);
       expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a suffixed txId passes the plain hash to the sale and payout receipts',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _tx(category: TransferCategory.sale, txId: 'tx-42#history-1-2-to'),
+      );
+
+      expect(find.text('RealUnit-Verkauf'), findsOneWidget);
+      expect(find.text('Auszahlung (DFX AG)'), findsOneWidget);
+
+      await tester.tap(find.text('RealUnit-Verkauf'));
+      await tester.pump();
+      verify(
+        () => receiptCubit.generateReceipt(
+          'tx-42',
+          eventId: null,
+          currency: Currency.chf,
+          language: Language.de,
+        ),
+      ).called(1);
+
+      await tester.tap(find.text('Auszahlung (DFX AG)'));
+      await tester.pump();
+      verify(() => receiptCubit.generateExchangeReceipt('tx-42')).called(1);
+    },
+  );
+
+  testWidgets('the RealUnit receipt receives the event ID', (tester) async {
+    await pumpDetail(tester, _tx(category: TransferCategory.sale, eventId: 'e2'));
+    await tester.tap(find.text('RealUnit-Verkauf'));
+    await tester.pump();
+    verify(() => receiptCubit.generateReceipt(
+      'tx-42',
+      eventId: 'e2',
+      currency: Currency.chf,
+      language: Language.de,
+    )).called(1);
+  });
+
+  testWidgets(
+    'a suffixed txId passes the plain hash to the payment receipt',
+    (tester) async {
+      await pumpDetail(
+        tester,
+        _tx(category: TransferCategory.payment, txId: 'tx-42#history-1-2-to'),
+      );
+
+      await tester.tap(find.text('Zahlungsbeleg'));
+      await tester.pump();
+      verify(() => receiptCubit.generatePaymentReceipt('tx-42', language: Language.de)).called(1);
     },
   );
 
@@ -264,6 +322,7 @@ void main() {
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
+          eventId: null,
           currency: Currency.chf,
           language: Language.de,
         ),
@@ -345,6 +404,7 @@ void main() {
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
+          eventId: null,
           currency: Currency.chf,
           language: Language.de,
         ),

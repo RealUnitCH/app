@@ -21,10 +21,12 @@ class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState> implement
 
 Transaction _tx({
   required String txId,
+  String? eventId,
   TransactionTypes type = TransactionTypes.tokenTransfer,
 }) => Transaction(
   height: 0,
   txId: txId,
+  eventId: eventId,
   chainId: realUnitAsset.chainId,
   senderAddress: type == TransactionTypes.referralPayout ? kReferralPayoutSenderAddress : '0xfrom',
   receiverAddress: '0xto',
@@ -59,6 +61,33 @@ void main() {
       ]),
       isEmpty,
     );
+    expect(
+      receiptTxIdsForDownload([
+        _tx(txId: '0xabc#history-1-2-to'),
+        _tx(txId: '0xabc'),
+      ]),
+      ['0xabc'],
+    );
+    expect(
+      receiptTxIdsForDownload([
+        _tx(txId: '0xabc#history-1-2-to'),
+        _tx(txId: '0xABC'),
+      ]).single,
+      isNot(contains('#')),
+    );
+  });
+
+  test('receiptEventIdsForDownload excludes prizes and duplicate IDs in order', () {
+    expect(
+      receiptEventIdsForDownload([
+        _tx(txId: '0xabc', eventId: 'e1'),
+        _tx(txId: '0xabc#e2', eventId: 'e2'),
+        _tx(txId: '0xduplicate', eventId: 'e1'),
+        _tx(txId: '0xno-id'),
+        _tx(txId: '0xprize', eventId: 'e3', type: TransactionTypes.referralPayout),
+      ]),
+      ['e1', 'e2'],
+    );
   });
 
   group('$TransactionHistoryDownloadButtonView', () {
@@ -75,6 +104,7 @@ void main() {
       when(
         () => cubit.generateReceipt(
           any(),
+          eventIds: any(named: 'eventIds'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -116,6 +146,29 @@ void main() {
         verify(
           () => cubit.generateReceipt(
             ['0xbuy'],
+            eventIds: const [],
+            currency: Currency.chf,
+            language: Language.en,
+          ),
+        ).called(1);
+      },
+    );
+
+    testWidgets(
+      'sends one pure hash when two rows share the on-chain transaction',
+      (tester) async {
+        await pumpButton(tester, [
+          _tx(txId: '0xabc#history-1-2-to', eventId: 'e2'),
+          _tx(txId: '0xabc', eventId: 'e1'),
+        ]);
+
+        await tester.tap(find.byIcon(Icons.file_download_outlined));
+        await tester.pump();
+
+        verify(
+          () => cubit.generateReceipt(
+            ['0xabc'],
+            eventIds: ['e2', 'e1'],
             currency: Currency.chf,
             language: Language.en,
           ),
@@ -150,6 +203,7 @@ void main() {
         verifyNever(
           () => cubit.generateReceipt(
             any(),
+            eventIds: any(named: 'eventIds'),
             currency: any(named: 'currency'),
             language: any(named: 'language'),
           ),

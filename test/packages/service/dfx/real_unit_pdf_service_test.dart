@@ -119,6 +119,7 @@ void main() {
 
         final pdf = await build(client).getTransactionsReceipt(
           ['0xa', '0xb', '0xc'],
+          eventIds: ['e1', 'e2'],
           currency: Currency.eur,
           language: Language.de,
         );
@@ -126,6 +127,7 @@ void main() {
         expect(pdf.pdfData, 'MULTI');
         expect(path, '/v1/realunit/transactions/receipt/multi');
         expect(body!['txHashes'], ['0xa', '0xb', '0xc']);
+        expect(body!['eventIds'], ['e1', 'e2']);
         expect(body!['currency'], 'EUR');
         // Language is uppercased on the wire.
         expect(body!['language'], 'DE');
@@ -141,6 +143,7 @@ void main() {
         await build(client).getTransactionsReceipt(['0x1'], language: Language.en);
 
         expect(body!['currency'], 'CHF');
+        expect(body!.containsKey('eventIds'), isFalse);
       });
 
       test('throws ApiException on non-2xx', () async {
@@ -168,6 +171,7 @@ void main() {
 
         final pdf = await build(client).getTransactionReceipt(
           '0xabc',
+          eventId: 'e2',
           currency: Currency.eur,
           language: Language.de,
         );
@@ -175,6 +179,7 @@ void main() {
         expect(pdf.pdfData, 'SINGLE');
         expect(path, '/v1/realunit/transactions/receipt/single');
         expect(body!['txHash'], '0xabc');
+        expect(body!['eventId'], 'e2');
         expect(body!['currency'], 'EUR');
         // Language is uppercased on the wire.
         expect(body!['language'], 'DE');
@@ -190,6 +195,7 @@ void main() {
         await build(client).getTransactionReceipt('0xabc', language: Language.en);
 
         expect(body!['currency'], 'CHF');
+        expect(body!.containsKey('eventId'), isFalse);
       });
 
       test('throws ApiException on non-2xx', () async {

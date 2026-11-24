@@ -40,6 +40,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(Currency.chf);
     registerFallbackValue(Language.en);
+    registerFallbackValue(<String>[]);
   });
 
   setUp(() {
@@ -71,6 +72,7 @@ void main() {
       when(
         () => service.getTransactionsReceipt(
           any(),
+          eventIds: any(named: 'eventIds'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -85,7 +87,7 @@ void main() {
         ]),
       );
 
-      await cubit.generateReceipt(['tx-1', 'tx-2'], currency: Currency.eur, language: Language.de);
+      await cubit.generateReceipt(['tx-1', 'tx-2'], eventIds: ['e1', 'e2'], currency: Currency.eur, language: Language.de);
       await emissions;
 
       expect(cubit.state, isA<TransactionHistoryMultiReceiptSuccess>());
@@ -97,6 +99,7 @@ void main() {
       verify(
         () => service.getTransactionsReceipt(
           ['tx-1', 'tx-2'],
+          eventIds: ['e1', 'e2'],
           currency: Currency.eur,
           language: Language.de,
         ),
@@ -107,6 +110,7 @@ void main() {
       when(
         () => service.getTransactionsReceipt(
           any(),
+          eventIds: any(named: 'eventIds'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -118,6 +122,7 @@ void main() {
       verify(
         () => service.getTransactionsReceipt(
           ['tx-1'],
+          eventIds: const [],
           currency: Currency.chf,
           language: Language.en,
         ),
@@ -128,6 +133,7 @@ void main() {
       when(
         () => service.getTransactionsReceipt(
           any(),
+          eventIds: any(named: 'eventIds'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -148,6 +154,7 @@ void main() {
       when(
         () => service.getTransactionsReceipt(
           any(),
+          eventIds: any(named: 'eventIds'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -164,6 +171,7 @@ void main() {
       when(
         () => service.getTransactionsReceipt(
           any(),
+          eventIds: any(named: 'eventIds'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
@@ -180,6 +188,7 @@ void main() {
       when(
         () => service.getTransactionsReceipt(
           any(),
+          eventIds: any(named: 'eventIds'),
           currency: any(named: 'currency'),
           language: any(named: 'language'),
         ),
