@@ -69,11 +69,11 @@ The auto-opened promotion PRs are idempotent — only one is open per branch pai
 ## A38
 
 This repository requires A38 according to the canonical A38 standard in
-[DFXswiss/agent](https://github.com/DFXswiss/agent/blob/e63980625f5b778c5a93104b0bf5de7fb5e379a8/docs/a38.md)
-at commit `e63980625f5b778c5a93104b0bf5de7fb5e379a8`. Repo job selection:
+[DFXswiss/agent](https://github.com/DFXswiss/agent/blob/3528240c62d72e8f50f8ec5ddda0c4d213f0f04a/docs/a38.md)
+at commit `3528240c62d72e8f50f8ec5ddda0c4d213f0f04a`. Repo job selection:
 `.github/a38.json`. Target-branch applicability and fork workflow approval:
 `.github/pr-guard.json`. `dfx pr guard` is
-[wired in](https://github.com/DFXswiss/agent/blob/e63980625f5b778c5a93104b0bf5de7fb5e379a8/docs/a38-guard.md#how-fork-github-actions-are-meant-to-work).
+[wired in](https://github.com/DFXswiss/agent/blob/3528240c62d72e8f50f8ec5ddda0c4d213f0f04a/docs/a38-guard.md#how-fork-github-actions-are-meant-to-work).
 
 This is a **public** repository. GitHub-hosted and self-hosted runners execute
 the heavy suite (unit and widget tests, the coverage floor, visual regression,
@@ -88,6 +88,8 @@ external contributors as `action_required`. Ready does not start CI. After a
 fresh A38 enforce pass on the current head, `dfx pr guard` approves those
 waiting initial runs, then sets Ready when the review rule below is met, the
 required GitHub jobs are green, and the PR is mergeable.
+A draft that a person sets stays draft until a person marks the pull request
+Ready or a first-run review comment posted after that draft names the current head.
 
 Two reviews are required before Ready. One review is enough only when the
 pull request opener is listed in one_review_authors in the trusted
@@ -242,6 +244,8 @@ Leave these unchanged:
 - Wording that reproduces a legal source, such as a registration agreement, a prospectus, or a statute. Change that only when the source changes.
 
 If a label is too short for the full form, rewrite the sentence so the full form fits and the grammar agrees. Do not shorten it.
+
+In the Aktionariat flow, German copy addresses the user formally with `Sie` / `Ihr` (`Bitte lesen und bestätigen Sie die folgenden Dokumente der Aktionariat AG`), never with `du` / `dein`. In the app, this flow is the legal disclaimer step with the Aktionariat AG documents and the Aktionariat page under the legal documents in the settings. The rule also covers any copy added to this flow later. In the same flow, English copy addresses the user as `you` / `your`.
 
 English uses the ordinary English word (`shareholder`, `shareholders`). Do not build a German-style pair in English.
 

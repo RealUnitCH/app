@@ -13,6 +13,7 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pay/pay_info_page.dart';
 import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
+import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
@@ -20,6 +21,8 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import '../../helper/helper.dart';
 
 class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
+
+class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
 
 class _BitboxWallet extends Fake implements BitboxWallet {
   @override
@@ -39,7 +42,15 @@ void main() {
     // /pay lands on PayInfoPage (no camera). The stub stays so a later
     // Continue onto PayScanPage in other tests does not throw MissingPluginException.
     stubMobileScannerChannel();
+    // The router's PIN check reads the session state; these tests run unlocked.
+    final pinAuthCubit = _MockPinAuthCubit();
+    when(
+      () => pinAuthCubit.state,
+    ).thenReturn(const PinAuthState(isPinSetup: true, isPinVerified: true));
+    getIt.registerSingleton<PinAuthCubit>(pinAuthCubit);
   });
+
+  tearDownAll(() => getIt.unregister<PinAuthCubit>());
 
   setUp(() {
     homeBloc = _MockHomeBloc();

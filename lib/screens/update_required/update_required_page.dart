@@ -10,11 +10,10 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/utils/store_update_target.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/pin_route_guard.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
-import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
@@ -102,13 +101,10 @@ class _UpdateRequiredPageState extends State<UpdateRequiredPage> {
                   AppFilledButton(
                     variant: .secondary,
                     label: S.of(context).updateRequiredBackup,
-                    onPressed: () => context.pushNamed(
-                      PinRoutes.gate,
-                      extra: VerifyPinParams(
-                        onAuthenticated: () =>
-                            context.pushReplacementNamed(SettingsRoutes.seed),
-                        description: S.of(context).pinVerifySeedDescription,
-                      ),
+                    onPressed: () => pushAfterFreshPin(
+                      context,
+                      routeName: SettingsRoutes.seed,
+                      description: S.of(context).pinVerifySeedDescription,
                     ),
                   ),
                 if (hasWallet && !bitboxAddressRecoveryNeeded)

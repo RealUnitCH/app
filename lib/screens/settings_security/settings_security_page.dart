@@ -4,11 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
-import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/screens/settings_security/cubits/settings_security_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
-import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
+import 'package:realunit_wallet/setup/routing/pin_route_guard.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -78,17 +77,13 @@ class SettingsSecurityView extends StatelessWidget {
     ),
   );
 
-  void _onChangePinTap(BuildContext context) => context.pushNamed(
-    PinRoutes.gate,
-    extra: VerifyPinParams(
-      description: S.of(context).settingsChangePinVerifyDescription,
-      // The verify gate also offers biometric re-auth, so a user who forgot
-      // their PIN but has working biometrics can still reach the change flow.
-      onAuthenticated: () => context.pushReplacementNamed(
-        SettingsRoutes.changePin,
-        extra: ChangePinParams(onCompleted: () => _onPinChanged(context)),
-      ),
-    ),
+  // The verify gate also offers biometric re-auth, so a user who forgot their
+  // PIN but has working biometrics can still reach the change flow.
+  void _onChangePinTap(BuildContext context) => pushAfterFreshPin(
+    context,
+    routeName: SettingsRoutes.changePin,
+    description: S.of(context).settingsChangePinVerifyDescription,
+    extra: ChangePinParams(onCompleted: () => _onPinChanged(context)),
   );
 
   void _onPinChanged(BuildContext context) {

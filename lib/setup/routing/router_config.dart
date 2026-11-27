@@ -57,7 +57,7 @@ import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
-import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
+import 'package:realunit_wallet/setup/routing/pin_route_guard.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
@@ -77,12 +77,9 @@ final GoRouter routerConfig = GoRouter(
   // the redirect hands off to the normal boot entry. Warm resume: the redirect
   // lets the scheme URL fall through unmatched and onException keeps the
   // current configuration — the only true no-op that survives imperatively
-  // pushed routes (e.g. the KYC flow). See app_link_entry.dart.
-  redirect: (context, state) => appLinkSchemeRedirect(
-    state,
-    effectiveLocation(routerConfig.routerDelegate.currentConfiguration),
-    routerConfig,
-  ),
+  // pushed routes (e.g. the KYC flow). See app_link_entry.dart. Every in-app
+  // navigation then passes the PIN check of pin_route_guard.dart.
+  redirect: (context, state) => appRouterRedirect(state, routerConfig),
   onException: appLinkOnException,
   routes: <RouteBase>[
     GoRoute(
