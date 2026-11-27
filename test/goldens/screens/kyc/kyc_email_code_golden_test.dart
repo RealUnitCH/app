@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_code/kyc_email_code_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_code_page.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../../helper/helper.dart';
 
@@ -12,15 +13,8 @@ class _MockKycEmailCodeCubit extends MockCubit<KycEmailCodeState> implements Kyc
 
 void main() {
   // `KycEmailCodeView` (`kyc_email_code_page.dart`): the idle form, the two
-  // in-flight states and every SnackBar its BlocListener shows.
-  //
-  // Documented skip — the code-field validation messages (`twoFaCodeRequired`
-  // / `registerPhoneNumberOnlyDigits` / `twoFaCodeTooShort`) render only after
-  // the Next button runs `_formKey.currentState!.validate()`. The `Form` has no
-  // `autovalidateMode` and no state mirrors the validator output, so the
-  // message is purely interaction-driven with no State seam — a text-field
-  // validate() error, skipped per the golden-states convention (same as
-  // `kyc_2fa_states_golden_test.dart`).
+  // in-flight states, every SnackBar its BlocListener shows, and the three
+  // code-field validation messages shown after the Next tap.
   late _MockKycEmailCodeCubit cubit;
 
   setUp(() {
@@ -134,6 +128,44 @@ void main() {
         emit(const KycEmailCodeFailure(KycEmailCodeError.unknown));
         return buildSubject();
       },
+    );
+
+    // The Next tap runs Form.validate() on the code field; the message shows
+    // under the field (hideErrorText is false) and no call reaches the cubit.
+    Future<void> Function(WidgetTester) submitCode(String code) => (tester) async {
+      await tester.pumpAndSettle();
+      if (code.isNotEmpty) {
+        await tester.enterText(find.byType(TextFormField), code);
+      }
+      await tester.tap(find.byType(AppFilledButton));
+      await tester.pumpAndSettle();
+    };
+
+    // Empty field → `twoFaCodeRequired`.
+    goldenTest(
+      'empty code after Next — required message',
+      fileName: 'kyc_email_code_page_code_required',
+      constraints: phoneConstraints,
+      pumpBeforeTest: submitCode(''),
+      builder: buildSubject,
+    );
+
+    // A non-digit → `registerPhoneNumberOnlyDigits`.
+    goldenTest(
+      'code with letters after Next — digits-only message',
+      fileName: 'kyc_email_code_page_code_digits_only',
+      constraints: phoneConstraints,
+      pumpBeforeTest: submitCode('12a456'),
+      builder: buildSubject,
+    );
+
+    // Fewer than six digits → `twoFaCodeTooShort`.
+    goldenTest(
+      'short code after Next — six-digits message',
+      fileName: 'kyc_email_code_page_code_too_short',
+      constraints: phoneConstraints,
+      pumpBeforeTest: submitCode('123'),
+      builder: buildSubject,
     );
   });
 }

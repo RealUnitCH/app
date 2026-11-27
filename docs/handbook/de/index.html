@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 470 Visual-Regression Goldens (470 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 473 Visual-Regression Goldens (473 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 470 App-Screenshots dieser Seite sind Goldens aus
+            Die 473 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 470 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 473 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -6255,7 +6255,7 @@
                 <div class="file">test/goldens/screens/kyc/</div>
               </div>
               <div class="rhs">
-                <b>20 Screens</b>
+                <b>23 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/kyc"
@@ -6508,6 +6508,54 @@
               </div>
               <div class="desc">
                 Rote Fehler-SnackBar <b>Ihre E-Mail-Adresse konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.</b>, wenn ein solcher Fehler keinen Text der API mitbringt.
+              </div>
+            </div>
+            <div class="test" id="465-kyc-email-code-page-code-required">
+              <div class="head">
+                <a class="name permalink" href="#465-kyc-email-code-page-code-required">465-kyc-email-code-page-code-required</a>
+                <button class="copy-link" type="button" data-target="465-kyc-email-code-page-code-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_code_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/465-kyc-email-code-page-code-required.png"
+                  alt="E-Mail-Code fehlt"
+                />
+              </div>
+              <div class="desc">
+                Nach <b>Weiter</b> mit leerem Code-Feld erscheint unter dem Feld <b>Code ist erforderlich</b>. Die App ruft die API nicht auf.
+              </div>
+            </div>
+            <div class="test" id="466-kyc-email-code-page-code-digits-only">
+              <div class="head">
+                <a class="name permalink" href="#466-kyc-email-code-page-code-digits-only">466-kyc-email-code-page-code-digits-only</a>
+                <button class="copy-link" type="button" data-target="466-kyc-email-code-page-code-digits-only" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_code_digits_only.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/466-kyc-email-code-page-code-digits-only.png"
+                  alt="E-Mail-Code mit Buchstaben"
+                />
+              </div>
+              <div class="desc">
+                Nach <b>Weiter</b> mit einem Code, der nicht nur aus Ziffern besteht, erscheint unter dem Feld <b>Nur Zahlen sind erlaubt</b>. Die App ruft die API nicht auf.
+              </div>
+            </div>
+            <div class="test" id="467-kyc-email-code-page-code-too-short">
+              <div class="head">
+                <a class="name permalink" href="#467-kyc-email-code-page-code-too-short">467-kyc-email-code-page-code-too-short</a>
+                <button class="copy-link" type="button" data-target="467-kyc-email-code-page-code-too-short" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_code_too_short.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/467-kyc-email-code-page-code-too-short.png"
+                  alt="E-Mail-Code zu kurz"
+                />
+              </div>
+              <div class="desc">
+                Nach <b>Weiter</b> mit weniger als sechs Ziffern erscheint unter dem Feld <b>Der Code sollte 6 Ziffern lang sein</b>. Die App ruft die API nicht auf.
               </div>
             </div>
             <div class="test" id="156-kyc-2fa-page-default">
