@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -52,7 +53,7 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
       } catch (e) {
         developer.log(e.toString());
         if (isClosed) return;
-        emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: e.toString()));
+        emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: _messageOf(e)));
         return;
       }
     }
@@ -85,7 +86,10 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
     } catch (e) {
       developer.log(e.toString());
       if (isClosed) return;
-      emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: e.toString()));
+      emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: _messageOf(e)));
     }
   }
+
+  // A timeout has no API text; the page then shows its generic sentence.
+  static String _messageOf(Object error) => error is TimeoutException ? '' : error.toString();
 }

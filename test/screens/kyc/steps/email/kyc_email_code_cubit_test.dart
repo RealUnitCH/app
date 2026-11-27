@@ -182,6 +182,30 @@ void main() {
     );
   });
 
+  group('timeouts', () {
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'a timed-out confirmation is a retryable failure with the generic text',
+      setUp: () => when(() => service.verifyEmail(any())).thenThrow(TimeoutException('stalled')),
+      build: build,
+      act: (c) => c.verify('123456'),
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+      ],
+    );
+
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'a timed-out register/email is a retryable failure with the generic text',
+      setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('stalled')),
+      build: build,
+      act: (c) => c.resend(),
+      expect: () => const [
+        KycEmailCodeResending(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+      ],
+    );
+  });
+
   group('resend', () {
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
       'calls register/email again and reports the new code',

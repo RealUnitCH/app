@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -140,6 +142,24 @@ void main() {
         throwsA(isA<ApiException>()),
       );
     });
+  });
+
+  group('email step requests stop after 20 seconds', () {
+    void expectTimeout(Future<Object?> Function(RealUnitRegistrationService) call) {
+      fakeAsync((async) {
+        final client = MockClient((_) => Completer<http.Response>().future);
+        Object? error;
+        call(build(client)).then<void>((_) {}, onError: (Object e) => error = e);
+
+        async.elapse(const Duration(seconds: 19));
+        expect(error, isNull);
+        async.elapse(const Duration(seconds: 2));
+        expect(error, isA<TimeoutException>());
+      });
+    }
+
+    test('verifyEmail', () => expectTimeout((s) => s.verifyEmail('123456')));
+    test('registerEmail', () => expectTimeout((s) => s.registerEmail('a@b.com')));
   });
 
   group('$RealUnitRegistrationService.verifyEmail', () {
