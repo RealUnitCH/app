@@ -24,8 +24,6 @@ import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 part 'kyc_state.dart';
 
 class KycCubit extends Cubit<KycState> {
-  static const _backendTimeoutMessage = 'KYC backend did not respond in time';
-
   static const _checkKycTimeout = Duration(seconds: 30);
 
   final DfxKycService _kycService;
@@ -88,7 +86,7 @@ class KycCubit extends Cubit<KycState> {
       await _runCheckKyc(generation).timeout(_checkKycTimeout);
     } on TimeoutException {
       if (isClosed || generation != _runGeneration) return;
-      emit(const KycFailure(_backendTimeoutMessage));
+      emit(const KycTimedOut());
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(ApiException.userFacingMessage(e)));
@@ -334,9 +332,9 @@ class KycCubit extends Cubit<KycState> {
       }
     } on RequestTimeoutException {
       // A single request (the email re-registration) ran out of time: same
-      // outcome and wording as the whole check timing out.
+      // outcome as the whole check timing out.
       if (isClosed || generation != _runGeneration) return;
-      emit(const KycFailure(_backendTimeoutMessage));
+      emit(const KycTimedOut());
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(ApiException.userFacingMessage(e)));

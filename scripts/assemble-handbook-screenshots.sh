@@ -519,6 +519,7 @@ MAPPING=(
   "468-kyc-email-page-error-snackbar-timeout=screens/kyc/goldens/macos/kyc_email_page_error_snackbar_timeout.png"
   "469-support-email-capture-page-timeout-snackbar=screens/support/goldens/macos/support_email_capture_page_timeout_snackbar.png"
   "470-support-email-capture-page-buy-flow-timeout-snackbar=screens/support/goldens/macos/support_email_capture_page_buy_flow_timeout_snackbar.png"
+  "471-kyc-failure-page-timeout=screens/kyc/goldens/macos/kyc_failure_page_timeout.png"
 )
 
 missing=()

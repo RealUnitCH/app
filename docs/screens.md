@@ -142,7 +142,7 @@ Column meaning:
 | KYC | `KycLoadingPage` | — | — | `204` |
 | KYC | `KycPendingPage` | — | — | `205` |
 | KYC | `KycCompletedPage` | — | — | `206` |
-| KYC | `KycFailurePage` | — | — | `207` |
+| KYC | `KycFailurePage` | — | — | `207`, `471` |
 | KYC | `KycManualReviewPage` | — | — | `208`, `323` |
 | KYC | `KycAccountMergePage` | — | — | `209` |
 | KYC | `KycMergeProcessingPage` | — | — | `210` |

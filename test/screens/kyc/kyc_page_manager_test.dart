@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_unsupported_step_page.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
@@ -293,6 +294,19 @@ void main() {
 
   // The KycManualReview arm renders the dedicated registration-under-review
   // waiting page — a state no page test drives directly.
+  testWidgets(
+    'KycViewManager shows the localized timeout sentence on the failure page for KycTimedOut',
+    (tester) async {
+      final cubit = _MockKycCubit();
+      when(() => cubit.state).thenReturn(const KycTimedOut());
+
+      await tester.pumpApp(viewWithState(cubit));
+
+      expect(find.byType(KycFailurePage), findsOneWidget);
+      expect(find.text(S.current.registerEmailTimeout), findsOneWidget);
+    },
+  );
+
   testWidgets(
     'KycViewManager renders KycManualReviewPage for KycManualReview',
     (tester) async {

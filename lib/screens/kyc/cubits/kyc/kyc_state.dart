@@ -110,6 +110,13 @@ class KycUnsupportedStepFailure extends KycState {
   List<Object?> get props => [stepName];
 }
 
+/// The API did not answer in time: the whole check ran out of time, or one
+/// request (the email re-registration) hit its own limit. The view shows the
+/// localized timeout sentence on the failure page.
+class KycTimedOut extends KycState {
+  const KycTimedOut();
+}
+
 class KycFailure extends KycState {
   final String message;
   const KycFailure(this.message);

@@ -382,7 +382,7 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      'a request timeout while auto-registering the stored email is the backend-timeout failure',
+      'a request timeout while auto-registering the stored email is KycTimedOut',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(level: KycLevel.level0),
@@ -396,7 +396,7 @@ void main() {
       act: (cubit) => cubit.checkKyc(),
       expect: () => [
         const KycLoading(),
-        const KycFailure('KYC backend did not respond in time'),
+        const KycTimedOut(),
       ],
     );
 
@@ -1722,7 +1722,7 @@ void main() {
 
           expect(states, [
             const KycLoading(),
-            const KycFailure('KYC backend did not respond in time'),
+            const KycTimedOut(),
           ]);
 
           sub.cancel();
