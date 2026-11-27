@@ -69,6 +69,16 @@ const _referralLinkHosts = {
   'dev.realunit.app',
 };
 
+/// Schemes an invite or promo link can arrive with.
+const _referralLinkSchemes = {
+  appLinkScheme,
+  'https',
+  'http',
+  'intent',
+  'android-app',
+  'ios-app',
+};
+
 bool _isReferralPathKind(String? value) => value == 'invite' || value == 'promo';
 
 bool _isWebReferralLink(Uri uri) =>
@@ -301,50 +311,52 @@ String? _extractReferralInviteCode(Uri uri) {
 /// [applyBootNavAction] replays the payload as an imperative `/pay` push only
 /// once that ladder lands on the dashboard.
 ///
-/// Non-scheme (in-app) navigation is left untouched (`null`).
+/// Invite and promo links (custom scheme, https, intent, android-app, ios-app;
+/// see [extractReferralInviteCode]) only hand over their code: it is stashed,
+/// or bound once the app is unlocked. They never select a route by their path:
+/// a cold start hands off to [appLinkColdStartLocation], a warm resume —
+/// locked or unlocked — is rewritten to [appLinkUrl], the same no-op as a
+/// path-carrying scheme URL above. Any other link with a scheme is treated the
+/// same way.
+///
+/// Non-scheme (in-app) navigation is left untouched (`null`); the router's PIN
+/// check (`pin_route_guard.dart`) runs after this redirect.
 //
 // @no-integration-test: OS-level custom-scheme delivery and foregrounding can
 // only be exercised on a real device, and no integration_test/ harness exists
 // in this repo yet. The redirect is covered by widget tests in
-// app_link_entry_test.dart.
+// app_link_entry_test.dart and app_link_invite_no_route_test.dart.
 String? appLinkSchemeRedirect(
   GoRouterState state,
   String currentLocation,
   GoRouter router,
 ) {
-  // https App Links for /invite/{code} (Android) — go_router may receive them
-  // as hierarchical https URIs rather than the custom scheme. Chrome intent
-  // URLs (`intent://realunit.app/invite/{code}#Intent;scheme=https;…`) are
-  // the same App Link once the fragment is ignored.
-  if (state.uri.scheme == 'https' ||
-      state.uri.scheme == 'http' ||
-      state.uri.scheme == 'intent' ||
-      state.uri.scheme == 'android-app' ||
-      state.uri.scheme == 'ios-app') {
-    final httpsCode = extractReferralInviteCode(state.uri);
-    if (httpsCode != null) {
-      final current = Uri.parse(currentLocation);
-      final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
+  // In-app navigation carries no scheme.
+  if (!state.uri.hasScheme) return null;
+  final current = Uri.parse(currentLocation);
+  final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
+
+  // Invite and promo links of every kind: the custom scheme, https App Links
+  // (Android) that go_router receives as hierarchical https URIs, Chrome
+  // intent URLs (`intent://realunit.app/invite/{code}#Intent;scheme=https;…`,
+  // the same App Link once the fragment is ignored), `android-app://` referrers
+  // and `ios-app://` Smart App Banner arguments. They only hand the code over;
+  // their path never selects a route.
+  if (_referralLinkSchemes.contains(state.uri.scheme)) {
+    final inviteCode = extractReferralInviteCode(state.uri);
+    if (inviteCode != null) {
       return _handleReferralInviteRedirect(
-        code: httpsCode,
+        code: inviteCode,
         isInAppRoute: isInAppRoute,
         router: router,
       );
     }
-    return null;
   }
 
-  if (state.uri.scheme != appLinkScheme) return null;
-  final current = Uri.parse(currentLocation);
-  final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
-
-  final inviteCode = extractReferralInviteCode(state.uri);
-  if (inviteCode != null) {
-    return _handleReferralInviteRedirect(
-      code: inviteCode,
-      isInAppRoute: isInAppRoute,
-      router: router,
-    );
+  // Any other link from outside the app foregrounds it and nothing else: its
+  // path never selects a route.
+  if (state.uri.scheme != appLinkScheme) {
+    return isInAppRoute ? appLinkUrl : appLinkColdStartLocation;
   }
 
   final paymentPayload = extractPaymentDeeplinkPayload(state.uri.toString());
@@ -409,6 +421,11 @@ String? appLinkSchemeRedirect(
 
 /// Shared cold/warm handling for invite codes — same security properties as
 /// the payment carve-out (never `go` over KYC `extra` / back stack; defer bind).
+///
+/// Warm resume returns [appLinkUrl] whatever the link carries, locked or not:
+/// it matches no route, so [appLinkOnException] keeps the current screen (the
+/// same no-op as a path-carrying `realunit-wallet://` open). Returning null
+/// would let go_router match the link's own path as an in-app route.
 String? _handleReferralInviteRedirect({
   required String code,
   required bool isInAppRoute,
@@ -419,10 +436,10 @@ String? _handleReferralInviteRedirect({
       // Unlocked: schedule stashes then take-binds once. Do not stash here or
       // a dashboard boot bind can take the same code in parallel.
       scheduleReferralBind(router, code);
-      return null;
+      return appLinkUrl;
     }
     unawaited(stashPendingReferralCode(code));
-    return null;
+    return appLinkUrl;
   }
   unawaited(stashPendingReferralCode(code));
   return appLinkColdStartLocation;
@@ -450,8 +467,9 @@ void appLinkOnException(
 ) {
   if (state.uri.scheme == appLinkScheme) return;
   // https / intent / android-app / ios-app App Links for /invite and /promo
-  // stash in [appLinkSchemeRedirect] then fall through unmatched — same no-op
-  // as the custom scheme. Do not assert: those URIs are OS-delivered.
+  // are rewritten by [appLinkSchemeRedirect]; one that still arrives here
+  // unmatched is the same no-op as the custom scheme. Do not assert: those
+  // URIs are OS-delivered.
   if (extractReferralInviteCode(state.uri) != null) return;
   // A non-scheme URL that matches no route is a programming error. Installing
   // onException removes go_router's default error screen, so fail loud where

@@ -7,13 +7,17 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pay/pay_info_page.dart';
+import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/send/send_info_page.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 import '../../helper/helper.dart';
 
 class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
+
+class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
 
 void main() {
   late _MockHomeBloc homeBloc;
@@ -22,7 +26,15 @@ void main() {
     // /pay and /send land on info pages (no camera). The stub stays so a later
     // Continue onto a scanner page does not throw MissingPluginException.
     stubMobileScannerChannel();
+    // The router's PIN check reads the session state; these tests run unlocked.
+    final pinAuthCubit = _MockPinAuthCubit();
+    when(
+      () => pinAuthCubit.state,
+    ).thenReturn(const PinAuthState(isPinSetup: true, isPinVerified: true));
+    getIt.registerSingleton<PinAuthCubit>(pinAuthCubit);
   });
+
+  tearDownAll(() => getIt.unregister<PinAuthCubit>());
 
   setUp(() {
     homeBloc = _MockHomeBloc();
