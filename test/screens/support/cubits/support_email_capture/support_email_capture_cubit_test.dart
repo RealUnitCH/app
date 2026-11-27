@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_email_capture/support_email_capture_cubit.dart';
@@ -107,8 +108,8 @@ void main() {
 
   group('timeout', () {
     blocTest<SupportEmailCaptureCubit, SupportEmailCaptureState>(
-      'a timed-out register/email is TimedOut, not a failure with the exception text',
-      setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('stalled')),
+      'a request timeout is TimedOut, not a failure with the exception text',
+      setUp: () => when(() => service.registerEmail(any())).thenThrow(const RequestTimeoutException(Duration(seconds: 20))),
       build: build,
       act: (c) => c.submit('a@b.com'),
       expect: () => const [
@@ -131,6 +132,17 @@ void main() {
     verify(() => service.registerEmail('a@b.com')).called(1);
     await cubit.close();
   });
+
+  blocTest<SupportEmailCaptureCubit, SupportEmailCaptureState>(
+    'a sign-in timeout before the request is not reported as a server timeout',
+    setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('signature')),
+    build: build,
+    act: (c) => c.submit('a@b.com'),
+    expect: () => [
+      const SupportEmailCaptureLoading(),
+      isA<SupportEmailCaptureFailure>(),
+    ],
+  );
 
   group('closed while register/email is in flight', () {
     for (final outcome in ['status', 'api error', 'other error']) {

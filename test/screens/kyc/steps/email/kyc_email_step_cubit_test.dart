@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_step/kyc_email_step_cubit.dart';
@@ -132,8 +133,8 @@ void main() {
 
   group('timeout', () {
     blocTest<KycEmailStepCubit, KycEmailStepState>(
-      'a timed-out register/email is a timeout failure without the exception text',
-      setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('stalled')),
+      'a request timeout is a timeout failure without the exception text',
+      setUp: () => when(() => service.registerEmail(any())).thenThrow(const RequestTimeoutException(Duration(seconds: 20))),
       build: build,
       act: (c) => c.registerEmail('a@b.com'),
       expect: () => const [
@@ -156,6 +157,17 @@ void main() {
     verify(() => service.registerEmail('a@b.com')).called(1);
     await cubit.close();
   });
+
+  blocTest<KycEmailStepCubit, KycEmailStepState>(
+    'a sign-in timeout before the request is not reported as a server timeout',
+    setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('signature')),
+    build: build,
+    act: (c) => c.registerEmail('a@b.com'),
+    expect: () => [
+      const KycEmailStepLoading(),
+      isA<KycEmailStepFailure>().having((s) => s.error, 'error', KycEmailStepError.unknown),
+    ],
+  );
 
   group('closed while register/email is in flight', () {
     for (final outcome in ['status', 'api error', 'other error']) {

@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exc
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_date_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/sell_quote_amount.dart';
 import 'package:realunit_wallet/packages/service/dfx/sell_unsigned_tx_check.dart';
@@ -34,6 +35,7 @@ void main() {
       const UpgradeRequiredException(minSupportedVersion: '1.3.0'),
       const RegistrationRejectedException(code: 'TEST', message: 'test'),
       const RegistrationDateUnavailableException(message: 'test'),
+      const RequestTimeoutException(Duration(seconds: 20)),
       const RegistrationRequiredException(code: 'TEST', message: 'test'),
       const KycLevelRequiredException(
         code: 'TEST',

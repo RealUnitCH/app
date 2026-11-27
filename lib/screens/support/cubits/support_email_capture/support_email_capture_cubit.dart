@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 
@@ -50,9 +50,10 @@ class SupportEmailCaptureCubit extends Cubit<SupportEmailCaptureState> {
     } catch (e) {
       developer.log(e.toString());
       if (isClosed) return;
-      // A timeout has no API text; the page shows its own sentence for it.
+      // The server did not answer in time (the request was sent); the page
+      // shows its own sentence for it. Other failures keep their text.
       emit(
-        e is TimeoutException
+        e is RequestTimeoutException
             ? const SupportEmailCaptureTimedOut()
             : SupportEmailCaptureFailure(e.toString()),
       );

@@ -13,6 +13,7 @@ import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
@@ -466,7 +467,7 @@ void main() {
         async.elapse(const Duration(seconds: 79));
         expect(error, isNull);
         async.elapse(const Duration(seconds: 2));
-        expect(error, isA<TimeoutException>());
+        expect(error, isA<RequestTimeoutException>());
       });
     });
   });

@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_code/kyc_email_code_cubit.dart';
@@ -137,7 +139,7 @@ void main() {
         var calls = 0;
         when(() => service.verifyEmail(any())).thenAnswer((_) async {
           calls++;
-          if (calls == 1) throw TimeoutException('stalled');
+          if (calls == 1) throw const RequestTimeoutException(Duration(seconds: 20));
           throw const ApiException(
             statusCode: 403,
             code: 'UNKNOWN',
@@ -171,7 +173,7 @@ void main() {
         var calls = 0;
         when(() => service.verifyEmail(any())).thenAnswer((_) async {
           calls++;
-          if (calls == 1) throw TimeoutException('stalled');
+          if (calls == 1) throw const RequestTimeoutException(Duration(seconds: 20));
           throw const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token');
         });
         when(() => service.registerEmail(any())).thenAnswer(
@@ -265,7 +267,7 @@ void main() {
   group('timeouts', () {
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
       'a timed-out confirmation is a retryable failure with the generic text',
-      setUp: () => when(() => service.verifyEmail(any())).thenThrow(TimeoutException('stalled')),
+      setUp: () => when(() => service.verifyEmail(any())).thenThrow(const RequestTimeoutException(Duration(seconds: 20))),
       build: build,
       act: (c) => c.verify('123456'),
       expect: () => const [
@@ -276,7 +278,7 @@ void main() {
 
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
       'a timed-out register/email is a retryable failure with the generic text',
-      setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('stalled')),
+      setUp: () => when(() => service.registerEmail(any())).thenThrow(const RequestTimeoutException(Duration(seconds: 20))),
       build: build,
       act: (c) => c.resend(),
       expect: () => const [
@@ -325,7 +327,7 @@ void main() {
         var calls = 0;
         when(() => service.verifyEmail(any())).thenAnswer((_) async {
           calls++;
-          if (calls == 1) throw TimeoutException('stalled');
+          if (calls == 1) throw const RequestTimeoutException(Duration(seconds: 20));
           if (calls == 2) throw const ApiException(statusCode: 500, code: 'UNKNOWN', message: 'boom');
           throw const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token');
         });
@@ -356,7 +358,7 @@ void main() {
         var calls = 0;
         when(() => service.verifyEmail(any())).thenAnswer((_) async {
           calls++;
-          if (calls == 1) throw TimeoutException('stalled');
+          if (calls == 1) throw const RequestTimeoutException(Duration(seconds: 20));
           throw const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token');
         });
         when(() => service.registerEmail(any())).thenAnswer(
@@ -376,6 +378,35 @@ void main() {
         KycEmailCodeResent(),
         KycEmailCodeVerifying(),
         KycEmailCodeFailure(KycEmailCodeError.invalidCode),
+      ],
+      verify: (_) => verify(() => service.registerEmail('a@b.com')).called(1),
+    );
+  });
+
+  group('no API answer on the confirmation', () {
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'a dropped connection makes a later 403 settle through register/email',
+      setUp: () {
+        var calls = 0;
+        when(() => service.verifyEmail(any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw http.ClientException('connection closed');
+          throw const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token');
+        });
+        when(() => service.registerEmail(any())).thenAnswer(
+          (_) async => RegistrationEmailStatus.emailRegistered,
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.verify('123456');
+        await c.verify('123456');
+      },
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+        KycEmailCodeVerifying(),
+        KycEmailCodeCompleted(RegistrationEmailStatus.emailRegistered),
       ],
       verify: (_) => verify(() => service.registerEmail('a@b.com')).called(1),
     );
@@ -513,6 +544,27 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       await cubit.close();
       pending.complete();
+
+      await expectLater(call, completes);
+      verify(() => service.registerEmail('a@b.com')).called(1);
+      expect(states, const [KycEmailCodeVerifying()]);
+      await sub.cancel();
+    });
+
+    test('a 409 after close still finishes register/email, without emitting', () async {
+      final pending = Completer<void>();
+      when(() => service.verifyEmail(any())).thenAnswer((_) => pending.future);
+      when(() => service.registerEmail(any())).thenAnswer(
+        (_) async => RegistrationEmailStatus.mergeRequested,
+      );
+      final cubit = build();
+      final states = <KycEmailCodeState>[];
+      final sub = cubit.stream.listen(states.add);
+
+      final call = cubit.verify('123456');
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+      pending.completeError(const ApiException(statusCode: 409, code: 'UNKNOWN', message: 'any conflict text'));
 
       await expectLater(call, completes);
       verify(() => service.registerEmail('a@b.com')).called(1);

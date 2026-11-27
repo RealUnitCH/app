@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -20,7 +19,7 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
   // retry after a failed second `register/email` call must not send it again.
   bool _codeConfirmed = false;
 
-  // Set when a confirmation timed out: the server may still have accepted the
+  // Set when a confirmation got no API answer: the server may still have accepted the
   // code, so a 403 on a later try can mean "already used" and is settled
   // through register/email instead of being shown as a wrong code. Cleared
   // only by a definitive answer: an accepted code, a wrong code, or a
@@ -70,7 +69,6 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
         _confirmationUnknown = false;
       } on ApiException catch (e) {
         developer.log(e.toString());
-        if (isClosed) return;
         // 409: another account holds the address. The API checks that only
         // after it accepted (and used up) the code, so a retry must not send
         // it again: treat it like an accepted code.
@@ -82,10 +80,13 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
         // used the code), register/email decides the next step
         // (email_registered, merge_requested or a new code) instead of the app
         // reading the error text.
+        // This runs even after the page closed: register/email only guards
+        // its emits.
         if (e.statusCode == 409 || (e.statusCode == 403 && _confirmationUnknown)) {
           await _registerEmail();
           return;
         }
+        if (isClosed) return;
         // The API answers a wrong, expired or used-up code with 403.
         if (e.statusCode == 403) {
           emit(const KycEmailCodeFailure(KycEmailCodeError.invalidCode));
@@ -95,7 +96,11 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
         return;
       } catch (e) {
         developer.log(e.toString());
-        if (e is TimeoutException) _confirmationUnknown = true;
+        // No API answer (timeout, dropped connection): the request may have
+        // reached the server and used the code. Treated as unknown, so a later
+        // 403 is settled through register/email; if the failure happened
+        // before sending, that costs at most a new code.
+        _confirmationUnknown = true;
         if (isClosed) return;
         emit(const KycEmailCodeFailure(KycEmailCodeError.unknown));
         return;

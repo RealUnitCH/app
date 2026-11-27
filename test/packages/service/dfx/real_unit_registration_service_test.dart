@@ -26,6 +26,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -154,7 +155,7 @@ void main() {
         async.elapse(const Duration(seconds: 19));
         expect(error, isNull);
         async.elapse(const Duration(seconds: 2));
-        expect(error, isA<TimeoutException>());
+        expect(error, isA<RequestTimeoutException>());
       });
     }
 
