@@ -113,7 +113,7 @@ Column meaning:
 | Settings | `SettingsEditPendingPage` | — | — | `240` |
 | Settings | `SettingsEditFailurePage` | — | — | `241` |
 | Support | `SupportPage` | `support` | `/support` | `246` |
-| Support | `SupportEmailCapturePage` | `supportEmailCapture` | `/support/email` | `247`, `248`, `249` |
+| Support | `SupportEmailCapturePage` | `supportEmailCapture` | `/support/email` | `247`, `248`, `249`, `469`, `470` |
 | Support | `SupportTicketsPage` | `supportTickets` | `/support/tickets` | `253`, `254`, `255`, `256` |
 | Support | `SupportCreateTicketPage` | `supportCreateTicket` | `/support/create` | `250`, `251`, `252`, `381`, `382`, `383` |
 | Support | `SupportChatPage` | `supportChat` | `/support/chat/:uid` | `257`, `258`, `259`, `260`, `261` |
@@ -126,7 +126,7 @@ Column meaning:
 | KYC | `KycRegistrationAddressStep` | — | — | `41`, `55`, `167` |
 | KYC | `KycRegistrationTaxStep` | — | — | `56`, `57`, `58`, `59`, `60`, `61`, `61b`, `61c`, `61d`, `61e`, `61f`, `61g`, `61h`, `61i`, `61j`, `61k` |
 | KYC | `KycNationalityPage` | — | — | `173`, `174`, `175`, `176`, `177`, `178`, `179` |
-| KYC | `KycEmailPage` | — | — | `37`, `38`, `39`, `148`, `149`, `150` |
+| KYC | `KycEmailPage` | — | — | `37`, `38`, `39`, `148`, `149`, `150`, `468` |
 | KYC | `KycEmailVerificationPage` | — | — | `152`, `153`, `154`, `155` |
 | KYC | `KycEmailCodePage` | — | — | `458`, `459`, `460`, `461`, `462`, `463`, `464`, `465`, `466`, `467` |
 | KYC | `KycConfirmEmailPage` | — | — | `151` |

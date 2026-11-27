@@ -93,7 +93,11 @@ class _KycEmailFormState extends State<KycEmailForm> {
         if (state is KycEmailStepFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(
+                state.error == KycEmailStepError.timeout
+                    ? S.of(context).registerEmailTimeout
+                    : state.message,
+              ),
               backgroundColor: RealUnitColors.status.red600,
             ),
           );

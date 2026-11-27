@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -43,7 +44,12 @@ class SupportEmailCaptureCubit extends Cubit<SupportEmailCaptureState> {
     } catch (e) {
       developer.log(e.toString());
       if (isClosed) return;
-      emit(SupportEmailCaptureFailure(e.toString()));
+      // A timeout has no API text; the page shows its own sentence for it.
+      emit(
+        e is TimeoutException
+            ? const SupportEmailCaptureTimedOut()
+            : SupportEmailCaptureFailure(e.toString()),
+      );
     }
   }
 }

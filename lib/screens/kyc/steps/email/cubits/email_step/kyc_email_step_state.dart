@@ -36,7 +36,7 @@ class KycEmailStepCodeSent extends KycEmailStepState {
   List<Object?> get props => [email];
 }
 
-enum KycEmailStepError { emailDoesNotMatch, unknown }
+enum KycEmailStepError { emailDoesNotMatch, timeout, unknown }
 
 class KycEmailStepFailure extends KycEmailStepState {
   final KycEmailStepError error;

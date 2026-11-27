@@ -119,6 +119,15 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
           }
           return;
         }
+        if (state is SupportEmailCaptureTimedOut) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(S.of(context).registerEmailTimeout),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
+          return;
+        }
         if (state is SupportEmailCaptureFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

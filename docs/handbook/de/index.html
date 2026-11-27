@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 473 Visual-Regression Goldens (473 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 476 Visual-Regression Goldens (476 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 473 App-Screenshots dieser Seite sind Goldens aus
+            Die 476 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 473 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 476 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -6255,7 +6255,7 @@
                 <div class="file">test/goldens/screens/kyc/</div>
               </div>
               <div class="rhs">
-                <b>23 Screens</b>
+                <b>24 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/kyc"
@@ -6316,6 +6316,22 @@
               </div>
               <div class="desc">
                 Rote Fehler-SnackBar bei einem <b>unbekannten Fehler</b> während der E-Mail-Übermittlung. Angezeigt wird die generische Meldung, dass etwas schiefgelaufen ist und der Nutzer es erneut versuchen soll.
+              </div>
+            </div>
+            <div class="test" id="468-kyc-email-page-error-snackbar-timeout">
+              <div class="head">
+                <a class="name permalink" href="#468-kyc-email-page-error-snackbar-timeout">468-kyc-email-page-error-snackbar-timeout</a>
+                <button class="copy-link" type="button" data-target="468-kyc-email-page-error-snackbar-timeout" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_page_error_snackbar_timeout.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/468-kyc-email-page-error-snackbar-timeout.png"
+                  alt="E-Mail registrieren — Zeitüberschreitung"
+                />
+              </div>
+              <div class="desc">
+                Rote Fehler-SnackBar <b>Der Server hat nicht rechtzeitig geantwortet. Bitte versuchen Sie es erneut.</b>, wenn <code>register/email</code> nicht innerhalb von 20 Sekunden antwortet. Das Formular bleibt, ein erneutes <b>Weiter</b> sendet die Anfrage noch einmal.
               </div>
             </div>
             <div class="test" id="151-kyc-confirm-email-page-default">
@@ -8875,7 +8891,7 @@
                 <div class="file">test/goldens/screens/support/</div>
               </div>
               <div class="rhs">
-                <b>4 Screens</b>
+                <b>6 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/support"
@@ -8952,6 +8968,38 @@
               </div>
               <div class="desc">
                 Dasselbe E-Mail-Formular, jedoch mit abweichendem Erklärtext für den Kauf-Ablauf: Für den Kauf wird die primäre E-Mail-Adresse benötigt. Der Nutzer sieht diese Variante, wenn die Kaufbestätigung eine hinterlegte E-Mail-Adresse verlangt und ihn dafür auf dieses Formular leitet.
+              </div>
+            </div>
+            <div class="test" id="469-support-email-capture-page-timeout-snackbar">
+              <div class="head">
+                <a class="name permalink" href="#469-support-email-capture-page-timeout-snackbar">469-support-email-capture-page-timeout-snackbar</a>
+                <button class="copy-link" type="button" data-target="469-support-email-capture-page-timeout-snackbar" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/support/goldens/macos/support_email_capture_page_timeout_snackbar.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/469-support-email-capture-page-timeout-snackbar.png"
+                  alt="E-Mail-Erfassung Support — Zeitüberschreitung"
+                />
+              </div>
+              <div class="desc">
+                Rote Fehler-SnackBar <b>Der Server hat nicht rechtzeitig geantwortet. Bitte versuchen Sie es erneut.</b> auf der E-Mail-Erfassung für den Support, wenn <code>register/email</code> nicht innerhalb von 20 Sekunden antwortet. Das Formular bleibt für einen neuen Versuch.
+              </div>
+            </div>
+            <div class="test" id="470-support-email-capture-page-buy-flow-timeout-snackbar">
+              <div class="head">
+                <a class="name permalink" href="#470-support-email-capture-page-buy-flow-timeout-snackbar">470-support-email-capture-page-buy-flow-timeout-snackbar</a>
+                <button class="copy-link" type="button" data-target="470-support-email-capture-page-buy-flow-timeout-snackbar" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/support/goldens/macos/support_email_capture_page_buy_flow_timeout_snackbar.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/470-support-email-capture-page-buy-flow-timeout-snackbar.png"
+                  alt="E-Mail-Erfassung Kauf — Zeitüberschreitung"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe SnackBar <b>Der Server hat nicht rechtzeitig geantwortet. Bitte versuchen Sie es erneut.</b> auf der E-Mail-Erfassung aus dem Kauf, mit deren eigener Beschreibung.
               </div>
             </div>
           </div>

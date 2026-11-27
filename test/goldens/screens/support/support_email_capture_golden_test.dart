@@ -64,5 +64,53 @@ void main() {
         ),
       ),
     );
+
+    // TimedOut (register/email did not answer within 20 s) → red SnackBar with
+    // the localized `registerEmailTimeout` sentence; the form stays for a retry.
+    goldenTest(
+      'timeout — red snackbar with the timeout sentence',
+      fileName: 'support_email_capture_page_timeout_snackbar',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pumpAndSettle();
+      },
+      builder: () {
+        whenListen(
+          cubit,
+          Stream<SupportEmailCaptureState>.value(const SupportEmailCaptureTimedOut()),
+          initialState: const SupportEmailCaptureInitial(),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    // Same timeout on the buy-flow entry, which carries its own description.
+    goldenTest(
+      'buy-flow entry timeout — red snackbar with the timeout sentence',
+      fileName: 'support_email_capture_page_buy_flow_timeout_snackbar',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pump();
+        await tester.pumpAndSettle();
+      },
+      builder: () {
+        whenListen(
+          cubit,
+          Stream<SupportEmailCaptureState>.value(const SupportEmailCaptureTimedOut()),
+          initialState: const SupportEmailCaptureInitial(),
+        );
+        return wrapForGolden(
+          Builder(
+            builder: (context) => BlocProvider<SupportEmailCaptureCubit>.value(
+              value: cubit,
+              child: SupportEmailCaptureView(
+                description: S.of(context).buyPrimaryEmailRequiredCaptureDescription,
+              ),
+            ),
+          ),
+        );
+      },
+    );
   });
 }

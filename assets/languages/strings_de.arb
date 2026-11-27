@@ -378,6 +378,7 @@
   "registerEmailDoesNotMatch": "Die eingegebene E-Mail stimmt nicht mit der bereits verifizierten E-Mail überein. Bitte verwenden Sie die E-Mail, mit der Sie sich ursprünglich registriert haben.",
   "registerEmailInvalid": "E-Mail ist ungültig",
   "registerEmailRequired": "E-Mail ist erforderlich",
+  "registerEmailTimeout": "Der Server hat nicht rechtzeitig geantwortet. Bitte versuchen Sie es erneut.",
   "registerEmailVerification": "E-Mail Bestätigung",
   "registerEmailVerificationBitboxSignHint": "Bitte bestätigen Sie die Signatur auf Ihrer BitBox — die Nachricht erstreckt sich über mehrere Seiten, halten Sie den Touchsensor zum Weiterblättern.",
   "registerEmailVerificationButton": "Ich habe meine E-Mail bestätigt",

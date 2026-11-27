@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -41,11 +42,11 @@ class KycEmailStepCubit extends Cubit<KycEmailStepState> {
     } catch (e) {
       developer.log(e.toString());
       if (isClosed) return;
+      // A timeout has no API text; the page shows its own sentence for it.
       emit(
-        KycEmailStepFailure(
-          KycEmailStepError.unknown,
-          e.toString(),
-        ),
+        e is TimeoutException
+            ? const KycEmailStepFailure(KycEmailStepError.timeout, '')
+            : KycEmailStepFailure(KycEmailStepError.unknown, e.toString()),
       );
     }
   }

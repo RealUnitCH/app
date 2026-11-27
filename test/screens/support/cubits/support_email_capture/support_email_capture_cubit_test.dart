@@ -105,6 +105,19 @@ void main() {
     );
   });
 
+  group('timeout', () {
+    blocTest<SupportEmailCaptureCubit, SupportEmailCaptureState>(
+      'a timed-out register/email is TimedOut, not a failure with the exception text',
+      setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('stalled')),
+      build: build,
+      act: (c) => c.submit('a@b.com'),
+      expect: () => const [
+        SupportEmailCaptureLoading(),
+        SupportEmailCaptureTimedOut(),
+      ],
+    );
+  });
+
   group('closed while register/email is in flight', () {
     for (final outcome in ['status', 'api error', 'other error']) {
       test('a late $outcome does not emit or throw', () async {

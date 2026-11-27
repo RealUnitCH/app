@@ -378,6 +378,7 @@
   "registerEmailDoesNotMatch": "The email you entered does not match the previously verified email. Please use the email you originally registered with.",
   "registerEmailInvalid": "Email is invalid",
   "registerEmailRequired": "Email is required",
+  "registerEmailTimeout": "The server did not answer in time. Please try again.",
   "registerEmailVerification": "Email verification",
   "registerEmailVerificationBitboxSignHint": "Confirm the signature on your BitBox — the message spans multiple pages, hold the touch sensor to advance.",
   "registerEmailVerificationButton": "I have confirmed my email address",

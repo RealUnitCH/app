@@ -41,6 +41,13 @@ class SupportEmailCaptureCodeSent extends SupportEmailCaptureState {
   List<Object?> get props => [email];
 }
 
+/// register/email did not answer in time. Distinct from
+/// [SupportEmailCaptureFailure]: there is no API text, the view shows its own
+/// localized sentence and the user can submit again.
+class SupportEmailCaptureTimedOut extends SupportEmailCaptureState {
+  const SupportEmailCaptureTimedOut();
+}
+
 class SupportEmailCaptureFailure extends SupportEmailCaptureState {
   final String message;
 

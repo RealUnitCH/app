@@ -517,6 +517,9 @@ MAPPING=(
   "465-kyc-email-code-page-code-required=screens/kyc/goldens/macos/kyc_email_code_page_code_required.png"
   "466-kyc-email-code-page-code-digits-only=screens/kyc/goldens/macos/kyc_email_code_page_code_digits_only.png"
   "467-kyc-email-code-page-code-too-short=screens/kyc/goldens/macos/kyc_email_code_page_code_too_short.png"
+  "468-kyc-email-page-error-snackbar-timeout=screens/kyc/goldens/macos/kyc_email_page_error_snackbar_timeout.png"
+  "469-support-email-capture-page-timeout-snackbar=screens/support/goldens/macos/support_email_capture_page_timeout_snackbar.png"
+  "470-support-email-capture-page-buy-flow-timeout-snackbar=screens/support/goldens/macos/support_email_capture_page_buy_flow_timeout_snackbar.png"
 )
 
 missing=()

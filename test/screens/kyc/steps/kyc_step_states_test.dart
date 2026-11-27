@@ -25,9 +25,12 @@ void main() {
       expect(const KycEmailStepCodeSent('a@b.com'), isNot(const KycEmailStepCodeSent('c@d.com')));
     });
 
-    test('KycEmailStepError enum has exactly emailDoesNotMatch + unknown', () {
-      expect(KycEmailStepError.values.toSet(),
-          {KycEmailStepError.emailDoesNotMatch, KycEmailStepError.unknown});
+    test('KycEmailStepError enum has exactly emailDoesNotMatch + timeout + unknown', () {
+      expect(KycEmailStepError.values.toSet(), {
+        KycEmailStepError.emailDoesNotMatch,
+        KycEmailStepError.timeout,
+        KycEmailStepError.unknown,
+      });
     });
   });
 

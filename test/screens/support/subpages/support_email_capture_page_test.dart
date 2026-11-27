@@ -540,6 +540,21 @@ void main() {
       await controller.close();
     });
 
+    testWidgets('TimedOut shows the localized timeout sentence and keeps the form', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable(const [SupportEmailCaptureTimedOut()]),
+        initialState: const SupportEmailCaptureInitial(),
+      );
+
+      await tester.pumpWidget(pumpView());
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(S.current.registerEmailTimeout), findsOne);
+      expect(find.byType(SupportEmailCaptureView), findsOne);
+    });
+
     testWidgets('Failure state shows the raw error message', (tester) async {
       whenListen(
         cubit,

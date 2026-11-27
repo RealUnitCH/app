@@ -178,6 +178,19 @@ void main() {
       expect(find.byType(SnackBar), findsOne);
     });
 
+    testWidgets('a timeout shows the localized timeout sentence', (tester) async {
+      whenListen(
+        kycEmailStepCubit,
+        Stream.fromIterable([const KycEmailStepFailure(KycEmailStepError.timeout, '')]),
+        initialState: const KycEmailStepInitial(),
+      );
+
+      await tester.pumpApp(buildSubject(const KycEmailView()));
+      await tester.pump();
+
+      expect(find.text(S.current.registerEmailTimeout), findsOne);
+    });
+
     testWidgets(
       're-runs checkKyc after merge confirm pops with true',
       (tester) async {

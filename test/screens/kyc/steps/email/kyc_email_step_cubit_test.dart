@@ -130,6 +130,19 @@ void main() {
     });
   });
 
+  group('timeout', () {
+    blocTest<KycEmailStepCubit, KycEmailStepState>(
+      'a timed-out register/email is a timeout failure without the exception text',
+      setUp: () => when(() => service.registerEmail(any())).thenThrow(TimeoutException('stalled')),
+      build: build,
+      act: (c) => c.registerEmail('a@b.com'),
+      expect: () => const [
+        KycEmailStepLoading(),
+        KycEmailStepFailure(KycEmailStepError.timeout, ''),
+      ],
+    );
+  });
+
   group('closed while register/email is in flight', () {
     for (final outcome in ['status', 'api error', 'other error']) {
       test('a late $outcome does not emit or throw', () async {
