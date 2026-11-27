@@ -71,7 +71,7 @@ Helpers:
 The migration is repo-wide. Surfaces on `ScrollableActionsLayout` are
 registered in [`kResponsiveSurfaceCatalog`](../test/helper/responsive_surface_catalog.dart)
 — the BitBox connect sheet plus dashboard, create wallet, verify pin, the three KYC status
-pages, KYC account-merge / merge-processing / link-wallet / kyc_update_share_register_name_page,
+pages, KYC account-merge / merge-processing / link-wallet / kyc_update_share_register_name_page / kyc_email_code_page,
 KYC financial-data questions, onboarding completed, support create-ticket, settings_user_data_page,
 five settings_user_data edit/status subpages,
 verify seed phrase, restore wallet, buy, sell, setup PIN, and the two CTA-less KYC static

@@ -23,7 +23,10 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
     : _service = service,
       super(const KycEmailCodeInitial());
 
+  // The page closes the cubit when the user leaves; a request still in flight
+  // then must not emit (every emit below follows an await).
   Future<void> verify(String code) async {
+    if (isClosed) return;
     emit(const KycEmailCodeVerifying());
     if (!_codeConfirmed) {
       try {
@@ -31,6 +34,7 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
         _codeConfirmed = true;
       } on ApiException catch (e) {
         developer.log(e.toString());
+        if (isClosed) return;
         // The API answers a wrong, expired or used-up code with 403.
         if (e.statusCode == 403) {
           emit(const KycEmailCodeFailure(KycEmailCodeError.invalidCode));
@@ -46,6 +50,7 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
         return;
       } catch (e) {
         developer.log(e.toString());
+        if (isClosed) return;
         emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: e.toString()));
         return;
       }
@@ -56,13 +61,16 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
   /// Requests a new code: `register/email` sends one while the address is not
   /// proven yet.
   Future<void> resend() async {
+    if (isClosed) return;
     emit(const KycEmailCodeResending());
     await _registerEmail();
   }
 
   Future<void> _registerEmail() async {
+    if (isClosed) return;
     try {
       final status = await _service.registerEmail(email);
+      if (isClosed) return;
       if (status == RegistrationEmailStatus.verificationCodeSent) {
         // The address is still not proven, so the API sent a new code.
         _codeConfirmed = false;
@@ -72,9 +80,11 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
       emit(KycEmailCodeCompleted(status));
     } on ApiException catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: ApiException.userFacingMessage(e)));
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: e.toString()));
     }
   }

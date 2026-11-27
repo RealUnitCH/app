@@ -8,6 +8,7 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 /// Code entry for an address the API has not stored yet
 /// (register/email returned `verification_code_sent`). Pops with the final
@@ -50,6 +51,11 @@ class _KycEmailCodeViewState extends State<KycEmailCodeView> {
   Widget build(BuildContext context) {
     return BlocListener<KycEmailCodeCubit, KycEmailCodeState>(
       listener: (context, state) {
+        // The user may leave while a request is in flight. Once this route is
+        // no longer current (its exit animation still runs), a late result
+        // must not pop or show anything: a pop would remove the route below.
+        final route = ModalRoute.of(context);
+        if (route != null && !route.isCurrent) return;
         if (state is KycEmailCodeCompleted) {
           Navigator.of(context).pop(state.status);
           return;
@@ -77,7 +83,7 @@ class _KycEmailCodeViewState extends State<KycEmailCodeView> {
       },
       child: Scaffold(
         appBar: AppBar(title: Text(S.of(context).registerEmailCode)),
-        body: SingleChildScrollView(
+        body: Padding(
           padding: const .symmetric(horizontal: 20),
           child: SafeArea(
             child: GestureDetector(
@@ -85,76 +91,77 @@ class _KycEmailCodeViewState extends State<KycEmailCodeView> {
               behavior: .opaque,
               child: Form(
                 key: _formKey,
-                child: Column(
-                  crossAxisAlignment: .start,
-                  spacing: 16,
-                  children: [
-                    Padding(
-                      padding: const .only(top: 16),
-                      child: Text(
-                        S.of(context).registerEmailCodeTitle,
-                        style: Theme.of(context).textTheme.headlineSmall,
+                child: ScrollableActionsLayout(
+                  body: Column(
+                    crossAxisAlignment: .start,
+                    spacing: 16,
+                    children: [
+                      Padding(
+                        padding: const .only(top: 16),
+                        child: Text(
+                          S.of(context).registerEmailCodeTitle,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
                       ),
-                    ),
-                    Text(
-                      S.of(context).registerEmailCodeDescription(
-                        context.read<KycEmailCodeCubit>().email,
+                      Text(
+                        S.of(context).registerEmailCodeDescription(
+                          context.read<KycEmailCodeCubit>().email,
+                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
                       ),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: RealUnitColors.neutral500,
+                      LabeledTextField(
+                        label: S.of(context).registerEmailCodeLabel,
+                        hintText: '123456',
+                        controller: _codeCtrl,
+                        keyboardType: TextInputType.number,
+                        autofillHints: const [AutofillHints.oneTimeCode],
+                        hideErrorText: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return S.of(context).twoFaCodeRequired;
+                          }
+                          if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                            return S.of(context).registerPhoneNumberOnlyDigits;
+                          }
+                          if (value.length != 6) {
+                            return S.of(context).twoFaCodeTooShort;
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                    LabeledTextField(
-                      label: S.of(context).registerEmailCodeLabel,
-                      hintText: '123456',
-                      controller: _codeCtrl,
-                      keyboardType: TextInputType.number,
-                      autofillHints: const [AutofillHints.oneTimeCode],
-                      hideErrorText: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return S.of(context).twoFaCodeRequired;
-                        }
-                        if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                          return S.of(context).registerPhoneNumberOnlyDigits;
-                        }
-                        if (value.length != 6) {
-                          return S.of(context).twoFaCodeTooShort;
-                        }
-                        return null;
-                      },
+                    ],
+                  ),
+                  actionsSpacing: 4,
+                  actions: [
+                    BlocBuilder<KycEmailCodeCubit, KycEmailCodeState>(
+                      builder: (context, state) => AppFilledButton(
+                        state: state is KycEmailCodeVerifying ? .loading : .idle,
+                        onPressed: state is KycEmailCodeResending
+                            ? null
+                            : () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                if (_formKey.currentState?.validate() ?? false) {
+                                  context.read<KycEmailCodeCubit>().verify(
+                                    _codeCtrl.text.trim(),
+                                  );
+                                }
+                              },
+                        label: S.of(context).next,
+                      ),
                     ),
                     BlocBuilder<KycEmailCodeCubit, KycEmailCodeState>(
                       builder: (context, state) {
-                        final isVerifying = state is KycEmailCodeVerifying;
                         final isResending = state is KycEmailCodeResending;
-                        return Column(
-                          spacing: 4,
-                          children: [
-                            AppFilledButton(
-                              state: isVerifying ? .loading : .idle,
-                              onPressed: isResending
-                                  ? null
-                                  : () {
-                                      FocusManager.instance.primaryFocus?.unfocus();
-                                      if (_formKey.currentState?.validate() ?? false) {
-                                        context.read<KycEmailCodeCubit>().verify(
-                                          _codeCtrl.text.trim(),
-                                        );
-                                      }
-                                    },
-                              label: S.of(context).next,
-                            ),
-                            AppTextButton(
-                              fullWidth: false,
-                              onPressed: isVerifying || isResending
-                                  ? null
-                                  : () => context.read<KycEmailCodeCubit>().resend(),
-                              label: isResending
-                                  ? '${S.of(context).sending}...'
-                                  : S.of(context).twoFaResendCode,
-                            ),
-                          ],
+                        return AppTextButton(
+                          fullWidth: false,
+                          onPressed: state is KycEmailCodeVerifying || isResending
+                              ? null
+                              : () => context.read<KycEmailCodeCubit>().resend(),
+                          label: isResending
+                              ? '${S.of(context).sending}...'
+                              : S.of(context).twoFaResendCode,
                         );
                       },
                     ),

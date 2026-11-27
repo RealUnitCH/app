@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -231,6 +233,69 @@ void main() {
         KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'Exception: offline'),
       ],
     );
+  });
+
+  group('closed while a request is in flight', () {
+    test('a late verify answer does not emit or throw', () async {
+      final pending = Completer<void>();
+      when(() => service.verifyEmail(any())).thenAnswer((_) => pending.future);
+      final cubit = build();
+      final states = <KycEmailCodeState>[];
+      final sub = cubit.stream.listen(states.add);
+
+      final call = cubit.verify('123456');
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+      pending.completeError(
+        const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token'),
+      );
+
+      await expectLater(call, completes);
+      expect(states, const [KycEmailCodeVerifying()]);
+      verifyNever(() => service.registerEmail(any()));
+      await sub.cancel();
+    });
+
+    test('a late register/email answer does not emit or throw', () async {
+      final pending = Completer<RegistrationEmailStatus>();
+      when(() => service.registerEmail(any())).thenAnswer((_) => pending.future);
+      final cubit = build();
+      final states = <KycEmailCodeState>[];
+      final sub = cubit.stream.listen(states.add);
+
+      final call = cubit.resend();
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+      pending.complete(RegistrationEmailStatus.emailRegistered);
+
+      await expectLater(call, completes);
+      expect(states, const [KycEmailCodeResending()]);
+      await sub.cancel();
+    });
+
+    test('a late register/email error does not emit or throw', () async {
+      final pending = Completer<RegistrationEmailStatus>();
+      when(() => service.registerEmail(any())).thenAnswer((_) => pending.future);
+      final cubit = build();
+
+      final call = cubit.resend();
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+      pending.completeError(Exception('offline'));
+
+      await expectLater(call, completes);
+    });
+
+    test('verify and resend on a closed cubit do nothing', () async {
+      final cubit = build();
+      await cubit.close();
+
+      await cubit.verify('123456');
+      await cubit.resend();
+
+      verifyNever(() => service.verifyEmail(any()));
+      verifyNever(() => service.registerEmail(any()));
+    });
   });
 
   group('states', () {

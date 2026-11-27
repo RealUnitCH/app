@@ -214,5 +214,50 @@ void main() {
         expect(find.byType(KycEmailCodeView), findsNothing);
       });
     }
+
+    testWidgets('a completion after the user left does not pop the route below', (tester) async {
+      final controller = StreamController<KycEmailCodeState>();
+      whenListen(cubit, controller.stream, initialState: const KycEmailCodeInitial());
+      Object? result = 'unset';
+
+      await tester.pumpApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () async {
+                      result = await Navigator.of(context).push<RegistrationEmailStatus>(
+                        MaterialPageRoute(builder: (_) => buildSubject()),
+                      );
+                    },
+                    child: const Text('middle'),
+                  ),
+                ),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('middle'));
+      await tester.pumpAndSettle();
+
+      // The user backs out while the request is in flight; the exit animation
+      // still runs when the late completion arrives.
+      Navigator.of(tester.element(find.byType(KycEmailCodeView))).pop();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.byType(KycEmailCodeView), findsOne);
+      controller.add(const KycEmailCodeCompleted(RegistrationEmailStatus.emailRegistered));
+      await tester.pumpAndSettle();
+
+      expect(result, isNull);
+      expect(find.text('middle'), findsOne);
+      expect(find.byType(KycEmailCodeView), findsNothing);
+      await controller.close();
+    });
   });
 }
