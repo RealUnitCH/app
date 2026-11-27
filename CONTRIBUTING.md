@@ -245,6 +245,8 @@ Leave these unchanged:
 
 If a label is too short for the full form, rewrite the sentence so the full form fits and the grammar agrees. Do not shorten it.
 
+In the Aktionariat flow, German copy addresses the user formally with `Sie` / `Ihr` (`Bitte lesen und bestätigen Sie die folgenden Dokumente der Aktionariat AG`), never with `du` / `dein`. In the app, this flow is the legal disclaimer step with the Aktionariat AG documents and the Aktionariat page under the legal documents in the settings. The rule also covers any copy added to this flow later. In the same flow, English copy addresses the user as `you` / `your`.
+
 English uses the ordinary English word (`shareholder`, `shareholders`). Do not build a German-style pair in English.
 
 This applies to `assets/languages/strings_de.arb`, `docs/handbook/de/`, and any other German product wording the app shows. A pull request that adds or changes such wording and breaks this rule is a blocking review finding. Wording the pull request does not touch stays as it is.
