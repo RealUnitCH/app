@@ -86,6 +86,10 @@ class _KycEmailFormState extends State<KycEmailForm> {
   Widget build(BuildContext context) {
     return BlocListener<KycEmailStepCubit, KycEmailStepState>(
       listener: (context, state) async {
+        // A result that arrives after the user left this page (its exit
+        // animation still runs) must not push, pop or show anything.
+        final route = ModalRoute.of(context);
+        if (route != null && !route.isCurrent) return;
         if (state is KycEmailStepFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

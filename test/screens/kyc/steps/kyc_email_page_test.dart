@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -273,15 +275,22 @@ void main() {
       expect(find.text(S.current.registerEmailCodeDescription('a@b.com')), findsOne);
     });
 
-    testWidgets('re-runs checkKyc when the code page finishes with emailRegistered', (tester) async {
+    testWidgets('re-runs checkKyc when the code page finishes with emailRegistered', (
+      tester,
+    ) async {
       emitCodeSent();
 
-      await pumpWithObserver(tester, _SequencedPopObserver({1: RegistrationEmailStatus.emailRegistered}));
+      await pumpWithObserver(
+        tester,
+        _SequencedPopObserver({1: RegistrationEmailStatus.emailRegistered}),
+      );
 
       verify(() => kycCubit.checkKyc()).called(1);
     });
 
-    testWidgets('routes a merge request from the code page to the merge confirmation', (tester) async {
+    testWidgets('routes a merge request from the code page to the merge confirmation', (
+      tester,
+    ) async {
       emitCodeSent();
 
       await pumpWithObserver(
@@ -299,6 +308,58 @@ void main() {
 
       verifyNever(() => kycCubit.checkKyc());
       expect(find.byType(KycEmailView), findsOne);
+    });
+    testWidgets('a late result after the user left does not open the code page', (tester) async {
+      final controller = StreamController<KycEmailStepState>();
+      whenListen(kycEmailStepCubit, controller.stream, initialState: const KycEmailStepInitial());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => Scaffold(
+                    body: TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<Object?>(
+                          builder: (_) => buildSubject(const KycEmailView()),
+                        ),
+                      ),
+                      child: const Text('middle'),
+                    ),
+                  ),
+                ),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('middle'));
+      await tester.pumpAndSettle();
+
+      // The user backs out while register/email is in flight; the late result
+      // arrives during the exit animation.
+      Navigator.of(tester.element(find.byType(KycEmailView))).pop();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.byType(KycEmailView), findsOne);
+      controller.add(const KycEmailStepCodeSent('a@b.com'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('middle'), findsOne);
+      expect(find.byType(KycEmailView), findsNothing);
+      expect(find.byType(KycEmailCodePage), findsNothing);
+      await controller.close();
     });
   });
 }

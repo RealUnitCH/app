@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -482,6 +484,60 @@ void main() {
       expect(find.byType(KycEmailCodePage), findsNothing);
       expect(capturePopped, isFalse);
       expect(find.byType(SupportEmailCaptureView, skipOffstage: false), findsOne);
+    });
+
+    testWidgets('a late success after the user left does not pop the route below', (tester) async {
+      final controller = StreamController<SupportEmailCaptureState>();
+      whenListen(cubit, controller.stream, initialState: const SupportEmailCaptureInitial());
+
+      await tester.pumpWidget(
+        BlocProvider<HomeBloc>.value(
+          value: homeBloc,
+          child: MaterialApp(
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => Scaffold(
+                      body: TextButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<Object?>(builder: (_) => captureRoute()),
+                        ),
+                        child: const Text('middle'),
+                      ),
+                    ),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('middle'));
+      await tester.pumpAndSettle();
+
+      // The user backs out while register/email is in flight; the late result
+      // arrives during the exit animation.
+      Navigator.of(tester.element(find.byType(SupportEmailCaptureView))).pop();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.byType(SupportEmailCaptureView), findsOne);
+      controller.add(const SupportEmailCaptureSuccess());
+      await tester.pumpAndSettle();
+
+      expect(find.text('middle'), findsOne);
+      expect(find.byType(SupportEmailCaptureView), findsNothing);
+      expect(find.byType(KycEmailCodePage), findsNothing);
+      await controller.close();
     });
 
     testWidgets('Failure state shows the raw error message', (tester) async {

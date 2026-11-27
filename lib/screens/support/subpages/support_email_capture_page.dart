@@ -86,6 +86,10 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
   Widget build(BuildContext context) {
     return BlocListener<SupportEmailCaptureCubit, SupportEmailCaptureState>(
       listener: (context, state) async {
+        // A result that arrives after the user left this page (its exit
+        // animation still runs) must not push, pop or show anything.
+        final route = ModalRoute.of(context);
+        if (route != null && !route.isCurrent) return;
         if (state is SupportEmailCaptureSuccess) {
           // Signal to the caller that the email is now set on the
           // user record so it can re-init its cubit and route to the
