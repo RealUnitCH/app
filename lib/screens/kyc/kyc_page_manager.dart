@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_legal_service.dart';
@@ -55,6 +56,7 @@ class KycViewManager extends StatelessWidget {
       builder: (context, state) => switch (state) {
         KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
+        KycTimedOut() => KycFailurePage(message: S.of(context).registerEmailTimeout),
         KycSignatureUnsupportedFailure() => const KycSignatureUnsupportedPage(),
         KycUnsupportedStepFailure() => const KycUnsupportedStepPage(),
         KycAccountMergeRequested() => const KycAccountMergePage(),

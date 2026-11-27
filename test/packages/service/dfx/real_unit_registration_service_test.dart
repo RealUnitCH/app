@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -14,6 +16,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_date_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -117,6 +120,16 @@ void main() {
       expect(status, RegistrationEmailStatus.mergeRequested);
     });
 
+    test('parses verification_code_sent for an address the API has not stored yet', () async {
+      final client = MockClient(
+        (_) async => http.Response(jsonEncode({'status': 'verification_code_sent'}), 201),
+      );
+
+      final status = await build(client).registerEmail('a@b.com');
+
+      expect(status, RegistrationEmailStatus.verificationCodeSent);
+    });
+
     test('throws ApiException on a 4xx response', () async {
       final client = MockClient(
         (_) async => http.Response(
@@ -128,6 +141,82 @@ void main() {
       expect(
         () => build(client).registerEmail('a@b.com'),
         throwsA(isA<ApiException>()),
+      );
+    });
+  });
+
+  group('email step requests stop after 20 seconds', () {
+    void expectTimeout(Future<Object?> Function(RealUnitRegistrationService) call) {
+      fakeAsync((async) {
+        final client = MockClient((_) => Completer<http.Response>().future);
+        Object? error;
+        call(build(client)).then<void>((_) {}, onError: (Object e) => error = e);
+
+        async.elapse(const Duration(seconds: 19));
+        expect(error, isNull);
+        async.elapse(const Duration(seconds: 2));
+        expect(error, isA<RequestTimeoutException>());
+      });
+    }
+
+    test('verifyEmail', () => expectTimeout((s) => s.verifyEmail('123456')));
+    test('registerEmail', () => expectTimeout((s) => s.registerEmail('a@b.com')));
+  });
+
+  group('$RealUnitRegistrationService.verifyEmail', () {
+    test('posts the code as token to /v2/user/mail/verify with the bearer token', () async {
+      late http.Request sent;
+      final client = MockClient((request) async {
+        sent = request;
+        return http.Response(jsonEncode({'id': 1}), 201);
+      });
+
+      await build(client).verifyEmail('123456');
+
+      expect(sent.method, 'POST');
+      expect(sent.url.path, '/v2/user/mail/verify');
+      expect(jsonDecode(sent.body), {'token': '123456'});
+      expect(sent.headers['authorization'], 'Bearer jwt-1');
+    });
+
+    test('accepts 200 as success', () async {
+      final client = MockClient((_) async => http.Response('{}', 200));
+
+      await build(client).verifyEmail('123456');
+    });
+
+    test('throws ApiException with status 403 for a wrong or expired code', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 403,
+            'message': 'Invalid or expired mail verification token',
+            'error': 'Forbidden',
+          }),
+          403,
+        ),
+      );
+
+      await expectLater(
+        build(client).verifyEmail('000000'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 403)
+              .having((e) => e.message, 'message', 'Invalid or expired mail verification token'),
+        ),
+      );
+    });
+
+    test('throws ApiException without the raw body for a non-JSON error', () async {
+      final client = MockClient((_) async => http.Response('<html>bad gateway</html>', 502));
+
+      await expectLater(
+        build(client).verifyEmail('123456'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 502)
+              .having((e) => e.message, 'message', isEmpty),
+        ),
       );
     });
   });

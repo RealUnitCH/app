@@ -116,6 +116,12 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/kyc/steps/link_wallet/kyc_link_wallet_page.dart',
   ),
   ResponsiveSurface(
+    id: 'kyc_email_code_page',
+    description: 'KYC email code entry page (idle, verifying and resending)',
+    matrixTestPath: 'test/screens/kyc/steps/email/kyc_email_code_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/kyc/steps/email/subpages/kyc_email_code_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'kyc_update_share_register_name_page',
     description: 'KYC update share register name page',
     matrixTestPath:

@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/kyc_unsupported_step_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_session_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto.dart';
@@ -378,6 +379,25 @@ void main() {
       verify: (_) {
         verify(() => registrationService.registerEmail('test@example.com')).called(1);
       },
+    );
+
+    blocTest<KycCubit, KycState>(
+      'a request timeout while auto-registering the stored email is KycTimedOut',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level0),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.registerEmail(any())).thenThrow(
+          const RequestTimeoutException(Duration(seconds: 20)),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycTimedOut(),
+      ],
     );
 
     // Legal disclaimer gate is server-driven: the API is the single source of
@@ -1702,7 +1722,7 @@ void main() {
 
           expect(states, [
             const KycLoading(),
-            const KycFailure('KYC backend did not respond in time'),
+            const KycTimedOut(),
           ]);
 
           sub.cancel();

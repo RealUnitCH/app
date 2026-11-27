@@ -5,6 +5,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
@@ -221,14 +222,19 @@ abstract class DFXAuthService {
     );
   }
 
+  /// [timeout], when given, limits each HTTP request (also the retry after a
+  /// 401) and then throws [RequestTimeoutException]. It does not limit the
+  /// token fetch before it: that may wait for a hardware-wallet signature with
+  /// its own, longer limit.
   Future<http.Response> authenticatedPost(
     Uri uri, {
     Map<String, String> headers = const {},
     Object? body,
     Encoding? encoding,
+    Duration? timeout,
   }) {
-    return _authenticated(
-      (token) => appStore.httpClient.post(
+    return _authenticated((token) {
+      final request = appStore.httpClient.post(
         uri,
         headers: {
           ...headers,
@@ -236,8 +242,11 @@ abstract class DFXAuthService {
         },
         body: body,
         encoding: encoding,
-      ),
-    );
+      );
+      return timeout == null
+          ? request
+          : request.timeout(timeout, onTimeout: () => throw RequestTimeoutException(timeout));
+    });
   }
 
   /// Runs [request] with a Bearer token and retries once on a 401 with a

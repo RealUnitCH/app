@@ -98,5 +98,24 @@ void main() {
         return buildSubject();
       },
     );
+
+    // error == timeout → the listener shows the localized `registerEmailTimeout`
+    // sentence instead of `state.message`.
+    goldenTest(
+      'timeout failure — red snackbar with the timeout sentence',
+      fileName: 'kyc_email_page_error_snackbar_timeout',
+      constraints: phoneConstraints,
+      pumpBeforeTest: pumpSnackBar,
+      builder: () {
+        whenListen(
+          emailStepCubit,
+          Stream<KycEmailStepState>.value(
+            const KycEmailStepFailure(KycEmailStepError.timeout, ''),
+          ),
+          initialState: const KycEmailStepInitial(),
+        );
+        return buildSubject();
+      },
+    );
   });
 }

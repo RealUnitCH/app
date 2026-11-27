@@ -20,9 +20,17 @@ void main() {
       );
     });
 
-    test('KycEmailStepError enum has exactly emailDoesNotMatch + unknown', () {
-      expect(KycEmailStepError.values.toSet(),
-          {KycEmailStepError.emailDoesNotMatch, KycEmailStepError.unknown});
+    test('CodeSent props pin the email', () {
+      expect(const KycEmailStepCodeSent('a@b.com'), const KycEmailStepCodeSent('a@b.com'));
+      expect(const KycEmailStepCodeSent('a@b.com'), isNot(const KycEmailStepCodeSent('c@d.com')));
+    });
+
+    test('KycEmailStepError enum has exactly emailDoesNotMatch + timeout + unknown', () {
+      expect(KycEmailStepError.values.toSet(), {
+        KycEmailStepError.emailDoesNotMatch,
+        KycEmailStepError.timeout,
+        KycEmailStepError.unknown,
+      });
     });
   });
 

@@ -24,7 +24,19 @@ class KycEmailStepSuccess extends KycEmailStepState {
   List<Object?> get props => [status];
 }
 
-enum KycEmailStepError { emailDoesNotMatch, unknown }
+/// The API has sent a code to [email] and stores the address only once that
+/// code is confirmed (register/email returned `verification_code_sent`). The
+/// view routes to the code entry page.
+class KycEmailStepCodeSent extends KycEmailStepState {
+  final String email;
+
+  const KycEmailStepCodeSent(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+enum KycEmailStepError { emailDoesNotMatch, timeout, unknown }
 
 class KycEmailStepFailure extends KycEmailStepState {
   final KycEmailStepError error;

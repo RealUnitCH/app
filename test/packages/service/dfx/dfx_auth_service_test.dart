@@ -13,6 +13,7 @@ import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
@@ -177,6 +178,25 @@ class _RetryTestAuthService extends DFXAuthService {
   Future<String?> refreshAuthToken() async {
     refreshAuthTokenCalls++;
     return 'fresh-token';
+  }
+}
+
+class _SlowTokenAuthService extends DFXAuthService {
+  _SlowTokenAuthService(super.appStore, super.walletService, this.tokenDelay);
+
+  final Duration tokenDelay;
+
+  @override
+  AWalletAccount get wallet => throw UnimplementedError();
+
+  @override
+  String get walletAddress => throw UnimplementedError();
+
+  @override
+  Future<String?> getAuthToken() async {
+    // Stands in for a sign-in that waits for a hardware-wallet signature.
+    await Future<void>.delayed(tokenDelay);
+    return 'slow-token';
   }
 }
 
@@ -408,6 +428,49 @@ void main() {
   // -------------------------------------------------------------------------
   // ensureSignatureFor — BitBox-pairing pre-warm path.
   // -------------------------------------------------------------------------
+
+  group('$DFXAuthService authenticatedPost timeout', () {
+    test('a slow sign-in does not count against the request timeout', () {
+      fakeAsync((async) {
+        final client = MockClient((_) async => http.Response('{"ok":true}', 201));
+        final service = _SlowTokenAuthService(
+          _RetryTestAppStore(client),
+          _MockWalletService(),
+          const Duration(seconds: 60),
+        );
+        http.Response? response;
+        Object? error;
+        service
+            .authenticatedPost(Uri.parse('https://api.example.test/v1/resource'), timeout: const Duration(seconds: 20))
+            .then<void>((r) => response = r, onError: (Object e) => error = e);
+
+        async.elapse(const Duration(seconds: 61));
+
+        expect(error, isNull);
+        expect(response?.statusCode, 201);
+      });
+    });
+
+    test('a stalled request times out after the limit, counted from the request', () {
+      fakeAsync((async) {
+        final client = MockClient((_) => Completer<http.Response>().future);
+        final service = _SlowTokenAuthService(
+          _RetryTestAppStore(client),
+          _MockWalletService(),
+          const Duration(seconds: 60),
+        );
+        Object? error;
+        service
+            .authenticatedPost(Uri.parse('https://api.example.test/v1/resource'), timeout: const Duration(seconds: 20))
+            .then<void>((_) {}, onError: (Object e) => error = e);
+
+        async.elapse(const Duration(seconds: 79));
+        expect(error, isNull);
+        async.elapse(const Duration(seconds: 2));
+        expect(error, isA<RequestTimeoutException>());
+      });
+    });
+  });
 
   group('$DFXAuthService ensureSignatureFor', () {
     late _MockAppStore appStore;

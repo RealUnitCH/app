@@ -507,6 +507,19 @@ MAPPING=(
   "455-kyc-update-share-register-name-page-send-failed=screens/kyc/goldens/macos/kyc_update_share_register_name_page_send_failed.png"
   "456-kyc-update-share-register-name-page-submitting=screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png"
   "457-kyc-update-share-register-name-page-bitbox-required=screens/kyc/goldens/macos/kyc_update_share_register_name_page_bitbox_required.png"
+  "458-kyc-email-code-page-default=screens/kyc/goldens/macos/kyc_email_code_page_default.png"
+  "459-kyc-email-code-page-verifying=screens/kyc/goldens/macos/kyc_email_code_page_verifying.png"
+  "460-kyc-email-code-page-resending=screens/kyc/goldens/macos/kyc_email_code_page_resending.png"
+  "461-kyc-email-code-page-resent-snackbar=screens/kyc/goldens/macos/kyc_email_code_page_resent_snackbar.png"
+  "462-kyc-email-code-page-invalid-code-snackbar=screens/kyc/goldens/macos/kyc_email_code_page_invalid_code_snackbar.png"
+  "464-kyc-email-code-page-failed-snackbar=screens/kyc/goldens/macos/kyc_email_code_page_failed_snackbar.png"
+  "465-kyc-email-code-page-code-required=screens/kyc/goldens/macos/kyc_email_code_page_code_required.png"
+  "466-kyc-email-code-page-code-digits-only=screens/kyc/goldens/macos/kyc_email_code_page_code_digits_only.png"
+  "467-kyc-email-code-page-code-too-short=screens/kyc/goldens/macos/kyc_email_code_page_code_too_short.png"
+  "468-kyc-email-page-error-snackbar-timeout=screens/kyc/goldens/macos/kyc_email_page_error_snackbar_timeout.png"
+  "469-support-email-capture-page-timeout-snackbar=screens/support/goldens/macos/support_email_capture_page_timeout_snackbar.png"
+  "470-support-email-capture-page-buy-flow-timeout-snackbar=screens/support/goldens/macos/support_email_capture_page_buy_flow_timeout_snackbar.png"
+  "471-kyc-failure-page-timeout=screens/kyc/goldens/macos/kyc_failure_page_timeout.png"
 )
 
 missing=()

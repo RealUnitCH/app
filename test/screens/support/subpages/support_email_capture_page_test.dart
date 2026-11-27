@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +11,10 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_code_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_verification_page.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_email_capture/support_email_capture_cubit.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_email_capture_page.dart';
@@ -47,6 +51,27 @@ class _AutoPopVerificationObserver extends NavigatorObserver {
     if (_subPushes == 2 && !_popped) {
       _popped = true;
       Future.microtask(() => route.navigator?.pop<bool>(value as bool?));
+    }
+  }
+}
+
+/// Pops the sub-routes pushed above the root, by their 1-based push order,
+/// with the configured results. The pop runs on the next microtask so the
+/// route mounts first.
+class _SequencedPopObserver extends NavigatorObserver {
+  _SequencedPopObserver(this.results);
+
+  final Map<int, Object?> results;
+  int _subPushes = 0;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    if (previousRoute == null) return; // root/home route
+    _subPushes++;
+    if (results.containsKey(_subPushes)) {
+      final result = results[_subPushes];
+      Future.microtask(() => route.navigator?.pop(result));
     }
   }
 }
@@ -342,6 +367,192 @@ void main() {
       expect(find.byType(KycEmailVerificationPage), findsNothing);
       expect(capturePopped, isFalse);
       expect(find.byType(SupportEmailCaptureView, skipOffstage: false), findsOne);
+    });
+
+    testWidgets('CodeSent routes to the code entry page for that address', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable(const [SupportEmailCaptureCodeSent('a@b.com')]),
+        initialState: const SupportEmailCaptureInitial(),
+      );
+
+      await tester.pumpWidget(
+        BlocProvider<HomeBloc>.value(
+          value: homeBloc,
+          child: MaterialApp(
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            home: captureRoute(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(KycEmailCodePage), findsOne);
+      expect(find.text(S.current.registerEmailCodeDescription('a@b.com')), findsOne);
+    });
+
+    testWidgets('CodeSent + registered address pops the capture route with true', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable(const [SupportEmailCaptureCodeSent('a@b.com')]),
+        initialState: const SupportEmailCaptureInitial(),
+      );
+      Object? popResult;
+
+      await tester.pumpWidget(
+        mergeHarness(
+          observers: [
+            _SequencedPopObserver({2: RegistrationEmailStatus.emailRegistered}),
+          ],
+          onLaunch: (ctx) async {
+            popResult = await Navigator.of(ctx).push<bool>(
+              MaterialPageRoute<bool>(builder: (_) => captureRoute()),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('LAUNCH'));
+      await tester.pumpAndSettle();
+
+      expect(popResult, isTrue);
+    });
+
+    testWidgets('CodeSent + merge request + confirmation pops the capture route with true', (
+      tester,
+    ) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable(const [SupportEmailCaptureCodeSent('a@b.com')]),
+        initialState: const SupportEmailCaptureInitial(),
+      );
+      Object? popResult;
+
+      await tester.pumpWidget(
+        mergeHarness(
+          observers: [
+            _SequencedPopObserver({2: RegistrationEmailStatus.mergeRequested, 3: true}),
+          ],
+          onLaunch: (ctx) async {
+            popResult = await Navigator.of(ctx).push<bool>(
+              MaterialPageRoute<bool>(builder: (_) => captureRoute()),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('LAUNCH'));
+      await tester.pumpAndSettle();
+
+      expect(popResult, isTrue);
+    });
+
+    testWidgets('CodeSent + back-out keeps the form and does not pop', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable(const [SupportEmailCaptureCodeSent('a@b.com')]),
+        initialState: const SupportEmailCaptureInitial(),
+      );
+      var capturePopped = false;
+
+      await tester.pumpWidget(
+        mergeHarness(
+          observers: [
+            _SequencedPopObserver({2: null}),
+          ],
+          onLaunch: (ctx) async {
+            await Navigator.of(ctx).push<bool>(
+              MaterialPageRoute<bool>(builder: (_) => captureRoute()),
+            );
+            capturePopped = true;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('LAUNCH'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(KycEmailCodePage), findsNothing);
+      expect(capturePopped, isFalse);
+      expect(find.byType(SupportEmailCaptureView, skipOffstage: false), findsOne);
+    });
+
+    testWidgets('a late success after the user left does not pop the route below', (tester) async {
+      final controller = StreamController<SupportEmailCaptureState>();
+      whenListen(cubit, controller.stream, initialState: const SupportEmailCaptureInitial());
+
+      await tester.pumpWidget(
+        BlocProvider<HomeBloc>.value(
+          value: homeBloc,
+          child: MaterialApp(
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => Scaffold(
+                      body: TextButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<Object?>(builder: (_) => captureRoute()),
+                        ),
+                        child: const Text('middle'),
+                      ),
+                    ),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('middle'));
+      await tester.pumpAndSettle();
+
+      // The user backs out while register/email is in flight; the late result
+      // arrives during the exit animation.
+      Navigator.of(tester.element(find.byType(SupportEmailCaptureView))).pop();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.byType(SupportEmailCaptureView), findsOne);
+      controller.add(const SupportEmailCaptureSuccess());
+      await tester.pumpAndSettle();
+
+      expect(find.text('middle'), findsOne);
+      expect(find.byType(SupportEmailCaptureView), findsNothing);
+      expect(find.byType(KycEmailCodePage), findsNothing);
+      await controller.close();
+    });
+
+    testWidgets('TimedOut shows the localized timeout sentence and keeps the form', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable(const [SupportEmailCaptureTimedOut()]),
+        initialState: const SupportEmailCaptureInitial(),
+      );
+
+      await tester.pumpWidget(pumpView());
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(S.current.registerEmailTimeout), findsOne);
+      expect(find.byType(SupportEmailCaptureView), findsOne);
     });
 
     testWidgets('Failure state shows the raw error message', (tester) async {

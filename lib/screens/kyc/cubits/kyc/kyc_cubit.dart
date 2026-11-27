@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/kyc_unsupported_step_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/legal/real_unit_legal_agreement.dart';
@@ -85,7 +86,7 @@ class KycCubit extends Cubit<KycState> {
       await _runCheckKyc(generation).timeout(_checkKycTimeout);
     } on TimeoutException {
       if (isClosed || generation != _runGeneration) return;
-      emit(const KycFailure('KYC backend did not respond in time'));
+      emit(const KycTimedOut());
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(ApiException.userFacingMessage(e)));
@@ -329,6 +330,11 @@ class KycCubit extends Cubit<KycState> {
       } else {
         rethrow;
       }
+    } on RequestTimeoutException {
+      // A single request (the email re-registration) ran out of time: same
+      // outcome as the whole check timing out.
+      if (isClosed || generation != _runGeneration) return;
+      emit(const KycTimedOut());
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(ApiException.userFacingMessage(e)));
