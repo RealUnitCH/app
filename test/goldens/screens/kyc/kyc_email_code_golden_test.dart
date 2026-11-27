@@ -101,26 +101,10 @@ void main() {
       },
     );
 
-    // unknown with API text → red SnackBar showing that text as-is.
+    // unknown (any API or network error) → red `registerEmailCodeFailed`
+    // SnackBar; the raw error text is never shown.
     goldenTest(
-      'other failure — red snackbar with the API message',
-      fileName: 'kyc_email_code_page_error_snackbar',
-      constraints: phoneConstraints,
-      pumpBeforeTest: settleSnackBar,
-      builder: () {
-        emit(
-          const KycEmailCodeFailure(
-            KycEmailCodeError.unknown,
-            message: 'ThrottlerException: Too Many Requests',
-          ),
-        );
-        return buildSubject();
-      },
-    );
-
-    // unknown without API text → red `registerEmailCodeFailed` SnackBar.
-    goldenTest(
-      'other failure without API text — red generic snackbar',
+      'other failure — red generic snackbar',
       fileName: 'kyc_email_code_page_failed_snackbar',
       constraints: phoneConstraints,
       pumpBeforeTest: settleSnackBar,

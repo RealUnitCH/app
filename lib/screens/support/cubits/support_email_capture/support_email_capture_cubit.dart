@@ -12,11 +12,17 @@ part 'support_email_capture_state.dart';
 class SupportEmailCaptureCubit extends Cubit<SupportEmailCaptureState> {
   final RealUnitRegistrationService _service;
 
+  // True while register/email runs. A second tap before the button rebuilds is
+  // ignored, so no second code or merge mail is requested.
+  bool _inFlight = false;
+
   SupportEmailCaptureCubit(RealUnitRegistrationService service)
     : _service = service,
       super(const SupportEmailCaptureInitial());
 
   Future<void> submit(String email) async {
+    if (_inFlight) return;
+    _inFlight = true;
     try {
       emit(const SupportEmailCaptureLoading());
       final status = await _service.registerEmail(email);
@@ -50,6 +56,8 @@ class SupportEmailCaptureCubit extends Cubit<SupportEmailCaptureState> {
             ? const SupportEmailCaptureTimedOut()
             : SupportEmailCaptureFailure(e.toString()),
       );
+    } finally {
+      _inFlight = false;
     }
   }
 }

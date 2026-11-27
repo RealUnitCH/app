@@ -70,8 +70,7 @@ class _KycEmailCodeViewState extends State<KycEmailCodeView> {
         if (state is KycEmailCodeFailure) {
           final message = switch (state.error) {
             KycEmailCodeError.invalidCode => S.of(context).registerEmailCodeInvalid,
-            KycEmailCodeError.unknown =>
-              state.message.isEmpty ? S.of(context).registerEmailCodeFailed : state.message,
+            KycEmailCodeError.unknown => S.of(context).registerEmailCodeFailed,
           };
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

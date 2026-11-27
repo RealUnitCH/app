@@ -118,6 +118,20 @@ void main() {
     );
   });
 
+  test('a second submit while register/email runs is ignored', () async {
+    final pending = Completer<RegistrationEmailStatus>();
+    when(() => service.registerEmail(any())).thenAnswer((_) => pending.future);
+    final cubit = build();
+
+    final first = cubit.submit('a@b.com');
+    final second = cubit.submit('a@b.com');
+    pending.complete(RegistrationEmailStatus.verificationCodeSent);
+    await Future.wait([first, second]);
+
+    verify(() => service.registerEmail('a@b.com')).called(1);
+    await cubit.close();
+  });
+
   group('closed while register/email is in flight', () {
     for (final outcome in ['status', 'api error', 'other error']) {
       test('a late $outcome does not emit or throw', () async {

@@ -128,7 +128,7 @@ Column meaning:
 | KYC | `KycNationalityPage` | — | — | `173`, `174`, `175`, `176`, `177`, `178`, `179` |
 | KYC | `KycEmailPage` | — | — | `37`, `38`, `39`, `148`, `149`, `150`, `468` |
 | KYC | `KycEmailVerificationPage` | — | — | `152`, `153`, `154`, `155` |
-| KYC | `KycEmailCodePage` | — | — | `458`, `459`, `460`, `461`, `462`, `463`, `464`, `465`, `466`, `467` |
+| KYC | `KycEmailCodePage` | — | — | `458`, `459`, `460`, `461`, `462`, `464`, `465`, `466`, `467` |
 | KYC | `KycConfirmEmailPage` | — | — | `151` |
 | KYC | `Kyc2faPage` | — | — | `156`, `157`, `158`, `159`, `160` |
 | KYC | `KycIdentPage` | — | — | `193`, `194`, `195`, `196` |

@@ -100,7 +100,7 @@ void main() {
     );
 
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
-      'a 409 on confirmation shows the register/email error when that call fails',
+      'a 409 on confirmation is an unknown failure when register/email fails too',
       setUp: () {
         when(() => service.verifyEmail(any())).thenThrow(
           const ApiException(statusCode: 409, code: 'UNKNOWN', message: 'Account already exists'),
@@ -113,12 +113,12 @@ void main() {
       act: (c) => c.verify('123456'),
       expect: () => const [
         KycEmailCodeVerifying(),
-        KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'Account already exists'),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
       ],
     );
 
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
-      'another error on confirmation shows the API message without register/email',
+      'another error on confirmation is an unknown failure without register/email',
       setUp: () => when(() => service.verifyEmail(any())).thenThrow(
         const ApiException(statusCode: 500, code: 'UNKNOWN', message: 'boom'),
       ),
@@ -126,7 +126,7 @@ void main() {
       act: (c) => c.verify('123456'),
       expect: () => const [
         KycEmailCodeVerifying(),
-        KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'boom'),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
       ],
       verify: (_) => verifyNever(() => service.registerEmail(any())),
     );
@@ -202,7 +202,7 @@ void main() {
       act: (c) => c.verify('123456'),
       expect: () => const [
         KycEmailCodeVerifying(),
-        KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'Exception: offline'),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
       ],
     );
 
@@ -226,7 +226,7 @@ void main() {
       },
       expect: () => const [
         KycEmailCodeVerifying(),
-        KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'boom'),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
         KycEmailCodeVerifying(),
         KycEmailCodeCompleted(RegistrationEmailStatus.emailRegistered),
       ],
@@ -286,6 +286,113 @@ void main() {
     );
   });
 
+  group('possibly used code after a timeout', () {
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'an unrelated API error keeps the doubt, so a later 403 is still settled by register/email',
+      setUp: () {
+        var calls = 0;
+        when(() => service.verifyEmail(any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw TimeoutException('stalled');
+          if (calls == 2) throw const ApiException(statusCode: 500, code: 'UNKNOWN', message: 'boom');
+          throw const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token');
+        });
+        when(() => service.registerEmail(any())).thenAnswer(
+          (_) async => RegistrationEmailStatus.emailRegistered,
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.verify('123456'); // timeout
+        await c.verify('123456'); // 500
+        await c.verify('123456'); // 403: the timed-out try may have used it
+      },
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+        KycEmailCodeVerifying(),
+        KycEmailCodeCompleted(RegistrationEmailStatus.emailRegistered),
+      ],
+      verify: (_) => verify(() => service.registerEmail('a@b.com')).called(1),
+    );
+
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'a successful resend clears the doubt, so a 403 on the new code is a wrong code',
+      setUp: () {
+        var calls = 0;
+        when(() => service.verifyEmail(any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw TimeoutException('stalled');
+          throw const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token');
+        });
+        when(() => service.registerEmail(any())).thenAnswer(
+          (_) async => RegistrationEmailStatus.verificationCodeSent,
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.verify('123456'); // timeout
+        await c.resend(); // new code sent
+        await c.verify('000000'); // 403 on the new code
+      },
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+        KycEmailCodeResending(),
+        KycEmailCodeResent(),
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.invalidCode),
+      ],
+      verify: (_) => verify(() => service.registerEmail('a@b.com')).called(1),
+    );
+  });
+
+  group('second tap while a request runs', () {
+    test('a second verify is ignored', () async {
+      final pending = Completer<void>();
+      when(() => service.verifyEmail(any())).thenAnswer((_) => pending.future);
+      when(() => service.registerEmail(any())).thenAnswer(
+        (_) async => RegistrationEmailStatus.emailRegistered,
+      );
+      final cubit = build();
+
+      final first = cubit.verify('123456');
+      final second = cubit.verify('123456');
+      pending.complete();
+      await Future.wait([first, second]);
+
+      verify(() => service.verifyEmail('123456')).called(1);
+      verify(() => service.registerEmail('a@b.com')).called(1);
+      await cubit.close();
+    });
+
+    test('resend while verify runs, and a second resend, are ignored', () async {
+      final pendingVerify = Completer<void>();
+      final pendingRegister = Completer<RegistrationEmailStatus>();
+      when(() => service.verifyEmail(any())).thenAnswer((_) => pendingVerify.future);
+      when(() => service.registerEmail(any())).thenAnswer((_) => pendingRegister.future);
+      final cubit = build();
+
+      final verifying = cubit.verify('123456');
+      await cubit.resend();
+      pendingVerify.completeError(
+        const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token'),
+      );
+      await verifying;
+      verifyNever(() => service.registerEmail(any()));
+
+      final firstResend = cubit.resend();
+      final secondResend = cubit.resend();
+      pendingRegister.complete(RegistrationEmailStatus.verificationCodeSent);
+      await Future.wait([firstResend, secondResend]);
+
+      verify(() => service.registerEmail('a@b.com')).called(1);
+      await cubit.close();
+    });
+  });
+
   group('resend', () {
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
       'calls register/email again and reports the new code',
@@ -315,7 +422,7 @@ void main() {
     );
 
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
-      'an API error is an unknown failure with the API message',
+      'an API error is an unknown failure',
       setUp: () => when(() => service.registerEmail(any())).thenThrow(
         const ApiException(statusCode: 429, code: 'UNKNOWN', message: 'Too many requests'),
       ),
@@ -323,7 +430,7 @@ void main() {
       act: (c) => c.resend(),
       expect: () => const [
         KycEmailCodeResending(),
-        KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'Too many requests'),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
       ],
     );
 
@@ -334,7 +441,7 @@ void main() {
       act: (c) => c.resend(),
       expect: () => const [
         KycEmailCodeResending(),
-        KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'Exception: offline'),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
       ],
     );
   });
@@ -430,8 +537,8 @@ void main() {
         const KycEmailCodeCompleted(RegistrationEmailStatus.emailRegistered),
       );
       expect(
-        const KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'a'),
-        isNot(const KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'b')),
+        const KycEmailCodeFailure(KycEmailCodeError.unknown),
+        isNot(const KycEmailCodeFailure(KycEmailCodeError.invalidCode)),
       );
       expect(const KycEmailCodeResent(), const KycEmailCodeResent());
       expect(const KycEmailCodeResending().props, isEmpty);

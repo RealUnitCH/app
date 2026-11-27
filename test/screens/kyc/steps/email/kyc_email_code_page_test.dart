@@ -160,20 +160,7 @@ void main() {
       expect(find.text(S.current.registerEmailCodeInvalid), findsOne);
     });
 
-    testWidgets('another failure shows the API message', (tester) async {
-      whenListen(
-        cubit,
-        Stream.value(const KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'Too many requests')),
-        initialState: const KycEmailCodeInitial(),
-      );
-
-      await tester.pumpApp(buildSubject());
-      await tester.pump();
-
-      expect(find.text('Too many requests'), findsOne);
-    });
-
-    testWidgets('a failure without API text shows the generic message', (tester) async {
+    testWidgets('any other failure shows the localized generic sentence', (tester) async {
       whenListen(
         cubit,
         Stream.value(const KycEmailCodeFailure(KycEmailCodeError.unknown)),

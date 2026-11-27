@@ -43,10 +43,9 @@ enum KycEmailCodeError { invalidCode, unknown }
 
 class KycEmailCodeFailure extends KycEmailCodeState {
   final KycEmailCodeError error;
-  final String message;
 
-  const KycEmailCodeFailure(this.error, {this.message = ''});
+  const KycEmailCodeFailure(this.error);
 
   @override
-  List<Object?> get props => [error, message];
+  List<Object?> get props => [error];
 }
