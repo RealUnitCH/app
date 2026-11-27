@@ -14,9 +14,9 @@ import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
+import '../../helper/helper.dart';
 
-class _MockReferralService extends Mock implements RealUnitReferralService {}
+class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
 
 // Invite and promo links only hand over their code. Whatever path they carry,
 // a warm open keeps the current screen, locked or unlocked. `/settings` stands
@@ -41,7 +41,7 @@ void main() {
     pinAuthCubit = _MockPinAuthCubit();
     GetIt.instance.registerSingleton<PinAuthCubit>(pinAuthCubit);
     // An unlocked bind stays in flight: no dialog, the code is taken.
-    final service = _MockReferralService();
+    final service = MockRealUnitReferralService();
     when(
       () => service.bind(code: any(named: 'code')),
     ).thenAnswer((_) => Completer<ReferralBindResultDto>().future);
