@@ -256,6 +256,27 @@ void main() {
       await sub.cancel();
     });
 
+    test('an accepted code still finishes register/email after close, without emitting', () async {
+      final pending = Completer<void>();
+      when(() => service.verifyEmail(any())).thenAnswer((_) => pending.future);
+      when(() => service.registerEmail(any())).thenAnswer(
+        (_) async => RegistrationEmailStatus.emailRegistered,
+      );
+      final cubit = build();
+      final states = <KycEmailCodeState>[];
+      final sub = cubit.stream.listen(states.add);
+
+      final call = cubit.verify('123456');
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+      pending.complete();
+
+      await expectLater(call, completes);
+      verify(() => service.registerEmail('a@b.com')).called(1);
+      expect(states, const [KycEmailCodeVerifying()]);
+      await sub.cancel();
+    });
+
     test('a late register/email answer does not emit or throw', () async {
       final pending = Completer<RegistrationEmailStatus>();
       when(() => service.registerEmail(any())).thenAnswer((_) => pending.future);

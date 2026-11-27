@@ -24,7 +24,8 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
       super(const KycEmailCodeInitial());
 
   // The page closes the cubit when the user leaves; a request still in flight
-  // then must not emit (every emit below follows an await).
+  // then must not emit (every emit below follows an await). An accepted code
+  // still gets its finishing register/email call, which completes the step.
   Future<void> verify(String code) async {
     if (isClosed) return;
     emit(const KycEmailCodeVerifying());
@@ -67,7 +68,6 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
   }
 
   Future<void> _registerEmail() async {
-    if (isClosed) return;
     try {
       final status = await _service.registerEmail(email);
       if (isClosed) return;
