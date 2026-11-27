@@ -19,6 +19,8 @@ class SupportEmailCaptureCubit extends Cubit<SupportEmailCaptureState> {
     try {
       emit(const SupportEmailCaptureLoading());
       final status = await _service.registerEmail(email);
+      // The page closes the cubit when the user leaves while the call runs.
+      if (isClosed) return;
 
       switch (status) {
         case RegistrationEmailStatus.emailRegistered:
@@ -36,9 +38,11 @@ class SupportEmailCaptureCubit extends Cubit<SupportEmailCaptureState> {
       }
     } on ApiException catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(SupportEmailCaptureFailure(e.message));
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(SupportEmailCaptureFailure(e.toString()));
     }
   }

@@ -19,6 +19,8 @@ class KycEmailStepCubit extends Cubit<KycEmailStepState> {
     try {
       emit(const KycEmailStepLoading());
       final status = await _service.registerEmail(email);
+      // The page closes the cubit when the user leaves while the call runs.
+      if (isClosed) return;
 
       if (status == RegistrationEmailStatus.verificationCodeSent) {
         emit(KycEmailStepCodeSent(email));
@@ -27,6 +29,7 @@ class KycEmailStepCubit extends Cubit<KycEmailStepState> {
       emit(KycEmailStepSuccess(status));
     } on ApiException catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(
         KycEmailStepFailure(
           e.message.contains('does not match verified email')
@@ -37,6 +40,7 @@ class KycEmailStepCubit extends Cubit<KycEmailStepState> {
       );
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(
         KycEmailStepFailure(
           KycEmailStepError.unknown,
