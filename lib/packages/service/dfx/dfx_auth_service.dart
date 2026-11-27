@@ -221,14 +221,18 @@ abstract class DFXAuthService {
     );
   }
 
+  /// [timeout], when given, limits each HTTP request (also the retry after a
+  /// 401), not the token fetch before it: that may wait for a hardware-wallet
+  /// signature with its own, longer limit.
   Future<http.Response> authenticatedPost(
     Uri uri, {
     Map<String, String> headers = const {},
     Object? body,
     Encoding? encoding,
+    Duration? timeout,
   }) {
-    return _authenticated(
-      (token) => appStore.httpClient.post(
+    return _authenticated((token) {
+      final request = appStore.httpClient.post(
         uri,
         headers: {
           ...headers,
@@ -236,8 +240,9 @@ abstract class DFXAuthService {
         },
         body: body,
         encoding: encoding,
-      ),
-    );
+      );
+      return timeout == null ? request : request.timeout(timeout);
+    });
   }
 
   /// Runs [request] with a Bearer token and retries once on a 401 with a

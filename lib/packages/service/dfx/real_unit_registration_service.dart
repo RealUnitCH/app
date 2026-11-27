@@ -30,8 +30,9 @@ class RealUnitRegistrationService extends DFXAuthService {
   static const _registerWalletPath = '/v1/realunit/register/wallet';
   static const _registerNamePath = '/v1/realunit/register/name';
   static const _verifyEmailPath = '/v2/user/mail/verify';
-  // The email step waits on these calls with a spinner; a stalled connection
+  // The email step waits on these calls with a spinner; a stalled request
   // must end in a retryable failure instead of a spinner that never stops.
+  // It limits the HTTP request only, not a sign-in that waits for a signature.
   static const _httpTimeout = Duration(seconds: 20);
 
   int get _chainId => appStore.apiConfig.asset.chainId;
@@ -111,7 +112,8 @@ class RealUnitRegistrationService extends DFXAuthService {
           email: email.toLowerCase(),
         ),
       ),
-    ).timeout(_httpTimeout);
+      timeout: _httpTimeout,
+    );
 
     if (response.statusCode != 201 && response.statusCode != 202) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
@@ -133,7 +135,8 @@ class RealUnitRegistrationService extends DFXAuthService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode(RealUnitVerifyEmailRequestDto(token: token)),
-    ).timeout(_httpTimeout);
+      timeout: _httpTimeout,
+    );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw ApiException.fromBody(response.body, httpStatusCode: response.statusCode);
