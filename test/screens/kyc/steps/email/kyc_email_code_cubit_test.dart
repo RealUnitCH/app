@@ -81,38 +81,118 @@ void main() {
     );
 
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
-      'a 409 merge request on confirmation completes with mergeRequested',
-      setUp: () => when(() => service.verifyEmail(any())).thenThrow(
-        const ApiException(
-          statusCode: 409,
-          code: 'UNKNOWN',
-          message: 'account merge request sent',
-        ),
-      ),
+      'a 409 on confirmation lets register/email decide: merge_requested completes',
+      setUp: () {
+        when(() => service.verifyEmail(any())).thenThrow(
+          const ApiException(statusCode: 409, code: 'UNKNOWN', message: 'any conflict text'),
+        );
+        when(() => service.registerEmail(any())).thenAnswer(
+          (_) async => RegistrationEmailStatus.mergeRequested,
+        );
+      },
       build: build,
       act: (c) => c.verify('123456'),
       expect: () => const [
         KycEmailCodeVerifying(),
         KycEmailCodeCompleted(RegistrationEmailStatus.mergeRequested),
       ],
-      verify: (_) => verifyNever(() => service.registerEmail(any())),
+      verify: (_) => verify(() => service.registerEmail('a@b.com')).called(1),
     );
 
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
-      'another 409 is an unknown failure with the API message',
-      setUp: () => when(() => service.verifyEmail(any())).thenThrow(
-        const ApiException(
-          statusCode: 409,
-          code: 'UNKNOWN',
-          message: 'Account already exists',
-        ),
-      ),
+      'a 409 on confirmation shows the register/email error when that call fails',
+      setUp: () {
+        when(() => service.verifyEmail(any())).thenThrow(
+          const ApiException(statusCode: 409, code: 'UNKNOWN', message: 'Account already exists'),
+        );
+        when(() => service.registerEmail(any())).thenThrow(
+          const ApiException(statusCode: 409, code: 'UNKNOWN', message: 'Account already exists'),
+        );
+      },
       build: build,
       act: (c) => c.verify('123456'),
       expect: () => const [
         KycEmailCodeVerifying(),
         KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'Account already exists'),
       ],
+    );
+
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'another error on confirmation shows the API message without register/email',
+      setUp: () => when(() => service.verifyEmail(any())).thenThrow(
+        const ApiException(statusCode: 500, code: 'UNKNOWN', message: 'boom'),
+      ),
+      build: build,
+      act: (c) => c.verify('123456'),
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown, message: 'boom'),
+      ],
+      verify: (_) => verifyNever(() => service.registerEmail(any())),
+    );
+
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'a 403 after a timed-out try is settled by register/email, not shown as a wrong code',
+      setUp: () {
+        var calls = 0;
+        when(() => service.verifyEmail(any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw TimeoutException('stalled');
+          throw const ApiException(
+            statusCode: 403,
+            code: 'UNKNOWN',
+            message: 'Invalid or expired mail verification token',
+          );
+        });
+        when(() => service.registerEmail(any())).thenAnswer(
+          (_) async => RegistrationEmailStatus.emailRegistered,
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.verify('123456');
+        await c.verify('123456');
+      },
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+        KycEmailCodeVerifying(),
+        KycEmailCodeCompleted(RegistrationEmailStatus.emailRegistered),
+      ],
+      verify: (_) {
+        verify(() => service.verifyEmail('123456')).called(2);
+        verify(() => service.registerEmail('a@b.com')).called(1);
+      },
+    );
+
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'a 403 without an earlier timeout stays a wrong code',
+      setUp: () {
+        var calls = 0;
+        when(() => service.verifyEmail(any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw TimeoutException('stalled');
+          throw const ApiException(statusCode: 403, code: 'UNKNOWN', message: 'Invalid or expired mail verification token');
+        });
+        when(() => service.registerEmail(any())).thenAnswer(
+          (_) async => RegistrationEmailStatus.verificationCodeSent,
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.verify('123456'); // times out
+        await c.verify('123456'); // 403 → register/email sends a new code
+        await c.verify('000000'); // 403 again: a plain wrong code now
+      },
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+        KycEmailCodeVerifying(),
+        KycEmailCodeResent(),
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.invalidCode),
+      ],
+      verify: (_) => verify(() => service.registerEmail('a@b.com')).called(1),
     );
 
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(

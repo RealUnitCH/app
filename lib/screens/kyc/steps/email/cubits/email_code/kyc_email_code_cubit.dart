@@ -20,6 +20,11 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
   // retry after a failed second `register/email` call must not send it again.
   bool _codeConfirmed = false;
 
+  // Set when a confirmation timed out: the server may still have accepted the
+  // code, so a 403 on the next try can mean "already used" and is settled
+  // through register/email instead of being shown as a wrong code.
+  bool _confirmationUnknown = false;
+
   KycEmailCodeCubit(RealUnitRegistrationService service, {required this.email})
     : _service = service,
       super(const KycEmailCodeInitial());
@@ -34,24 +39,30 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
       try {
         await _service.verifyEmail(code);
         _codeConfirmed = true;
+        _confirmationUnknown = false;
       } on ApiException catch (e) {
         developer.log(e.toString());
         if (isClosed) return;
+        final confirmationUnknown = _confirmationUnknown;
+        _confirmationUnknown = false;
+        // 409: another account holds the address. 403 after a timed-out try:
+        // that try may have used the code. In both cases register/email
+        // decides the next step (email_registered, merge_requested or a new
+        // code) instead of the app reading the error text.
+        if (e.statusCode == 409 || (e.statusCode == 403 && confirmationUnknown)) {
+          await _registerEmail();
+          return;
+        }
         // The API answers a wrong, expired or used-up code with 403.
         if (e.statusCode == 403) {
           emit(const KycEmailCodeFailure(KycEmailCodeError.invalidCode));
-          return;
-        }
-        // Another account holds the address: the API sent an account-merge
-        // confirmation mail instead of storing it.
-        if (e.statusCode == 409 && e.message.contains('account merge request sent')) {
-          emit(const KycEmailCodeCompleted(RegistrationEmailStatus.mergeRequested));
           return;
         }
         emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: ApiException.userFacingMessage(e)));
         return;
       } catch (e) {
         developer.log(e.toString());
+        if (e is TimeoutException) _confirmationUnknown = true;
         if (isClosed) return;
         emit(KycEmailCodeFailure(KycEmailCodeError.unknown, message: _messageOf(e)));
         return;
