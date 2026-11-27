@@ -95,9 +95,17 @@ String? pinRouteGuardRedirect(GoRouterState state, String currentLocation) {
 }
 
 /// Whether the app is locked: a PIN is set, it was not entered since the last
-/// lock, and there is a wallet to protect. This is the state in which the boot
-/// ladder in `boot_navigation.dart` sends the user to the PIN prompt; without a
-/// wallet the ladder runs the onboarding first and asks for the PIN afterwards.
+/// lock, and there is a wallet to protect.
+///
+/// This is not the boot ladder (`resolveBootNavigation` in
+/// `boot_navigation.dart`), and it does not replace it. The ladder reacts to
+/// state changes and picks the next landing by walking its gates in order
+/// (wallet loading, terms, onboarding, PIN setup, PIN entry, …). This check
+/// answers one question on every navigation: may a page open while the wallet
+/// is locked. It ignores the earlier gates on purpose, so a set PIN is always
+/// asked first; the ladder then continues with the remaining gates after the
+/// PIN entry. Without a wallet there is nothing to protect, and the ladder runs
+/// the onboarding before any PIN exists.
 bool isAppLocked({
   required bool isPinSetup,
   required bool isPinVerified,

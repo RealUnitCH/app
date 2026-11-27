@@ -10,20 +10,20 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 
-class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
+import '../../helper/helper.dart';
 
-class _MockHomeBloc extends Mock implements HomeBloc {}
+class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
 
 // Runs the top-level redirect of the production router, the one every page
 // change passes, for a direct navigation to a protected route.
 void main() {
   late _MockPinAuthCubit pinAuthCubit;
-  late _MockHomeBloc homeBloc;
+  late MockHomeBloc homeBloc;
   late BuildContext context;
 
   setUp(() {
     pinAuthCubit = _MockPinAuthCubit();
-    homeBloc = _MockHomeBloc();
+    homeBloc = MockHomeBloc();
     when(() => homeBloc.state).thenReturn(const HomeState(hasWallet: true));
     GetIt.instance
       ..registerSingleton<PinAuthCubit>(pinAuthCubit)

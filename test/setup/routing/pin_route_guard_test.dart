@@ -17,9 +17,9 @@ import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
+import '../../helper/helper.dart';
 
-class _MockHomeBloc extends Mock implements HomeBloc {}
+class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
 
 const _locations = {
   AppRoutes.home: '/home',
@@ -100,7 +100,7 @@ void main() {
 
   group('router with the PIN check', () {
     late _MockPinAuthCubit pinAuthCubit;
-    late _MockHomeBloc homeBloc;
+    late MockHomeBloc homeBloc;
     var pinSetup = true;
     var pinVerified = true;
 
@@ -111,7 +111,7 @@ void main() {
       pinSetup = true;
       pinVerified = true;
       pinAuthCubit = _MockPinAuthCubit();
-      homeBloc = _MockHomeBloc();
+      homeBloc = MockHomeBloc();
       when(() => pinAuthCubit.state).thenAnswer(
         (_) => PinAuthState(isPinSetup: pinSetup, isPinVerified: pinVerified),
       );
@@ -320,6 +320,23 @@ void main() {
 
       await pump(tester, initial: '/home');
 
+      expect(shows('home'), findsOneWidget);
+    });
+
+    testWidgets('a set PIN is asked before an earlier boot gate, which follows after it', (
+      tester,
+    ) async {
+      final router = await pump(tester, initial: '/dashboard');
+      pinVerified = false;
+
+      apply(router, const BootNavGoNamed(AppRoutes.home));
+      await tester.pumpAndSettle();
+      expect(shows('verifyPin'), findsOneWidget);
+      expect(shows('home'), findsNothing);
+
+      pinVerified = true;
+      apply(router, const BootNavGoNamed(AppRoutes.home));
+      await tester.pumpAndSettle();
       expect(shows('home'), findsOneWidget);
     });
 
