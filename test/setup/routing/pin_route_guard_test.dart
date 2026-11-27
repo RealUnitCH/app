@@ -64,20 +64,20 @@ void main() {
     test('a locked app keeps a PIN prompt that is already showing', () {
       expect(
         decide('/settings', isLocked: true, currentLocation: '/verifyPin'),
-        pinRouteGuardStay,
+        appLinkUrl,
       );
     });
 
     test('the PIN setup opens only while no PIN is set', () {
       expect(decide('/setupPin', isPinSetup: false), isNull);
-      expect(decide('/setupPin'), pinRouteGuardStay);
+      expect(decide('/setupPin'), appLinkUrl);
     });
 
     test('a protected route opens only with its own grant', () {
-      expect(decide('/settings/seed'), pinRouteGuardStay);
+      expect(decide('/settings/seed'), appLinkUrl);
       expect(decide('/settings/seed', freshPinRoute: SettingsRoutes.seed), isNull);
-      expect(decide('/settings/seed', freshPinRoute: SettingsRoutes.changePin), pinRouteGuardStay);
-      expect(decide('/settings/security/changePin'), pinRouteGuardStay);
+      expect(decide('/settings/seed', freshPinRoute: SettingsRoutes.changePin), appLinkUrl);
+      expect(decide('/settings/security/changePin'), appLinkUrl);
       expect(
         decide('/settings/security/changePin', freshPinRoute: SettingsRoutes.changePin),
         isNull,
@@ -88,10 +88,6 @@ void main() {
       for (final path in ['/home', '/dashboard', '/settings', '/kyc', '/updateRequired']) {
         expect(decide(path), isNull, reason: path);
       }
-    });
-
-    test('the stay location matches no route', () {
-      expect(pinRouteGuardStay, appLinkUrl);
     });
   });
 
@@ -290,9 +286,21 @@ void main() {
 
       expect(shows('verifyPin'), findsOneWidget);
       expect(shows('seed'), findsNothing);
-      router.pop();
+      expect(shows('dashboard'), findsNothing);
+    });
+
+    testWidgets('a trailing slash does not get past the check', (tester) async {
+      final router = await pump(tester, initial: '/settings');
+
+      router.go('/settings/seed/');
       await tester.pumpAndSettle();
+      router.go('/setupPin/');
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
       expect(shows('settings'), findsOneWidget);
+      expect(shows('seed'), findsNothing);
+      expect(shows('setupPin'), findsNothing);
     });
 
     testWidgets('app start while locked opens the PIN prompt first', (tester) async {

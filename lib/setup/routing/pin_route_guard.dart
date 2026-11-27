@@ -16,12 +16,6 @@ const Set<String> freshPinRoutes = {
   SettingsRoutes.changePin,
 };
 
-/// Location a denied navigation is rewritten to. It matches no route, so
-/// go_router hands it to [appLinkOnException], which keeps the current route
-/// configuration: the user stays exactly where they are, pushed routes and
-/// their `extra` included.
-const String pinRouteGuardStay = appLinkUrl;
-
 String? _freshPinGrant;
 
 /// Opens [routeName] (one of [freshPinRoutes]) behind the PIN step-up gate.
@@ -52,6 +46,11 @@ Future<void> pushAfterFreshPin(
 /// Top-level redirect of the app router: links from outside the app first
 /// ([appLinkSchemeRedirect]), then the PIN check ([pinRouteGuardRedirect]) for
 /// every in-app navigation.
+//
+// @no-integration-test: OS-level link delivery and foregrounding can only be
+// exercised on a real device, and no integration_test/ harness exists in this
+// repo yet. The redirect is covered by widget tests in pin_route_guard_test.dart,
+// router_config_pin_check_test.dart and app_link_invite_no_route_test.dart.
 String? appRouterRedirect(GoRouterState state, GoRouter router) {
   final current = effectiveLocation(router.routerDelegate.currentConfiguration);
   return appLinkSchemeRedirect(state, current, router) ?? pinRouteGuardRedirect(state, current);
@@ -68,13 +67,21 @@ void clearFreshPinGrant() => _freshPinGrant = null;
 /// already turned them into a location that matches no route, so they are left
 /// alone here. Every in-app navigation consumes the pending fresh-PIN grant,
 /// whether it uses it or not. The decision itself is [resolvePinRouteGuard].
+//
+// @no-integration-test: OS-level link delivery can only be exercised on a real
+// device, and no integration_test/ harness exists in this repo yet. The check
+// is covered by widget tests in pin_route_guard_test.dart and
+// router_config_pin_check_test.dart.
 String? pinRouteGuardRedirect(GoRouterState state, String currentLocation) {
   if (state.uri.hasScheme) return null;
   final grant = _freshPinGrant;
   _freshPinGrant = null;
   final pin = getIt<PinAuthCubit>().state;
+  // The matched route pattern, not the raw path: a spelling go_router still
+  // matches (a trailing slash, for example) resolves to the same pattern.
+  final matched = state.fullPath;
   return resolvePinRouteGuard(
-    path: state.uri.path,
+    path: matched == null || matched.isEmpty ? state.uri.path : matched,
     currentLocation: currentLocation,
     locationOf: state.namedLocation,
     isLocked: isAppLocked(
@@ -106,6 +113,11 @@ bool isAppLocked({
 /// - A [freshPinRoutes] route opens only with the grant of
 ///   [pushAfterFreshPin] for exactly that route ([freshPinRoute]).
 ///
+/// A denied navigation returns [appLinkUrl]: it matches no route, so go_router
+/// hands it to [appLinkOnException], which keeps the current route
+/// configuration. The user stays where they are, pushed routes and their
+/// `extra` included — the same no-op as a path-carrying scheme URL.
+///
 /// [locationOf] maps a route name to its location (`GoRouterState.namedLocation`).
 String? resolvePinRouteGuard({
   required String path,
@@ -119,14 +131,14 @@ String? resolvePinRouteGuard({
   if (isLocked) {
     if (path == verifyLocation) return null;
     final onVerify = Uri.parse(currentLocation).path == verifyLocation;
-    return onVerify ? pinRouteGuardStay : verifyLocation;
+    return onVerify ? appLinkUrl : verifyLocation;
   }
   if (path == locationOf(PinRoutes.setup)) {
-    return isPinSetup ? pinRouteGuardStay : null;
+    return isPinSetup ? appLinkUrl : null;
   }
   for (final routeName in freshPinRoutes) {
     if (path == locationOf(routeName)) {
-      return routeName == freshPinRoute ? null : pinRouteGuardStay;
+      return routeName == freshPinRoute ? null : appLinkUrl;
     }
   }
   return null;
