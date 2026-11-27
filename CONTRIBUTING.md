@@ -245,7 +245,7 @@ Leave these unchanged:
 
 If a label is too short for the full form, rewrite the sentence so the full form fits and the grammar agrees. Do not shorten it.
 
-In the Aktionariat flow (the Aktionariat AG documents, the address confirmation, and their loading, error, and success messages), German copy addresses the user formally with `Sie` / `Ihr` (`Bitte bestätigen Sie Ihre Adresse`), never with `du` / `dein`. In the same flow, English copy addresses the user as `you` / `your`.
+In the Aktionariat flow, German copy addresses the user formally with `Sie` / `Ihr` (`Bitte lesen und bestätigen Sie die folgenden Dokumente der Aktionariat AG`), never with `du` / `dein`. In the app, this flow is the legal disclaimer step with the Aktionariat AG documents and the Aktionariat page under the legal documents in the settings. The rule also covers any copy added to this flow later. In the same flow, English copy addresses the user as `you` / `your`.
 
 English uses the ordinary English word (`shareholder`, `shareholders`). Do not build a German-style pair in English.
 
