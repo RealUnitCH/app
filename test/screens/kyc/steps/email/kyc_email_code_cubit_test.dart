@@ -286,6 +286,38 @@ void main() {
     );
   });
 
+  group('code used up by a 409', () {
+    blocTest<KycEmailCodeCubit, KycEmailCodeState>(
+      'a retry after a failed register/email goes straight to register/email',
+      setUp: () {
+        when(() => service.verifyEmail(any())).thenThrow(
+          const ApiException(statusCode: 409, code: 'UNKNOWN', message: 'any conflict text'),
+        );
+        var calls = 0;
+        when(() => service.registerEmail(any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw const ApiException(statusCode: 500, code: 'UNKNOWN', message: 'boom');
+          return RegistrationEmailStatus.mergeRequested;
+        });
+      },
+      build: build,
+      act: (c) async {
+        await c.verify('123456'); // 409, then register/email fails
+        await c.verify('123456'); // retry: no second confirmation
+      },
+      expect: () => const [
+        KycEmailCodeVerifying(),
+        KycEmailCodeFailure(KycEmailCodeError.unknown),
+        KycEmailCodeVerifying(),
+        KycEmailCodeCompleted(RegistrationEmailStatus.mergeRequested),
+      ],
+      verify: (_) {
+        verify(() => service.verifyEmail('123456')).called(1);
+        verify(() => service.registerEmail('a@b.com')).called(2);
+      },
+    );
+  });
+
   group('possibly used code after a timeout', () {
     blocTest<KycEmailCodeCubit, KycEmailCodeState>(
       'an unrelated API error keeps the doubt, so a later 403 is still settled by register/email',

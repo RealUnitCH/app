@@ -71,10 +71,17 @@ class KycEmailCodeCubit extends Cubit<KycEmailCodeState> {
       } on ApiException catch (e) {
         developer.log(e.toString());
         if (isClosed) return;
-        // 409: another account holds the address. 403 after a timed-out try:
-        // that try may have used the code. In both cases register/email
-        // decides the next step (email_registered, merge_requested or a new
-        // code) instead of the app reading the error text.
+        // 409: another account holds the address. The API checks that only
+        // after it accepted (and used up) the code, so a retry must not send
+        // it again: treat it like an accepted code.
+        if (e.statusCode == 409) {
+          _codeConfirmed = true;
+          _confirmationUnknown = false;
+        }
+        // In that case, and for a 403 after a timed-out try (which may have
+        // used the code), register/email decides the next step
+        // (email_registered, merge_requested or a new code) instead of the app
+        // reading the error text.
         if (e.statusCode == 409 || (e.statusCode == 403 && _confirmationUnknown)) {
           await _registerEmail();
           return;
