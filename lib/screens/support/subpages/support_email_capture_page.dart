@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_code_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_verification_page.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_email_capture/support_email_capture_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -62,6 +64,24 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
     super.dispose();
   }
 
+  // The email belongs to an existing account and the API has already sent an
+  // account-merge confirmation email. Route to the same verification page the
+  // KYC email step uses so the user can confirm. On confirmation this wallet
+  // is linked to the existing account, so its primary email is now set —
+  // signal the caller exactly like a direct registration success. If the user
+  // backs out unconfirmed, stay on the form so they can retry.
+  Future<void> _confirmMerge(BuildContext context) async {
+    final isConfirmed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (_) => const KycEmailVerificationPage(),
+      ),
+    );
+    if (isConfirmed == true && context.mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<SupportEmailCaptureCubit, SupportEmailCaptureState>(
@@ -74,21 +94,24 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
           return;
         }
         if (state is SupportEmailCaptureMergeRequested) {
-          // The email belongs to an existing account and the API has already
-          // sent an account-merge confirmation email. Route to the same
-          // verification page the KYC email step uses so the user can confirm.
-          // On confirmation this wallet is linked to the existing account, so
-          // its primary email is now set — signal the caller exactly like a
-          // direct registration success. If the user backs out unconfirmed,
-          // stay on the form so they can retry.
-          final isConfirmed = await Navigator.push<bool>(
+          await _confirmMerge(context);
+          return;
+        }
+        if (state is SupportEmailCaptureCodeSent) {
+          // The API stores the address only after the code sent to it is
+          // confirmed. The code page pops with the status of the second
+          // register/email call; backing out keeps the form for a retry.
+          final status = await Navigator.push<RegistrationEmailStatus>(
             context,
-            MaterialPageRoute<bool>(
-              builder: (_) => const KycEmailVerificationPage(),
+            MaterialPageRoute<RegistrationEmailStatus>(
+              builder: (_) => KycEmailCodePage(email: state.email),
             ),
           );
-          if (isConfirmed == true && context.mounted) {
+          if (!context.mounted) return;
+          if (status == RegistrationEmailStatus.emailRegistered) {
             Navigator.of(context).pop(true);
+          } else if (status == RegistrationEmailStatus.mergeRequested) {
+            await _confirmMerge(context);
           }
           return;
         }

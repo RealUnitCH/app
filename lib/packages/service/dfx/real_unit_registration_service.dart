@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/rea
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_register_wallet_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_verify_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
@@ -28,6 +29,7 @@ class RealUnitRegistrationService extends DFXAuthService {
   static const _registerCompletionPath = '/v1/realunit/register/complete';
   static const _registerWalletPath = '/v1/realunit/register/wallet';
   static const _registerNamePath = '/v1/realunit/register/name';
+  static const _verifyEmailPath = '/v2/user/mail/verify';
 
   int get _chainId => appStore.apiConfig.asset.chainId;
 
@@ -114,6 +116,25 @@ class RealUnitRegistrationService extends DFXAuthService {
     }
     final responseDto = RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
+  }
+
+  /// Confirms the code that `register/email` sent with
+  /// [RegistrationEmailStatus.verificationCodeSent]. The API stores the mail
+  /// only after this call; [registerEmail] must then be called again to finish
+  /// the email step. A wrong or expired code is answered with 403.
+  Future<void> verifyEmail(String token) async {
+    final uri = buildUri(host, _verifyEmailPath);
+    final response = await authenticatedPost(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(RealUnitVerifyEmailRequestDto(token: token)),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw ApiException.fromBody(response.body, httpStatusCode: response.statusCode);
+    }
   }
 
   /// registers a wallet and and adds the wallet to the new user

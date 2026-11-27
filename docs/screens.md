@@ -128,6 +128,7 @@ Column meaning:
 | KYC | `KycNationalityPage` | — | — | `173`, `174`, `175`, `176`, `177`, `178`, `179` |
 | KYC | `KycEmailPage` | — | — | `37`, `38`, `39`, `148`, `149`, `150` |
 | KYC | `KycEmailVerificationPage` | — | — | `152`, `153`, `154`, `155` |
+| KYC | `KycEmailCodePage` | — | — | `458`, `459`, `460`, `461`, `462`, `463`, `464` |
 | KYC | `KycConfirmEmailPage` | — | — | `151` |
 | KYC | `Kyc2faPage` | — | — | `156`, `157`, `158`, `159`, `160` |
 | KYC | `KycIdentPage` | — | — | `193`, `194`, `195`, `196` |
@@ -149,7 +150,7 @@ Column meaning:
 | Shared widgets | `ImageSourceSheet` | — | — | `393` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282`, `356`, `357` |
 
-100 screens — 54 routed (`GoRoute`) + 46 non-routed. The table also carries
+101 screens — 54 routed (`GoRoute`) + 47 non-routed. The table also carries
 three shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`, `ImageSourceSheet`),
 which are not screens.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook

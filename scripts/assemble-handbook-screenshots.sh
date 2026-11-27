@@ -507,6 +507,13 @@ MAPPING=(
   "455-kyc-update-share-register-name-page-send-failed=screens/kyc/goldens/macos/kyc_update_share_register_name_page_send_failed.png"
   "456-kyc-update-share-register-name-page-submitting=screens/kyc/goldens/macos/kyc_update_share_register_name_page_submitting.png"
   "457-kyc-update-share-register-name-page-bitbox-required=screens/kyc/goldens/macos/kyc_update_share_register_name_page_bitbox_required.png"
+  "458-kyc-email-code-page-default=screens/kyc/goldens/macos/kyc_email_code_page_default.png"
+  "459-kyc-email-code-page-verifying=screens/kyc/goldens/macos/kyc_email_code_page_verifying.png"
+  "460-kyc-email-code-page-resending=screens/kyc/goldens/macos/kyc_email_code_page_resending.png"
+  "461-kyc-email-code-page-resent-snackbar=screens/kyc/goldens/macos/kyc_email_code_page_resent_snackbar.png"
+  "462-kyc-email-code-page-invalid-code-snackbar=screens/kyc/goldens/macos/kyc_email_code_page_invalid_code_snackbar.png"
+  "463-kyc-email-code-page-error-snackbar=screens/kyc/goldens/macos/kyc_email_code_page_error_snackbar.png"
+  "464-kyc-email-code-page-failed-snackbar=screens/kyc/goldens/macos/kyc_email_code_page_failed_snackbar.png"
 )
 
 missing=()

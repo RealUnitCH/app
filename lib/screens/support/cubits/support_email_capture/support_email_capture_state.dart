@@ -29,6 +29,18 @@ class SupportEmailCaptureMergeRequested extends SupportEmailCaptureState {
   const SupportEmailCaptureMergeRequested();
 }
 
+/// The API has sent a code to [email] and stores the address only once that
+/// code is confirmed (register/email returned `verification_code_sent`). The
+/// view routes to the shared KYC code entry page.
+class SupportEmailCaptureCodeSent extends SupportEmailCaptureState {
+  final String email;
+
+  const SupportEmailCaptureCodeSent(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
 class SupportEmailCaptureFailure extends SupportEmailCaptureState {
   final String message;
 

@@ -5,6 +5,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/rea
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_register_wallet_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_verify_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -25,6 +26,13 @@ void main() {
       expect(
         RegistrationEmailStatus.fromString('merge_requested'),
         RegistrationEmailStatus.mergeRequested,
+      );
+    });
+
+    test('parses verification_code_sent', () {
+      expect(
+        RegistrationEmailStatus.fromString('verification_code_sent'),
+        RegistrationEmailStatus.verificationCodeSent,
       );
     });
 
@@ -124,6 +132,14 @@ void main() {
       const dto = RealUnitEmailRegistrationRequestDto(email: 'a@b.com');
 
       expect(dto.toJson(), {'email': 'a@b.com'});
+    });
+  });
+
+  group('$RealUnitVerifyEmailRequestDto.toJson', () {
+    test('wraps the code in a single-key token object', () {
+      const dto = RealUnitVerifyEmailRequestDto(token: '123456');
+
+      expect(dto.toJson(), {'token': '123456'});
     });
   });
 

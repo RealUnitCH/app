@@ -13,6 +13,7 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_step/kyc_email_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/kyc_email_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_code_page.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 import '../../../helper/pump_app.dart';
@@ -51,6 +52,31 @@ class _AutoPopObserver extends NavigatorObserver {
     // matches how a real user would tap "I've confirmed" after the page
     // appears.
     Future.microtask(() => route.navigator?.pop<bool>(value as bool?));
+  }
+}
+
+/// Pops the sub-routes pushed above the root, by their 1-based push order,
+/// with the configured results — e.g. the code page with a status, then the
+/// merge confirmation page with a bool.
+class _SequencedPopObserver extends NavigatorObserver {
+  _SequencedPopObserver(this.results);
+
+  final Map<int, Object?> results;
+  bool _seenRoot = false;
+  int _subPushes = 0;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    if (!_seenRoot) {
+      _seenRoot = true;
+      return;
+    }
+    _subPushes++;
+    if (results.containsKey(_subPushes)) {
+      final result = results[_subPushes];
+      Future.microtask(() => route.navigator?.pop(result));
+    }
   }
 }
 
@@ -213,5 +239,66 @@ void main() {
         verifyNever(() => kycCubit.checkKyc());
       },
     );
+
+    Future<void> pumpWithObserver(WidgetTester tester, NavigatorObserver observer) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+          navigatorObservers: [observer],
+          home: buildSubject(const KycEmailView()),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    void emitCodeSent() => whenListen(
+      kycEmailStepCubit,
+      Stream.fromIterable([const KycEmailStepCodeSent('a@b.com')]),
+      initialState: const KycEmailStepInitial(),
+    );
+
+    testWidgets('a sent code opens the code entry page for that address', (tester) async {
+      emitCodeSent();
+
+      await tester.pumpApp(buildSubject(const KycEmailView()));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(KycEmailCodePage), findsOne);
+      expect(find.text(S.current.registerEmailCodeDescription('a@b.com')), findsOne);
+    });
+
+    testWidgets('re-runs checkKyc when the code page finishes with emailRegistered', (tester) async {
+      emitCodeSent();
+
+      await pumpWithObserver(tester, _SequencedPopObserver({1: RegistrationEmailStatus.emailRegistered}));
+
+      verify(() => kycCubit.checkKyc()).called(1);
+    });
+
+    testWidgets('routes a merge request from the code page to the merge confirmation', (tester) async {
+      emitCodeSent();
+
+      await pumpWithObserver(
+        tester,
+        _SequencedPopObserver({1: RegistrationEmailStatus.mergeRequested, 2: true}),
+      );
+
+      verify(() => kycCubit.checkKyc()).called(1);
+    });
+
+    testWidgets('does NOT call checkKyc when the user backs out of the code page', (tester) async {
+      emitCodeSent();
+
+      await pumpWithObserver(tester, _SequencedPopObserver({1: null}));
+
+      verifyNever(() => kycCubit.checkKyc());
+      expect(find.byType(KycEmailView), findsOne);
+    });
   });
 }

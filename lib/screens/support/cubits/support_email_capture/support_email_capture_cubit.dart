@@ -29,6 +29,10 @@ class SupportEmailCaptureCubit extends Cubit<SupportEmailCaptureState> {
           // shared email-verification flow so the user can confirm and link
           // this wallet to the existing account.
           emit(const SupportEmailCaptureMergeRequested());
+        case RegistrationEmailStatus.verificationCodeSent:
+          // The API stores the address only after the code it sent there is
+          // confirmed. Signal the view to route to the code entry page.
+          emit(SupportEmailCaptureCodeSent(email));
       }
     } on ApiException catch (e) {
       developer.log(e.toString());

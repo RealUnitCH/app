@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 463 Visual-Regression Goldens (463 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 470 Visual-Regression Goldens (470 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 463 App-Screenshots dieser Seite sind Goldens aus
+            Die 470 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 463 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 470 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -6255,7 +6255,7 @@
                 <div class="file">test/goldens/screens/kyc/</div>
               </div>
               <div class="rhs">
-                <b>13 Screens</b>
+                <b>20 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/kyc"
@@ -6266,7 +6266,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Der Einstieg in die Verifizierung dreht sich um die E-Mail-Adresse und die 2-Faktor-Authentifizierung. Diese Seiten decken das Registrieren und Bestätigen der E-Mail, die Verifizierung wiederkehrender Nutzer sowie die Code-Eingabe der 2FA ab — jeweils inklusive Lade- und Fehlerzustände.
+            Der Einstieg in die Verifizierung dreht sich um die E-Mail-Adresse und die 2-Faktor-Authentifizierung. Diese Seiten decken das Registrieren und Bestätigen der E-Mail (mit dem Code an eine neue Adresse), die Verifizierung wiederkehrender Nutzer sowie die Code-Eingabe der 2FA ab — jeweils inklusive Lade- und Fehlerzustände.
           </p>
 
           <div class="tests cols-2">
@@ -6396,6 +6396,118 @@
               </div>
               <div class="desc">
                 Rote Fehler-SnackBar, wenn die <b>E-Mail-Verifizierung fehlschlägt</b> — etwa weil der Bestätigungslink noch nicht angeklickt wurde. Der Button bleibt im Ruhezustand ohne Spinner.
+              </div>
+            </div>
+            <div class="test" id="458-kyc-email-code-page-default">
+              <div class="head">
+                <a class="name permalink" href="#458-kyc-email-code-page-default">458-kyc-email-code-page-default</a>
+                <button class="copy-link" type="button" data-target="458-kyc-email-code-page-default" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/458-kyc-email-code-page-default.png"
+                  alt="E-Mail-Code eingeben"
+                />
+              </div>
+              <div class="desc">
+                Die Seite <b>E-Mail bestätigen</b>. Sie erscheint, wenn die API eine neue E-Mail-Adresse erst nach einem Code speichert (<code>register/email</code> antwortet <code>verification_code_sent</code>) — im KYC-E-Mail-Schritt und bei der E-Mail-Erfassung für den Support. Unter <b>Code aus Ihrer E-Mail eingeben</b> steht <b>Wir haben einen 6-stelligen Code an max@mustermann.ch gesendet. Bitte geben Sie ihn hier ein, um Ihre E-Mail-Adresse zu bestätigen.</b> Darunter das Code-Feld, <b>Weiter</b> und <b>Code erneut senden</b>. Nach dem Code ruft die App <code>register/email</code> erneut auf und kehrt mit dessen Ergebnis zurück.
+              </div>
+            </div>
+            <div class="test" id="459-kyc-email-code-page-verifying">
+              <div class="head">
+                <a class="name permalink" href="#459-kyc-email-code-page-verifying">459-kyc-email-code-page-verifying</a>
+                <button class="copy-link" type="button" data-target="459-kyc-email-code-page-verifying" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_verifying.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/459-kyc-email-code-page-verifying.png"
+                  alt="E-Mail-Code wird geprüft"
+                />
+              </div>
+              <div class="desc">
+                Ladezustand nach <b>Weiter</b>: der Button zeigt einen Spinner, <b>Code erneut senden</b> ist gesperrt, bis Code-Bestätigung und zweiter <code>register/email</code>-Aufruf fertig sind.
+              </div>
+            </div>
+            <div class="test" id="460-kyc-email-code-page-resending">
+              <div class="head">
+                <a class="name permalink" href="#460-kyc-email-code-page-resending">460-kyc-email-code-page-resending</a>
+                <button class="copy-link" type="button" data-target="460-kyc-email-code-page-resending" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_resending.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/460-kyc-email-code-page-resending.png"
+                  alt="Neuer E-Mail-Code wird angefordert"
+                />
+              </div>
+              <div class="desc">
+                Ladezustand nach <b>Code erneut senden</b>: die App ruft <code>register/email</code> erneut auf, der Link zeigt <b>Wird gesendet...</b> und beide Buttons sind gesperrt.
+              </div>
+            </div>
+            <div class="test" id="461-kyc-email-code-page-resent-snackbar">
+              <div class="head">
+                <a class="name permalink" href="#461-kyc-email-code-page-resent-snackbar">461-kyc-email-code-page-resent-snackbar</a>
+                <button class="copy-link" type="button" data-target="461-kyc-email-code-page-resent-snackbar" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_resent_snackbar.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/461-kyc-email-code-page-resent-snackbar.png"
+                  alt="Neuer E-Mail-Code gesendet"
+                />
+              </div>
+              <div class="desc">
+                SnackBar <b>Wir haben Ihnen einen neuen Code gesendet.</b>, sobald die API einen neuen Code verschickt hat. Das Code-Feld wird geleert.
+              </div>
+            </div>
+            <div class="test" id="462-kyc-email-code-page-invalid-code-snackbar">
+              <div class="head">
+                <a class="name permalink" href="#462-kyc-email-code-page-invalid-code-snackbar">462-kyc-email-code-page-invalid-code-snackbar</a>
+                <button class="copy-link" type="button" data-target="462-kyc-email-code-page-invalid-code-snackbar" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_invalid_code_snackbar.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/462-kyc-email-code-page-invalid-code-snackbar.png"
+                  alt="E-Mail-Code falsch oder abgelaufen"
+                />
+              </div>
+              <div class="desc">
+                Rote Fehler-SnackBar <b>Der Code ist falsch oder abgelaufen. Bitte prüfen Sie ihn oder fordern Sie einen neuen Code an.</b> Die API antwortet so (403) auf einen falschen, abgelaufenen oder zu oft falsch eingegebenen Code.
+              </div>
+            </div>
+            <div class="test" id="463-kyc-email-code-page-error-snackbar">
+              <div class="head">
+                <a class="name permalink" href="#463-kyc-email-code-page-error-snackbar">463-kyc-email-code-page-error-snackbar</a>
+                <button class="copy-link" type="button" data-target="463-kyc-email-code-page-error-snackbar" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_error_snackbar.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/463-kyc-email-code-page-error-snackbar.png"
+                  alt="E-Mail-Code — Fehler der API"
+                />
+              </div>
+              <div class="desc">
+                Rote Fehler-SnackBar mit dem Text der API, wenn die Bestätigung oder der erneute Aufruf aus einem anderen Grund scheitert — im Beispiel <b>ThrottlerException: Too Many Requests</b>.
+              </div>
+            </div>
+            <div class="test" id="464-kyc-email-code-page-failed-snackbar">
+              <div class="head">
+                <a class="name permalink" href="#464-kyc-email-code-page-failed-snackbar">464-kyc-email-code-page-failed-snackbar</a>
+                <button class="copy-link" type="button" data-target="464-kyc-email-code-page-failed-snackbar" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/kyc/goldens/macos/kyc_email_code_page_failed_snackbar.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/464-kyc-email-code-page-failed-snackbar.png"
+                  alt="E-Mail-Code — allgemeiner Fehler"
+                />
+              </div>
+              <div class="desc">
+                Rote Fehler-SnackBar <b>Ihre E-Mail-Adresse konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.</b>, wenn ein solcher Fehler keinen Text der API mitbringt.
               </div>
             </div>
             <div class="test" id="156-kyc-2fa-page-default">

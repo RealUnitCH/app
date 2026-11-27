@@ -38,6 +38,19 @@ void main() {
     );
 
     blocTest<KycEmailStepCubit, KycEmailStepState>(
+      'verification_code_sent: Loading → CodeSent carrying the submitted email',
+      setUp: () => when(() => service.registerEmail(any())).thenAnswer(
+        (_) async => RegistrationEmailStatus.verificationCodeSent,
+      ),
+      build: build,
+      act: (c) => c.registerEmail('a@b.com'),
+      expect: () => const [
+        KycEmailStepLoading(),
+        KycEmailStepCodeSent('a@b.com'),
+      ],
+    );
+
+    blocTest<KycEmailStepCubit, KycEmailStepState>(
       'ApiException "does not match verified email" maps to emailDoesNotMatch',
       setUp: () => when(() => service.registerEmail(any())).thenAnswer(
         (_) async => throw const ApiException(

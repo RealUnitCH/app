@@ -54,6 +54,24 @@ void main() {
     );
 
     blocTest<SupportEmailCaptureCubit, SupportEmailCaptureState>(
+      'verificationCodeSent → Loading → CodeSent carrying the submitted email',
+      setUp: () => when(() => service.registerEmail(any())).thenAnswer(
+        (_) async => RegistrationEmailStatus.verificationCodeSent,
+      ),
+      build: build,
+      act: (c) => c.submit('a@b.com'),
+      expect: () => const [
+        SupportEmailCaptureLoading(),
+        SupportEmailCaptureCodeSent('a@b.com'),
+      ],
+    );
+
+    test('CodeSent props pin the email', () {
+      expect(const SupportEmailCaptureCodeSent('a@b.com'), const SupportEmailCaptureCodeSent('a@b.com'));
+      expect(const SupportEmailCaptureCodeSent('a@b.com'), isNot(const SupportEmailCaptureCodeSent('c@d.com')));
+    });
+
+    blocTest<SupportEmailCaptureCubit, SupportEmailCaptureState>(
       'ApiException → Failure carrying the api message',
       setUp: () => when(() => service.registerEmail(any())).thenAnswer(
         (_) async => throw const ApiException(

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_step/kyc_email_step_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_code_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_verification_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -53,6 +55,33 @@ class _KycEmailFormState extends State<KycEmailForm> {
     super.dispose();
   }
 
+  Future<void> _onStatus(BuildContext context, RegistrationEmailStatus status) async {
+    switch (status) {
+      case RegistrationEmailStatus.emailRegistered:
+        context.read<KycCubit>().checkKyc();
+      case RegistrationEmailStatus.mergeRequested:
+        final isConfirmed = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute<bool>(
+            builder: (BuildContext context) => const KycEmailVerificationPage(),
+          ),
+        );
+        if (isConfirmed == true && context.mounted) {
+          // Merge confirmed. `checkKyc()` re-fetches `getRegistrationInfo`
+          // and routes this wallet by the API `state`: AddWallet → link
+          // wallet, NewRegistration → full registration form,
+          // AlreadyRegistered → forward. The KYC flow is the single source
+          // of registration routing — see CONTRIBUTING.md "API as Decision
+          // Authority".
+          context.read<KycCubit>().checkKyc();
+        }
+      case RegistrationEmailStatus.verificationCodeSent:
+        // The cubit emits `KycEmailStepCodeSent` for this status, and the code
+        // page never pops with it.
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<KycEmailStepCubit, KycEmailStepState>(
@@ -66,25 +95,21 @@ class _KycEmailFormState extends State<KycEmailForm> {
           );
         }
         if (state is KycEmailStepSuccess) {
-          if (state.status == .emailRegistered) {
-            context.read<KycCubit>().checkKyc();
-          }
-          if (state.status == .mergeRequested) {
-            final isConfirmed = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute<bool>(
-                builder: (BuildContext context) => const KycEmailVerificationPage(),
-              ),
-            );
-            if (isConfirmed == true && context.mounted) {
-              // Merge confirmed. `checkKyc()` re-fetches `getRegistrationInfo`
-              // and routes this wallet by the API `state`: AddWallet → link
-              // wallet, NewRegistration → full registration form,
-              // AlreadyRegistered → forward. The KYC flow is the single source
-              // of registration routing — see CONTRIBUTING.md "API as Decision
-              // Authority".
-              context.read<KycCubit>().checkKyc();
-            }
+          await _onStatus(context, state.status);
+          return;
+        }
+        if (state is KycEmailStepCodeSent) {
+          // The API stores the address only after the code sent to it is
+          // confirmed. The code page pops with the status of the second
+          // register/email call.
+          final status = await Navigator.push<RegistrationEmailStatus>(
+            context,
+            MaterialPageRoute<RegistrationEmailStatus>(
+              builder: (BuildContext context) => KycEmailCodePage(email: state.email),
+            ),
+          );
+          if (status != null && context.mounted) {
+            await _onStatus(context, status);
           }
         }
       },

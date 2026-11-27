@@ -20,6 +20,10 @@ class KycEmailStepCubit extends Cubit<KycEmailStepState> {
       emit(const KycEmailStepLoading());
       final status = await _service.registerEmail(email);
 
+      if (status == RegistrationEmailStatus.verificationCodeSent) {
+        emit(KycEmailStepCodeSent(email));
+        return;
+      }
       emit(KycEmailStepSuccess(status));
     } on ApiException catch (e) {
       developer.log(e.toString());
