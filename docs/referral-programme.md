@@ -482,6 +482,9 @@ row.
   apex/www) so Universal Links can be tested while production AASA is
   still 404. iOS Profile/Release use App Store signing without
   `?mode=developer`.
+  An invite or promo deeplink of any kind only hands over the code: it
+  never opens a screen, the running app stays where it is, and a cold start
+  runs the normal boot with the PIN prompt.
   Invite bind is silent on
   success; promo bind shows the campaign dialog (Close only,
   keyboard-focused), including when bind returns before the navigator
