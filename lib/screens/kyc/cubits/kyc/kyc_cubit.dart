@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/kyc_unsupported_step_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/request_timeout_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/legal/real_unit_legal_agreement.dart';
@@ -23,6 +24,8 @@ import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 part 'kyc_state.dart';
 
 class KycCubit extends Cubit<KycState> {
+  static const _backendTimeoutMessage = 'KYC backend did not respond in time';
+
   static const _checkKycTimeout = Duration(seconds: 30);
 
   final DfxKycService _kycService;
@@ -85,7 +88,7 @@ class KycCubit extends Cubit<KycState> {
       await _runCheckKyc(generation).timeout(_checkKycTimeout);
     } on TimeoutException {
       if (isClosed || generation != _runGeneration) return;
-      emit(const KycFailure('KYC backend did not respond in time'));
+      emit(const KycFailure(_backendTimeoutMessage));
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(ApiException.userFacingMessage(e)));
@@ -329,6 +332,11 @@ class KycCubit extends Cubit<KycState> {
       } else {
         rethrow;
       }
+    } on RequestTimeoutException {
+      // A single request (the email re-registration) ran out of time: same
+      // outcome and wording as the whole check timing out.
+      if (isClosed || generation != _runGeneration) return;
+      emit(const KycFailure(_backendTimeoutMessage));
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(ApiException.userFacingMessage(e)));
