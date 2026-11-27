@@ -135,7 +135,7 @@ void main() {
     Future<void> Function(WidgetTester) submitCode(String code) => (tester) async {
       await tester.pumpAndSettle();
       if (code.isNotEmpty) {
-        await tester.enterText(find.byType(TextFormField), code);
+        await tester.enterText(find.byType(EditableText), code);
       }
       await tester.tap(find.byType(AppFilledButton));
       await tester.pumpAndSettle();
